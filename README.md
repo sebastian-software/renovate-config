@@ -4,7 +4,10 @@ Shared [Renovate](https://docs.renovatebot.com/) preset for all Sebastian Softwa
 
 ## Usage
 
-Every repository only needs a minimal `renovate.json`:
+Nothing to do per repository: [`org-inherited-config.json`](org-inherited-config.json)
+is picked up by the Mend Renovate app for every repository in the org
+(onboarding disabled, config optional). A repository may still carry its own
+`renovate.json` to extend or override:
 
 ```json
 {
