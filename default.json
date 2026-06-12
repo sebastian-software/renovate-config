@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Shared Renovate preset for all Sebastian Software repositories.",
+  "extends": [
+    "config:recommended",
+    ":timezone(Europe/Berlin)",
+    "schedule:weekly"
+  ],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Automerge our own packages once CI is green — releases roll out org-wide without manual review.",
+      "matchPackageNames": ["eslint-config-setup", "ardo", "ardo-*"],
+      "automerge": true
+    },
+    {
+      "description": "Group the OXC toolchain (oxlint, oxfmt and native bindings) into a single PR.",
+      "groupName": "OXC toolchain",
+      "matchPackageNames": ["oxlint", "oxfmt", "@oxlint/**", "@oxfmt/**"]
+    },
+    {
+      "description": "Automerge non-major devDependency updates once CI is green.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    }
+  ]
+}
