@@ -3,8 +3,7 @@
   "description": "Shared Renovate preset for all Sebastian Software repositories.",
   "extends": [
     "config:recommended",
-    ":timezone(Europe/Berlin)",
-    "schedule:weekly"
+    ":timezone(Europe/Berlin)"
   ],
   "labels": ["dependencies"],
   "packageRules": [
