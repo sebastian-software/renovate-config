@@ -1,0 +1,46 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Drives the @sebastian-software/standards rollout: stamps .repometa.json#standards against the package's manifest.json#currentVersion and runs the mechanical sync. Variant A is in force — a human merges every standards: PR after the two external agent runs (apply-judgement + pre-review) have posted their commit/comment; this preset deliberately sets no automerge.",
+  "customDatasources": {
+    "sebastian-software-standards": {
+      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/sebastian-software/standards/main/manifest.json",
+      "format": "json",
+      "transformTemplates": ["{ \"releases\": [ { \"version\": $string(currentVersion) } ] }"]
+    }
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.repometa\\.json$/"],
+      "matchStrings": ["\"standards\":\\s*(?<currentValue>\\d+)"],
+      "datasourceTemplate": "custom.sebastian-software-standards",
+      "depNameTemplate": "standards",
+      "versioningTemplate": "loose"
+    }
+  ],
+  "postUpgradeTasks": {
+    "commands": [
+      "pnpm --config.minimum-release-age=0 dlx @sebastian-software/standards apply --from-version {{{currentValue}}} --emit-pending .standards/pending.json"
+    ],
+    "fileFilters": ["**/*"],
+    "executionMode": "branch",
+    "installTools": {
+      "node": {},
+      "pnpm": {}
+    }
+  },
+  "packageRules": [
+    {
+      "description": "standards drift PR: direct PR (no dashboard checkbox), a human merges, and the external two-pass agent is driven by labels + the .standards marker files. No automerge by design (Variant A) — do not add automerge 'for consistency' with the other org-managed deps. commitMessagePrefix 'chore: ' is the primary fix for the live PR-title bug (title rendered as 'standards v2' instead of 'chore: standards v2' for custom-datasource PRs in Renovate 43+); if it is ever not enough, the fallback ladder is prTitleStrict:false + custom prTitle, then extends :semanticCommitTypeAll(chore) with local override. addLabels carries only 'standards:needs-agent' — the second label 'standards:needs-review' is set later by the external Agent run 1 after it has worked through pending.json; setting it earlier would make Agent run 2 fire on a still-unprocessed PR.",
+      "matchDatasources": ["custom.sebastian-software-standards"],
+      "matchPackageNames": ["standards"],
+      "dependencyDashboardApproval": false,
+      "recreateWhen": "always",
+      "addLabels": ["standards:needs-agent"],
+      "commitMessagePrefix": "chore: ",
+      "commitMessageTopic": "standards",
+      "commitMessageAction": "",
+      "commitMessageExtra": "v{{newVersion}}"
+    }
+  ]
+}
