@@ -1,28 +1,38 @@
 # renovate-config
 
-Shared [Renovate](https://docs.renovatebot.com/) preset for all Sebastian
-Software repositories, plus the reference configuration for the self-hosted
-Renovate worker that drives the [standards](https://github.com/sebastian-software/standards)
-rollout.
+Shared Renovate presets for all Sebastian Software repositories:
+[`default.json`](default.json) (general policy) and
+[`standards.json`](standards.json) (standards-sync mechanics).
+
+> [!NOTE]
+> **Variant A in production** — consumers extend via per-repo `renovate.json`,
+> listing both presets. There is no org-level inherited config: the self-hosted
+> workers do not set `inheritConfig`, so the per-repo `renovate.json` below is
+> the single opt-in path.
 
 ## Per-repository usage
 
 A repository opts in by carrying the `managed-deps` GitHub topic (the worker
-discovers repos via `autodiscoverTopics`) and extending the shared preset:
+discovers repos via `autodiscoverTopics`) and extending **both** presets:
 
 ```json
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>sebastian-software/renovate-config"]
+  "extends": [
+    "github>sebastian-software/renovate-config",
+    "github>sebastian-software/renovate-config:standards"
+  ]
 }
 ```
+
+Listing `:standards` is safe everywhere: its custom manager only matches in
+repos that actually carry a `.repometa.json` stamp, so it is a no-op in repos
+that have not onboarded to the standards rollout.
 
 Presets are resolved fresh on every Renovate run — changes to this repository
 take effect across the org immediately, without touching the consuming repos.
 
-## What the preset does
-
-See [`default.json`](default.json):
+## `default.json` — general org policy
 
 - Based on `config:recommended`, timezone Europe/Berlin (the worker controls the
   actual run schedule, so the preset pins no schedule of its own)
@@ -30,80 +40,40 @@ See [`default.json`](default.json):
 - Automerges non-major devDependency updates once CI is green
 - Groups the OXC toolchain (`oxlint`, `oxfmt`, bindings) into a single PR
 
-## Self-hosted worker — standards rollout
+## `standards.json` — standards-sync mechanics
 
-> [!NOTE]
-> This is the reference configuration for the org's self-hosted worker, kept here
-> so it lives in version control rather than only on the server. Reconcile it with
-> the live server config when you change either side. The hosted Mend app cannot
-> run `postUpgradeTasks` and therefore cannot drive the automated pull model — for
-> Mend, repos still get version bumps + a red `standards check`, and the judgement
-> work is done with `standards sync` locally or from a CI job.
+Drives the [standards](https://github.com/sebastian-software/standards) rollout.
+It turns the integer `manifest.json#currentVersion` of the standards package
+into a Renovate dependency on each repo's `.repometa.json#standards` stamp, then
+runs `standards apply` on the upgrade branch. The version model stays
+stack-agnostic (no npm semver leaks into Rust or docs-only repos). The preset
+carries:
 
-The worker turns the integer `manifest.json#currentVersion` of the standards
-package into a Renovate dependency on each repo's `.repometa.json#standards`
-stamp, then runs `standards apply` on the upgrade branch. The version model stays
-stack-agnostic (no npm semver leaks into Rust or docs-only repos).
-
-```json5
-{
-  "autodiscover": true,
-  "autodiscoverTopics": ["managed-deps"],
-
-  // Read the org's current standards version as a plain integer.
-  "customDatasources": {
-    "sebastian-software-standards": {
-      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/sebastian-software/standards/main/manifest.json",
-      "format": "json",
-      "transformTemplates": ["{ \"releases\": [ { \"version\": $string(currentVersion) } ] }"]
-    }
-  },
-
-  // Treat the .repometa.json stamp as a dependency on that datasource.
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.repometa\\.json$/"],
-      "matchStrings": ["\"standards\":\\s*(?<currentValue>\\d+)"],
-      "datasourceTemplate": "custom.sebastian-software-standards",
-      "depNameTemplate": "standards",
-      "versioningTemplate": "loose"
-    }
-  ],
-
-  // On bump: run the mechanical sync and drop the pending-judgement marker.
-  "postUpgradeTasks": {
-    "commands": [
-      "pnpm dlx @sebastian-software/standards apply --from-version {{{currentValue}}} --emit-pending .standards/pending.json"
-    ],
-    "fileFilters": ["**/*"],
-    "executionMode": "branch"
-  }
-}
-```
-
-Server-level (admin) settings, outside the repo config:
-
-- `allowedPostUpgradeCommands` must permit the exact `standards apply` invocation
-  — pin it tightly with regex anchors.
-- One worker per bot identity. The org runs several (GitHub org PAT for
-  `sebastian-software/*`, a user PAT for personal repos with an
-  `autodiscoverFilter`, and a Forgejo worker); the custom manager, datasource and
-  `postUpgradeTasks` block are identical across them — only `platform`,
-  `endpoint`, token and filter differ.
+- **`customDatasources`** — reads the org's current standards version as a plain
+  integer from `manifest.json`.
+- **`customManagers`** — treats the `.repometa.json` stamp as a dependency on
+  that datasource.
+- **`postUpgradeTasks`** — on bump, runs the mechanical sync and drops the
+  `.standards/pending.json` judgement marker (`executionMode: "branch"`,
+  `installTools: { node, pnpm }`, plus the `--config.minimum-release-age=0`
+  pnpm-cooldown workaround).
+- **standards `packageRule`** — `commitMessagePrefix: "chore: "` (so the PR title
+  reads `chore: standards v<N>`), `dependencyDashboardApproval: false`,
+  `recreateWhen: "always"`, and `addLabels: ["standards:needs-agent"]`.
+  **No `automerge`** — Variant A: a human merges every `standards:` PR after the
+  two external agent runs have posted their commit/comment.
 
 The PR carries the mechanical changes plus `.standards/pending.json`; an external
-LLM agent consumes that marker in pull mode and commits the judgement changes onto
-the same branch. Full contract:
+LLM agent consumes that marker in pull mode and commits the judgement changes
+onto the same branch. Full contract:
 [standards/changes/0002-renovate-pending.md](https://github.com/sebastian-software/standards/blob/main/changes/0002-renovate-pending.md).
 
-## `org-inherited-config.json`
-
-[`org-inherited-config.json`](org-inherited-config.json) is a hosted-Mend-app
-feature (the app reads `{org}/renovate-config/org-inherited-config.json` for every
-repo). On a self-hosted server it only takes effect if the global config sets
-`inheritConfig: true`; otherwise the per-repo `renovate.json` above is what
-applies.
+> [!NOTE]
+> What stays on the self-hosted worker (global-only, cannot move into a preset):
+> the `allowedCommands` allow-list (security boundary for `postUpgradeTasks`),
+> `autodiscover` / `autodiscoverTopics`, and the worker identity
+> (`platform`, `endpoint`, token). Those live in the `sebastian-software/proxmox`
+> worker templates, not here.
 
 ---
 
