@@ -16,6 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
+        with:
+          # This repo carries no package.json#packageManager, so pin pnpm here.
+          version: 10
       - uses: actions/setup-node@v6
         with:
           node-version: 24
