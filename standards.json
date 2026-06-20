@@ -1,9 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Drives the @sebastian-software/standards rollout: stamps .repometa.json#standards against the package's manifest.json#currentVersion and runs the mechanical sync. Variant A is in force — a human merges every standards: PR after the two external agent runs (apply-judgement + pre-review) have posted their commit/comment; this preset deliberately sets no automerge.",
+  "description": "Drives the @sebastian-software/standards rollout: stamps .repometa.json#standards against the package's manifest.json#currentVersion and runs the mechanical sync. Variant A is in force — a human merges every standards: PR after the two external agent runs (apply-judgement + pre-review) have posted their commit/comment; this preset deliberately sets no automerge. The custom datasource reads currentVersion from the PUBLISHED npm package via unpkg (@latest), not from the standards repo main branch: the rollout integer can then never lead the CLI that postUpgradeTasks fetches via dlx, which removes the main-ahead-of-npm race (the older raw.githubusercontent.com/.../main source advanced the moment a feat PR merged, before release-please published, so apply could be handed a version that did not exist on npm yet). currentVersion stays the migration-ledger integer (it maps to changes/NNNN), so CLI-only releases — e.g. the 0.6.0→0.6.1 patch, both currentVersion 4 — still trigger zero rollout; only real standards changes do. unpkg serves @latest with a short CDN TTL (max-age=60 / s-maxage=300), far inside the worker's 4×/day cadence. Relies on Renovate following the unpkg 302 redirect to the resolved version (got default). If unpkg is unavailable the datasource yields no release and no PR is filed — a safe, self-correcting degradation rather than a wrong rollout. jsDelivr was rejected as the source because it caches @latest for up to 7 days.",
   "customDatasources": {
     "sebastian-software-standards": {
-      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/sebastian-software/standards/main/manifest.json",
+      "defaultRegistryUrlTemplate": "https://unpkg.com/@sebastian-software/standards@latest/manifest.json",
       "format": "json",
       "transformTemplates": ["{ \"releases\": [ { \"version\": $string(currentVersion) } ] }"]
     }
