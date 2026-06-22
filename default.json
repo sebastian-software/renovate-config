@@ -6,6 +6,8 @@
     ":timezone(Europe/Berlin)"
   ],
   "labels": ["dependencies"],
+  "minimumReleaseAge": "1 day",
+  "internalChecksFilter": "strict",
   "packageRules": [
     {
       "description": "Automerge our own packages once CI is green — releases roll out org-wide without manual review.",
