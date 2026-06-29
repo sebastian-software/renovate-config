@@ -10,6 +10,12 @@
   "internalChecksFilter": "strict",
   "packageRules": [
     {
+      "description": "Internal scopes — trusted first-party publishers; the npm release-age cooldown would only delay our own releases without a security benefit.",
+      "matchDatasources": ["npm"],
+      "matchPackageNames": ["@palamedes/*", "@sebastian-gmbh/*", "@sebastian-software/*"],
+      "minimumReleaseAge": null
+    },
+    {
       "description": "Automerge our own packages once CI is green — releases roll out org-wide without manual review.",
       "matchPackageNames": ["eslint-config-setup", "ardo", "ardo-*"],
       "automerge": true
