@@ -26,6 +26,11 @@
       "matchPackageNames": ["oxlint", "oxfmt", "@oxlint/**", "@oxfmt/**"]
     },
     {
+      "description": "Group all @palamedes/* packages into a single PR — they are released in lockstep and bind to a module-singleton runtime, so a partial bump (e.g. @palamedes/react without @palamedes/runtime) duplicates the runtime instance and breaks SSR with 'No active server i18n instance'.",
+      "groupName": "Palamedes",
+      "matchPackageNames": ["@palamedes/*"]
+    },
+    {
       "description": "Automerge non-major devDependency updates once CI is green.",
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
