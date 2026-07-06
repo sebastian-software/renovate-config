@@ -10,6 +10,12 @@
   "internalChecksFilter": "strict",
   "packageRules": [
     {
+      "description": "Internal scopes — trusted first-party publishers; the npm release-age cooldown would only delay our own releases without a security benefit.",
+      "matchDatasources": ["npm"],
+      "matchPackageNames": ["@palamedes/*", "@sebastian-gmbh/*", "@sebastian-software/*"],
+      "minimumReleaseAge": null
+    },
+    {
       "description": "Automerge our own packages once CI is green — releases roll out org-wide without manual review.",
       "matchPackageNames": ["eslint-config-setup", "ardo", "ardo-*"],
       "automerge": true
@@ -18,6 +24,11 @@
       "description": "Group the OXC toolchain (oxlint, oxfmt and native bindings) into a single PR.",
       "groupName": "OXC toolchain",
       "matchPackageNames": ["oxlint", "oxfmt", "@oxlint/**", "@oxfmt/**"]
+    },
+    {
+      "description": "Group all @palamedes/* packages into a single PR — they are released in lockstep and bind to a module-singleton runtime, so a partial bump (e.g. @palamedes/react without @palamedes/runtime) duplicates the runtime instance and breaks SSR with 'No active server i18n instance'.",
+      "groupName": "Palamedes",
+      "matchPackageNames": ["@palamedes/*"]
     },
     {
       "description": "Automerge non-major devDependency updates once CI is green.",
