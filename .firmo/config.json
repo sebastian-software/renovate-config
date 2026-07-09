@@ -1,0 +1,32 @@
+{
+  "review": {
+    "profile": "focused",
+    "autoConfirmScope": false,
+    "designDecisionSources": "standard",
+    "validation": "full"
+  },
+  "applyReview": {
+    "defaultCommitStrategy": null,
+    "finalValidation": "full",
+    "stashPolicy": "interactive",
+    "worktree": {
+      "baseDir": ".firmo/.worktrees",
+      "setup": "auto"
+    }
+  },
+  "plan": {
+    "markerLanguage": "en"
+  },
+  "worktree": {
+    "enabled": true,
+    "baseBranch": "origin/main",
+    "branchPrefix": "firmo",
+    "completion": "pr",
+    "setup": "auto",
+    "baseDir": ".firmo/.worktrees"
+  },
+  "tracker": {
+    "mode": "remote",
+    "remoteToolOverride": "auto"
+  }
+}
