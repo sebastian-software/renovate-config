@@ -36,6 +36,9 @@ take effect across the org immediately, without touching the consuming repos.
 
 - Based on `config:recommended`, timezone Europe/Berlin (the worker controls the
   actual run schedule, so the preset pins no schedule of its own)
+- Uses `fix(deps):` for release-relevant dependency updates across runtime,
+  build, CI, package-manager, Node and Dockerfile managers, so release-please
+  can publish deployable releases after merged dependency PRs
 - Automerges our own packages (`eslint-config-setup`, `ardo`) once CI is green
 - Automerges non-major devDependency updates once CI is green
 - Groups the OXC toolchain (`oxlint`, `oxfmt`, bindings) into a single PR
