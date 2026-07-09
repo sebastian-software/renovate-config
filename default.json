@@ -10,6 +10,11 @@
   "internalChecksFilter": "strict",
   "packageRules": [
     {
+      "description": "Release-relevant dependency updates use fix(deps) so release-please publishes deployable application images after merged dependency PRs. This intentionally covers runtime packages plus build, CI, package-manager, Node, Dockerfile and lockfile-affecting updates; purely mechanical standards rollouts live in standards.json and keep their separate chore: standards flow.",
+      "matchManagers": ["npm", "github-actions", "dockerfile", "nvm"],
+      "semanticCommitType": "fix"
+    },
+    {
       "description": "Internal scopes — trusted first-party publishers; the npm release-age cooldown would only delay our own releases without a security benefit.",
       "matchDatasources": ["npm"],
       "matchPackageNames": ["@palamedes/*", "@sebastian-gmbh/*", "@sebastian-software/*"],
