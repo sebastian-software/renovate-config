@@ -1,19 +1,12 @@
 # renovate-config
 
-Shared Renovate presets for all Sebastian Software repositories:
-[`default.json`](default.json) (general policy) and
-[`standards.json`](standards.json) (standards-sync mechanics).
+Shared Renovate rules for Sebastian Software repositories. Use this repo to
+configure dependency updates; use [standards](https://github.com/sebastian-software/standards)
+to manage repository files and migrations.
 
-> [!NOTE]
-> **Variant A in production** — consumers extend via per-repo `renovate.json`,
-> listing both presets. There is no org-level inherited config: the self-hosted
-> workers do not set `inheritConfig`, so the per-repo `renovate.json` below is
-> the single opt-in path.
+## Enable updates in a repository
 
-## Per-repository usage
-
-A repository opts in by carrying the `managed-deps` GitHub topic (the worker
-discovers repos via `autodiscoverTopics`) and extending **both** presets:
+Add both presets to the repository's root `renovate.json`:
 
 ```json
 {
@@ -25,58 +18,59 @@ discovers repos via `autodiscoverTopics`) and extending **both** presets:
 }
 ```
 
-Listing `:standards` is safe everywhere: its custom manager only matches in
-repos that actually carry a `.repometa.json` stamp, so it is a no-op in repos
-that have not onboarded to the standards rollout.
+For the self-hosted worker, also add the GitHub topic `managed-deps` in the
+repository's About settings. The worker uses that topic to discover repos.
+Presets are read on each Renovate run; merging a change here affects consumers
+without a separate preset-version update.
 
-Presets are resolved fresh on every Renovate run — changes to this repository
-take effect across the org immediately, without touching the consuming repos.
+## What each preset does
 
-## `default.json` — general org policy
+| Preset | Responsibility |
+| --- | --- |
+| [default.json](default.json) | Dependency policy: release-age delay, groups, commit types and automerge |
+| [standards.json](standards.json) | Standards stamp discovery, workflow CLI pins and migration handoff |
 
-- Based on `config:recommended`, timezone Europe/Berlin (the worker controls the
-  actual run schedule, so the preset pins no schedule of its own)
-- Uses `fix(deps):` for release-relevant dependency updates across runtime,
-  build, CI, package-manager, Node and Dockerfile managers, so release-please
-  can publish deployable releases after merged dependency PRs
-- Automerges our own packages (`eslint-config-setup`, `ardo`) once CI is green
-- Automerges non-major devDependency updates once CI is green
-- Groups the OXC toolchain (`oxlint`, `oxfmt`, bindings) into a single PR
+The default policy:
 
-## `standards.json` — standards-sync mechanics
+- Uses the Europe/Berlin timezone and a one-day release-age delay, with an
+  exception for the configured internal npm scopes.
+- Uses `fix(deps)` for npm, GitHub Actions, Dockerfile and nvm updates so
+  Release Please can release deployment-relevant changes.
+- Automerges `eslint-config-setup`, `ardo` and `ardo-*` when checks pass.
+- Automerges minor and patch devDependency updates when checks pass.
+- Groups the OXC toolchain and the `@palamedes/*` packages.
 
-Drives the [standards](https://github.com/sebastian-software/standards) rollout.
-It turns the integer `manifest.json#currentVersion` of the standards package
-into a Renovate dependency on each repo's `.repometa.json#standards` stamp, then
-runs `standards apply` on the upgrade branch. The version model stays
-stack-agnostic (no npm semver leaks into Rust or docs-only repos). The preset
-carries:
+Standards migration PRs explicitly disable automerge. A human reviews the
+mechanical and agent changes before merging.
 
-- **`customDatasources`** — reads the org's current standards version as a plain
-  integer from `manifest.json`.
-- **`customManagers`** — treats the `.repometa.json` stamp as a dependency on
-  that datasource.
-- **`postUpgradeTasks`** — on bump, runs the mechanical sync and drops the
-  `.standards/pending.json` judgement marker (`executionMode: "branch"`,
-  `installTools: { node, pnpm }`, plus the `--config.minimum-release-age=0`
-  pnpm-cooldown workaround).
-- **standards `packageRule`** — `commitMessagePrefix: "chore: "` (so the PR title
-  reads `chore: standards v<N>`), `dependencyDashboardApproval: false`,
-  `recreateWhen: "always"`, and `addLabels: ["standards:needs-agent"]`.
-  **No `automerge`** — Variant A: a human merges every `standards:` PR after the
-  two external agent runs have posted their commit/comment.
+## Set up standards updates
 
-The PR carries the mechanical changes plus `.standards/pending.json`; an external
-LLM agent consumes that marker in pull mode and commits the judgement changes
-onto the same branch. Full contract:
-[standards/changes/0002-renovate-pending.md](https://github.com/sebastian-software/standards/blob/main/changes/0002-renovate-pending.md).
+A managed repo also needs `.repometa.json` and its pinned standards CLI.
+Follow [repository onboarding](https://github.com/sebastian-software/standards/blob/main/docs/runbooks/onboard-repo.md).
 
-> [!NOTE]
-> What stays on the self-hosted worker (global-only, cannot move into a preset):
-> the `allowedCommands` allow-list (security boundary for `postUpgradeTasks`),
-> `autodiscover` / `autodiscoverTopics`, and the worker identity
-> (`platform`, `endpoint`, token). Those live in the `sebastian-software/proxmox`
-> worker templates, not here.
+The standards preset recognizes both the integer stamp and exact CLI versions
+in `.github/workflows` and `.forgejo/workflows`. Remove an equivalent local
+workflow-pin regex manager when adopting this shared one.
+
+**An agent is a separate prerequisite.** The preset runs no agent itself.
+Automatic file application needs a worker that permits `postUpgradeTasks`;
+remaining migration decisions need external agent wiring or a local
+`standards sync` run. See [the rollout guide](docs/standards-rollout.md) for
+worker requirements, the two version numbers and recovery.
+
+## Change and validate the presets
+
+Use Node 24, pnpm 11 and jq. From this checkout:
+
+```sh
+node --test test/*.test.mjs
+pnpm dlx --package renovate -- renovate-config-validator default.json standards.json
+```
+
+The validator checks Renovate's schema; contract tests check representative
+workflow pins and the migration rule's boundaries. CI also parses each root
+JSON file. Read [the rollout guide](docs/standards-rollout.md) before changing
+`postUpgradeTasks`, labels, datasource selection or automerge.
 
 ---
 
