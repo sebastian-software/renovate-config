@@ -30,5 +30,8 @@ jobs:
             jq . "$file" > /dev/null
           done
 
+      - name: Preset contract tests
+        run: node --test test/*.test.mjs
+
       - name: Renovate config validation
         run: pnpm dlx --package renovate -- renovate-config-validator default.json standards.json
