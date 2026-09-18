@@ -78,8 +78,8 @@ onto the same branch. Full contract:
 > What stays on the self-hosted worker (global-only, cannot move into a preset):
 > the `allowedCommands` allow-list (security boundary for `postUpgradeTasks`),
 > `autodiscover` / `autodiscoverTopics`, and the worker identity
-> (`platform`, `endpoint`, token). Those live in the `sebastian-software/proxmox`
-> worker templates, not here.
+> (`platform`, `endpoint`, token). Those live in the worker templates of
+> [`fastner/proxmox`](https://git.dal12.de/fastner/proxmox) (Forgejo), not here.
 
 ---
 
