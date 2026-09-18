@@ -42,6 +42,9 @@ take effect across the org immediately, without touching the consuming repos.
 - Automerges our own packages (`eslint-config-setup`, `ardo`) once CI is green
 - Automerges non-major devDependency updates once CI is green
 - Groups the OXC toolchain (`oxlint`, `oxfmt`, bindings) into a single PR
+- Groups the React core packages (`react`, `react-dom`, `react-is`,
+  `react-test-renderer`, `react-server-dom-*`) into a single PR by package
+  name, so they always move in lockstep
 
 ## `standards.json` — standards-sync mechanics
 
