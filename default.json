@@ -36,6 +36,12 @@
       "matchPackageNames": ["@palamedes/*"]
     },
     {
+      "description": "Group the React core packages into a single PR — react, react-dom, react-is, react-test-renderer and react-server-dom-* share one version line and must move in lockstep, because React throws 'Incompatible React versions' on a mismatch. This is a permanent name-based guard that does not depend on source URLs or on the Renovate worker's bundled monorepo data: the React repository moved from facebook/react to react/react, and Renovate before 43.277.1 no longer groups it via group:monorepos. groupName and update types mirror upstream's group so a worker upgrade does not churn branches.",
+      "groupName": "react monorepo",
+      "matchUpdateTypes": ["digest", "patch", "minor", "major"],
+      "matchPackageNames": ["react", "react-dom", "react-is", "react-test-renderer", "react-server-dom-*"]
+    },
+    {
       "description": "Automerge non-major devDependency updates once CI is green.",
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
