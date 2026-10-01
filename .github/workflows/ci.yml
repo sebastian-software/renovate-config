@@ -33,11 +33,14 @@ jobs:
       - name: Renovate config validation
         run: pnpm dlx --package renovate -- renovate-config-validator default.json standards.json
 
-      - name: Vitest regular grouping (security acceptance not run)
+      - name: Vitest regular grouping and local test-only worker contracts (full security not proven)
         run: |
           tooling_dir="$(mktemp -d "$RUNNER_TEMP/vitest-lockstep-tools.XXXXXX")"
           pnpm --dir "$tooling_dir" add --save-exact renovate@44.127.1 pnpm@11.20.0 --ignore-scripts --config.minimum-release-age=0
           node "$tooling_dir/node_modules/renovate/dist/config-validator.js" --strict default.json standards.json
           node scripts/test-vitest-lockstep.mjs \
+            --renovate-root "$tooling_dir/node_modules/renovate" \
+            --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.cjs"
+          node scripts/test-vitest-worker-contract.mjs \
             --renovate-root "$tooling_dir/node_modules/renovate" \
             --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.cjs"

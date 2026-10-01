@@ -14,6 +14,7 @@ const { values } = parseArgs({ options: {
   'pnpm-cli': { type: 'string' },
   output: { type: 'string' },
   'require-security': { type: 'boolean', default: false },
+  'policy-input': { type: 'string' },
 } });
 assert(values['renovate-root'] && values['pnpm-cli'],
   'Supply --renovate-root for renovate@44.127.1 and --pnpm-cli for pnpm@11.20.0; run with Node 24.');
@@ -54,6 +55,9 @@ const advisory = JSON.parse(await readFile(join(fixture, 'advisory.json'), 'utf8
 const seed = await readFile(join(fixture, 'package.json'), 'utf8');
 const seedManifest = JSON.parse(seed);
 const rawPreset = JSON.parse(await readFile(join(repoRoot, 'default.json'), 'utf8'));
+// Optional local-only policy input preserves normal CLI behavior and exports real
+// branch data for the worker-contract fixture; it never fabricates upgrades.
+const pipelinePreset = values['policy-input'] ? JSON.parse(await readFile(resolve(values['policy-input']), 'utf8')) : rawPreset;
 const output = values.output ? resolve(values.output) : await mkdtemp(join(tmpdir(), 'vitest-lockstep-'));
 if (values.output) await mkdir(output);
 const bin = join(output, 'bin');
@@ -134,8 +138,8 @@ async function runCase(mode) {
   await new Promise((done) => server.listen(0, '127.0.0.1', done));
   const registry = `http://127.0.0.1:${server.address().port}`;
   try {
-    let config = await resolvePreset(rawPreset);
-    config.dependencyDashboardApproval = security;
+    let config = await resolvePreset(pipelinePreset);
+    if (!values['policy-input'] || security) config.dependencyDashboardApproval = security;
     if (security) {
       if (mode === 'security-group') config.vulnerabilityAlerts = { ...config.vulnerabilityAlerts, groupName: 'vitest monorepo' };
       // Contract-faithful platform alert input; actual Renovate initialization
@@ -180,6 +184,7 @@ async function runCase(mode) {
       assert.equal(coverage.updates[0].pendingChecks, true, 'The unadvised companion must actually exercise the ordinary age barrier.');
     }
     await writeFile(join(workspace, 'branches.json'), JSON.stringify(branches.map(summarizeBranch), null, 2) + '\n');
+    await writeFile(join(workspace, 'hook-input.json'), JSON.stringify(branch, null, 2) + '\n');
     let contents = seed;
     for (const upgrade of branch.upgrades) {
       contents = updateDependency({ fileContent: contents, packageFile: 'package.json', upgrade });

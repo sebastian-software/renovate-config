@@ -1,0 +1,30 @@
+{
+  "source": {
+    "repository": "fastner/proxmox",
+    "commit": "fea14ae3049a3a93bb9abcbf20f86caf6c3ac70e",
+    "path": "roles/services/renovate/templates/github-org.config.js.j2",
+    "sha256": "4ef6709db645d92bbe67a46f1d49a343d67170b19c73414bd90de34a2973d2bc"
+  },
+  "localPresetCommit": "c946105c29114c00eb0f549f38abe13b145f4d72",
+  "sanitizedConfig": {
+    "extends": [
+      "config:recommended",
+      "security:minimumReleaseAgeNpm"
+    ],
+    "dependencyDashboard": true,
+    "dependencyDashboardApproval": true,
+    "rebaseWhen": "behind-base-branch"
+  },
+  "remainingExtends": [
+    "local default.json",
+    "local standards.json"
+  ],
+  "liveCredentialsLoaded": false,
+  "allowedCommands": [
+    "^pnpm( --config\\.[^ ]+)* dlx @sebastian-software/standards .+$"
+  ],
+  "localPresetSha256": {
+    "default.json": "c6e44eeeb28a445c4c9e1ce3a9c2a3d28e16c728db4abeb37c32c2aff3b8f6ce",
+    "standards.json": "0da212e8fe096031a2949841a211008c4b493099d02b9fa3d21d48704e1dd553"
+  }
+}
