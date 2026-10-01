@@ -1,0 +1,14 @@
+{
+  "security_vulnerability": {
+    "package": { "ecosystem": "npm", "name": "vitest" },
+    "severity": "high",
+    "vulnerable_version_range": "< 4.1.11",
+    "first_patched_version": { "identifier": "4.1.11" }
+  },
+  "security_advisory": {
+    "severity": "high",
+    "summary": "Synthetic fixture advisory affecting Vitest only",
+    "description": "Controlled advisory input for the lockstep regression; not a claim about a real advisory.",
+    "identifiers": []
+  }
+}

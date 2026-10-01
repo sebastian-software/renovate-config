@@ -1,0 +1,11 @@
+{
+  "name": "vitest-lockstep-fixture",
+  "private": true,
+  "packageManager": "pnpm@11.20.0",
+  "devDependencies": {
+    "vitest": "4.1.10",
+    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/eslint-plugin": "1.6.27",
+    "is-number": "7.0.0"
+  }
+}

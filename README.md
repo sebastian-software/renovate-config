@@ -46,6 +46,72 @@ take effect across the org immediately, without touching the consuming repos.
   `react-test-renderer`, `react-server-dom-*`) into a single PR by package
   name, so they always move in lockstep
 
+### Vitest grouping and verification
+
+Ordinary npm updates group these eight installed packages by name: `vitest`,
+`@vitest/coverage-v8`, `@vitest/coverage-istanbul`, `@vitest/ui`,
+`@vitest/browser`, `@vitest/browser-playwright`, `@vitest/browser-preview` and
+`@vitest/browser-webdriverio`. Their published 4.1.10 and 4.1.11 metadata requires
+matching Vitest versions. This explicit rule does not match independently
+versioned `@vitest/eslint-plugin` or other `@vitest/*` names; inherited upstream
+groups still apply. Absent optional companions are not added.
+Existing major-update separation, automerge, semantic commits and one-day
+release-age policy still apply.
+
+`config:recommended` already groups Vitest when its repository metadata matches
+Renovate's [monorepo mapping](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/data/monorepo.json)
+and [group preset](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/config/presets/internal/group.preset.ts).
+The explicit allowlist preserves grouping when that metadata changes.
+
+From the repository root, use Node **24.21.0** and pnpm **11.20.0** to reproduce
+the regular CI milestone with Renovate **44.127.1** (source commit
+`f3ec5e6b5166b327833f63a531179d89fd8fc9db`):
+
+```sh
+tooling_dir="$(mktemp -d)"
+pnpm --dir "$tooling_dir" add --save-exact renovate@44.127.1 pnpm@11.20.0 --ignore-scripts --config.minimum-release-age=0
+node "$tooling_dir/node_modules/renovate/dist/config-validator.js" --strict default.json standards.json
+node scripts/test-vitest-lockstep.mjs \
+  --renovate-root "$tooling_dir/node_modules/renovate" \
+  --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.cjs"
+```
+
+The release-age override applies only to this temporary tooling installation.
+The fixture retains the ordinary update delay. The runner replays pinned registry
+metadata through Renovate's extraction, lookup and branch APIs, applies Renovate's
+manifest updater, and generates real pnpm lockfiles through Renovate's native
+pnpm path. It prints the temporary artifact directory. The regular 4.1.10 to
+4.1.11 case passes manifest, importer, exact-peer and frozen-lockfile checks;
+excluded packages stay unchanged. The committed fixture `.npmrc` permits peer
+mismatches, so frozen installation alone cannot prove companion compatibility.
+Tooling installation disables scripts; missing native RE2 uses Renovate's RegExp
+fallback. These literal-name/API/artifact checks do not verify RE2 conformance,
+hosted PR creation or the deployed worker.
+
+**Security acceptance is NOT RUN by the default command or CI.** Adding
+`--require-security` runs the synthetic Vitest-only advisory fixture and currently
+exits **1**: both native vulnerability defaults and restored `groupName` update
+Vitest to 4.1.11 while coverage stays at 4.1.10 in the selected security branch.
+A separate ordinary coverage branch does not satisfy same-branch alignment. The
+fixture checks the lowest fix despite a newer lookup candidate. Replayed lookup
+timestamps model a fix under one day old, with dashboard approval enabled for
+ordinary updates; actual tarballs and seed dependencies are pinned separately.
+In lookup replay, Renovate bypasses the ordinary release-age and dashboard
+approval barriers for the advised update. This does not prove pnpm's release-age
+bypass for a truly young published package. Renovate's
+[vulnerability initializer](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/workers/repository/init/vulnerability.ts)
+selects advised packages; [branch grouping](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/workers/repository/updates/branchify.ts)
+does not add unadvised companions. [Version bumps](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/workers/repository/update/branch/bump-versions.ts)
+run after [branch lockfile updates](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/workers/repository/update/branch/index.ts),
+so a manifest-only bump cannot establish aligned lockfiles.
+
+[Issue #37](https://github.com/sebastian-software/renovate-config/issues/37) remains
+open for security alignment. The next stage is a concrete pnpm-helper plan and
+review before implementation or worker rollout. No helper hook is enabled here.
+The worker configuration declares mutable Renovate `:43`; its deployed patch is
+unverified, and its current command permission covers standards tasks only.
+Local 44.127.1 evidence does not establish worker readiness.
+
 ## `standards.json` — standards-sync mechanics
 
 Drives the [standards](https://github.com/sebastian-software/standards) rollout.
