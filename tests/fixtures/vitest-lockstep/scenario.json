@@ -1,0 +1,15 @@
+{
+  "renovate": "44.127.1",
+  "sourceCommit": "f3ec5e6b5166b327833f63a531179d89fd8fc9db",
+  "node": "24.21.0",
+  "pnpm": "11.20.0",
+  "baselineCommand": "pnpm install --lockfile-only --ignore-scripts --ignore-pnpmfile",
+  "registrySource": "https://registry.npmjs.org/<name>/<version>; scoped slash encoded as %2f",
+  "newerLookupOnlyRelease": "vitest@5.0.3 (published, never installed by the security fixture)",
+  "advisorySource": "Synthetic GitHub-shaped advisory for vitest only; no actual advisory is claimed.",
+  "releaseTimes": "Lookup replay gives the fixed release a relative age of 1 hour in security cases; regular releases have age 7 days.",
+  "boundary": "Pinned real Renovate API pipeline and native pnpm artifacts, not hosted PR or deployed worker validation.",
+  "packageManagerSettings": "auto-install-peers=false and strict-peer-dependencies=false. A frozen install can succeed despite mismatched peers; explicit manifest/importer/peer assertions are required.",
+  "transitiveResolution": "Native-generated seed lockfile pins transitive versions and integrity. Lookup metadata is replayed locally; immutable package tarballs are fetched from npm by pnpm.",
+  "completion": "Default mode proves regular grouping only. --require-security fails on either native advisory-only mismatch; issue 37 remains open."
+}

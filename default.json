@@ -42,6 +42,22 @@
       "matchPackageNames": ["react", "react-dom", "react-is", "react-test-renderer", "react-server-dom-*"]
     },
     {
+      "description": "Group ordinary updates for Vitest and its coverage, UI and browser companions by package name. These companions require the exact Vitest version; the explicit allowlist excludes independently versioned @vitest/eslint-plugin and unrelated @vitest packages. This grouping alone does not guarantee companion alignment for vulnerability alerts.",
+      "groupName": "vitest monorepo",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["digest", "patch", "minor", "major"],
+      "matchPackageNames": [
+        "vitest",
+        "@vitest/coverage-v8",
+        "@vitest/coverage-istanbul",
+        "@vitest/ui",
+        "@vitest/browser",
+        "@vitest/browser-playwright",
+        "@vitest/browser-preview",
+        "@vitest/browser-webdriverio"
+      ]
+    },
+    {
       "description": "Automerge non-major devDependency updates once CI is green.",
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
