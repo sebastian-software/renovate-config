@@ -55,8 +55,9 @@ Ordinary npm updates group these eight installed packages by name: `vitest`,
 matching Vitest versions. This explicit rule does not match independently
 versioned `@vitest/eslint-plugin` or other `@vitest/*` names; inherited upstream
 groups still apply. Absent optional companions are not added.
-Existing major-update separation, automerge, semantic commits and one-day
-release-age policy still apply.
+Existing major-update separation, automerge and semantic commits still apply.
+The shared preset retains its one-day base release-age setting; worker package
+rules can override it.
 
 `config:recommended` already groups Vitest when its repository metadata matches
 Renovate's [monorepo mapping](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/data/monorepo.json)
@@ -88,8 +89,9 @@ Tooling installation disables scripts; missing native RE2 uses Renovate's RegExp
 fallback. These literal-name/API/artifact checks do not verify RE2 conformance,
 hosted PR creation or the deployed worker.
 
-**Security acceptance is NOT RUN by the default command or CI.** Adding
-`--require-security` runs the synthetic Vitest-only advisory fixture and currently
+**Full security alignment remains NOT PROVEN.** The default lockstep command
+runs regular grouping only. Adding `--require-security` runs the synthetic
+Vitest-only advisory fixture and currently
 exits **1**: both native vulnerability defaults and restored `groupName` update
 Vitest to 4.1.11 while coverage stays at 4.1.10 in the selected security branch.
 A separate ordinary coverage branch does not satisfy same-branch alignment. The
@@ -104,6 +106,41 @@ selects advised packages; [branch grouping](https://github.com/renovatebot/renov
 does not add unadvised companions. [Version bumps](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/workers/repository/update/branch/bump-versions.ts)
 run after [branch lockfile updates](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/workers/repository/update/branch/index.ts),
 so a manifest-only bump cannot establish aligned lockfiles.
+
+#### Local worker contracts
+
+CI also runs the [test-only worker fixture](tests/fixtures/vitest-worker-contract/README.md).
+Using the same temporary tooling above:
+
+```sh
+node scripts/test-vitest-worker-contract.mjs \
+  --renovate-root "$tooling_dir/node_modules/renovate" \
+  --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.cjs"
+```
+
+At the recorded reference versions, eight real hook cases and four native
+installer cases pass. The hook checks use actual generated regular/advisory
+branches, temporary Git repositories, data files and child processes. They cover
+branch execution once, no-change skip, command denial and failure. Probe input
+validation is test-only; artifact errors do not prove merge prevention.
+
+The pinned sanitized worker/default/standards stack resolves ordinary npm updates
+to three days with dashboard approval, despite the preset's one-day base setting.
+Advised updates bypass those barriers in lookup replay. Standards tasks are
+inspected without execution. pnpm's own installer age is a separate minutes-based
+setting: cold loopback cases model one-hour-old install metadata, retain real
+immutable target tarball URLs/integrity, and prove exact/scoped target exceptions
+while unrelated young releases remain blocked. A separate case without exceptions
+proves CLI age 30 minutes overrides workspace 1440 and .npmrc 2880 minutes.
+These settings exist only in temporary test workspaces. Transitive metadata and
+tarballs still require upstream network access; modeled timestamps do not prove
+live publication age or fleet compatibility.
+
+The local runner expects the unchanged native security command to exit **1** for
+the companion mismatch; this known-negative check is not full security acceptance.
+Its artifact summary reports **full security alignment NOT PROVEN**, with fleet
+provenance and required current-HEAD status enforcement **PENDING**. No production
+helper, new consumer preset, worker permission or hook activation is included.
 
 [Issue #37](https://github.com/sebastian-software/renovate-config/issues/37) remains
 open for security alignment. The next stage is a concrete pnpm-helper plan and
