@@ -1,0 +1,7 @@
+{
+  "name": "helper-unrelated-workspace",
+  "private": true,
+  "devDependencies": {
+    "@vitest/eslint-plugin": "1.6.27"
+  }
+}

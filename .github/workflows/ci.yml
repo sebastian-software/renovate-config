@@ -40,7 +40,47 @@ jobs:
           node "$tooling_dir/node_modules/renovate/dist/config-validator.js" --strict default.json standards.json
           node scripts/test-vitest-lockstep.mjs \
             --renovate-root "$tooling_dir/node_modules/renovate" \
-            --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.cjs"
+            --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"
           node scripts/test-vitest-worker-contract.mjs \
             --renovate-root "$tooling_dir/node_modules/renovate" \
-            --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.cjs"
+            --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"
+
+  vitest-helper-local:
+    name: vitest-helper-local (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: candidate43-consumer11
+            node: 24.18.0
+            pnpm: 11.17.0
+            renovate: 43.288.0
+          - profile: reference44
+            node: 24.21.0
+            pnpm: 11.20.0
+            renovate: 44.127.1
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ matrix.pnpm }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Exact local compatibility and same-advisory helper contracts (activation pending)
+        env:
+          PROFILE: ${{ matrix.profile }}
+          PNPM_VERSION: ${{ matrix.pnpm }}
+          RENOVATE_VERSION: ${{ matrix.renovate }}
+        run: |
+          tooling_dir="$(mktemp -d "$RUNNER_TEMP/vitest-helper-tools.XXXXXX")"
+          pnpm --dir "$tooling_dir" add --save-exact "renovate@$RENOVATE_VERSION" "pnpm@$PNPM_VERSION" --ignore-scripts --config.minimum-release-age=0
+          node "$tooling_dir/node_modules/renovate/dist/config-validator.js" --strict default.json standards.json
+          node scripts/test-vitest-worker-contract.mjs --runtime-profile "$PROFILE" \
+            --renovate-root "$tooling_dir/node_modules/renovate" \
+            --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"
+          node "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs" --dir scripts/vitest-lockstep install --frozen-lockfile --ignore-scripts --ignore-pnpmfile --pm-on-fail=ignore
+          node scripts/test-vitest-helper.mjs --runtime-profile "$PROFILE" \
+            --renovate-root "$tooling_dir/node_modules/renovate" \
+            --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"

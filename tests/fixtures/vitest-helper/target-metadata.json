@@ -1,0 +1,1287 @@
+{
+  "vitest": {
+    "bin": {
+      "vitest": "./vitest.mjs"
+    },
+    "bugs": {
+      "url": "https://github.com/vitest-dev/vitest/issues"
+    },
+    "dist": {
+      "shasum": "1653c1521ae917f960d9b21877797c47dfd8bf21",
+      "tarball": "https://registry.npmjs.org/vitest/-/vitest-4.1.11.tgz",
+      "fileCount": 114,
+      "integrity": "sha512-fhACrNXUidIbGSBr5FlbuBkO7VWC1ZyLl0DO4CU2DrQoAPxX84Ysxs+HeGQpii5lZWV1Q4gBZTTu49mF+A6Edw==",
+      "signatures": [
+        {
+          "sig": "MEUCIBSU996mnW6tNJuA1U7CRmR/Ukpn/bd/zIY/j5QMSIkrAiEA533Mf1NVfToeCZQA9EXozqd37DRbe6ZzDbSFdgHQNVo=",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/vitest@4.1.11",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 1909160
+    },
+    "main": "./dist/index.js",
+    "name": "vitest",
+    "type": "module",
+    "types": "./dist/index.d.ts",
+    "author": "Anthony Fu <anthonyfu117@hotmail.com>",
+    "module": "./dist/index.js",
+    "engines": {
+      "node": "^20.0.0 || ^22.0.0 || >=24.0.0"
+    },
+    "exports": {
+      ".": {
+        "import": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.js"
+        },
+        "require": {
+          "types": "./index.d.cts",
+          "default": "./index.cjs"
+        }
+      },
+      "./node": {
+        "types": "./dist/node.d.ts",
+        "default": "./dist/node.js"
+      },
+      "./jsdom": {
+        "types": "./jsdom.d.ts"
+      },
+      "./src/*": "./src/*",
+      "./suite": {
+        "types": "./dist/suite.d.ts",
+        "default": "./dist/suite.js"
+      },
+      "./config": {
+        "types": "./config.d.ts",
+        "default": "./dist/config.js",
+        "require": "./dist/config.cjs"
+      },
+      "./worker": {
+        "types": "./worker.d.ts",
+        "default": "./dist/worker.js"
+      },
+      "./browser": {
+        "types": "./browser/context.d.ts",
+        "default": "./browser/context.js"
+      },
+      "./globals": {
+        "types": "./globals.d.ts"
+      },
+      "./runners": {
+        "types": "./dist/runners.d.ts",
+        "default": "./dist/runners.js"
+      },
+      "./runtime": {
+        "types": "./dist/runtime.d.ts",
+        "default": "./dist/runtime.js"
+      },
+      "./coverage": {
+        "types": "./coverage.d.ts",
+        "default": "./dist/coverage.js"
+      },
+      "./snapshot": {
+        "types": "./dist/snapshot.d.ts",
+        "default": "./dist/snapshot.js"
+      },
+      "./reporters": {
+        "types": "./dist/reporters.d.ts",
+        "default": "./dist/reporters.js"
+      },
+      "./importMeta": {
+        "types": "./importMeta.d.ts"
+      },
+      "./import-meta": {
+        "types": "./import-meta.d.ts"
+      },
+      "./environments": {
+        "types": "./dist/environments.d.ts",
+        "default": "./dist/environments.js"
+      },
+      "./package.json": "./package.json",
+      "./internal/browser": {
+        "types": "./dist/browser.d.ts",
+        "default": "./dist/browser.js"
+      },
+      "./optional-types.js": {
+        "types": "./optional-types.d.ts"
+      },
+      "./optional-runtime-types.js": {
+        "types": "./optional-runtime-types.d.ts"
+      }
+    },
+    "funding": "https://opencollective.com/vitest",
+    "imports": {
+      "#module-evaluator": {
+        "types": "./dist/module-evaluator.d.ts",
+        "default": "./dist/module-evaluator.js"
+      },
+      "#nodejs-worker-loader": "./dist/nodejs-worker-loader.js"
+    },
+    "license": "MIT",
+    "scripts": {
+      "dev": "NODE_OPTIONS=\"--max-old-space-size=8192\" rollup -c --watch -m inline",
+      "build": "premove dist && rollup -c"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "approver": {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "oidc:1f286ab6-26e9-44a1-ba48-3a20cbe590fd"
+      }
+    },
+    "homepage": "https://vitest.dev",
+    "keywords": [
+      "vite",
+      "vitest",
+      "test",
+      "jest"
+    ],
+    "repository": {
+      "url": "git+https://github.com/vitest-dev/vitest.git",
+      "type": "git",
+      "directory": "packages/vitest"
+    },
+    "description": "Next generation testing framework powered by Vite",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "ariperkkio",
+        "email": "ari.perkkio@gmail.com"
+      },
+      {
+        "name": "antfu",
+        "email": "anthonyfu117@hotmail.com"
+      },
+      {
+        "name": "hiogawa",
+        "email": "hi.ogawa.zz@gmail.com"
+      },
+      {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      {
+        "name": "yyx990803",
+        "email": "yyx990803@gmail.com"
+      }
+    ],
+    "sideEffects": false,
+    "_nodeVersion": "24.19.0",
+    "dependencies": {
+      "obug": "^2.1.1",
+      "vite": "^6.0.0 || ^7.0.0 || ^8.0.0",
+      "pathe": "^2.0.3",
+      "std-env": "^4.0.0-rc.1",
+      "tinyexec": "^1.0.2",
+      "picomatch": "^4.0.3",
+      "tinybench": "^2.9.0",
+      "tinyglobby": "^0.2.15",
+      "@vitest/spy": "4.1.11",
+      "expect-type": "^1.3.0",
+      "tinyrainbow": "^3.1.0",
+      "magic-string": "^0.30.21",
+      "@vitest/utils": "4.1.11",
+      "@vitest/expect": "4.1.11",
+      "@vitest/mocker": "4.1.11",
+      "@vitest/runner": "4.1.11",
+      "es-module-lexer": "^2.0.0",
+      "@vitest/snapshot": "4.1.11",
+      "why-is-node-running": "^2.3.0",
+      "@vitest/pretty-format": "4.1.11"
+    },
+    "_hasShrinkwrap": false,
+    "devDependencies": {
+      "ws": "^8.19.0",
+      "cac": "^6.7.14",
+      "mime": "^4.1.0",
+      "acorn": "8.11.3",
+      "birpc": "^4.0.0",
+      "jsdom": "^27.4.0",
+      "flatted": "^3.4.2",
+      "prompts": "^2.4.2",
+      "empathic": "^2.0.0",
+      "happy-dom": "^20.8.3",
+      "local-pkg": "^1.1.2",
+      "acorn-walk": "^8.3.5",
+      "@types/node": "^24.12.0",
+      "@bomb.sh/tab": "^0.0.14",
+      "@types/jsdom": "^27.0.0",
+      "@types/estree": "^1.0.8",
+      "strip-literal": "^3.1.0",
+      "tinyhighlight": "^0.3.2",
+      "@types/prompts": "^2.4.9",
+      "@edge-runtime/vm": "^5.0.0",
+      "@types/picomatch": "^4.0.2",
+      "@antfu/install-pkg": "^1.1.0",
+      "@opentelemetry/api": "^1.9.0",
+      "@sinonjs/fake-timers": "15.0.0",
+      "@types/istanbul-reports": "^3.0.4",
+      "@jridgewell/trace-mapping": "0.3.31",
+      "@types/sinonjs__fake-timers": "^15.0.1",
+      "@types/istanbul-lib-coverage": "^2.0.6"
+    },
+    "peerDependencies": {
+      "vite": "^6.0.0 || ^7.0.0 || ^8.0.0",
+      "jsdom": "*",
+      "happy-dom": "*",
+      "@vitest/ui": "4.1.11",
+      "@types/node": "^20.0.0 || ^22.0.0 || >=24.0.0",
+      "@edge-runtime/vm": "*",
+      "@opentelemetry/api": "^1.9.0",
+      "@vitest/coverage-v8": "4.1.11",
+      "@vitest/browser-preview": "4.1.11",
+      "@vitest/coverage-istanbul": "4.1.11",
+      "@vitest/browser-playwright": "4.1.11",
+      "@vitest/browser-webdriverio": "4.1.11"
+    },
+    "peerDependenciesMeta": {
+      "vite": {
+        "optional": false
+      },
+      "jsdom": {
+        "optional": true
+      },
+      "happy-dom": {
+        "optional": true
+      },
+      "@vitest/ui": {
+        "optional": true
+      },
+      "@types/node": {
+        "optional": true
+      },
+      "@edge-runtime/vm": {
+        "optional": true
+      },
+      "@opentelemetry/api": {
+        "optional": true
+      },
+      "@vitest/coverage-v8": {
+        "optional": true
+      },
+      "@vitest/browser-preview": {
+        "optional": true
+      },
+      "@vitest/coverage-istanbul": {
+        "optional": true
+      },
+      "@vitest/browser-playwright": {
+        "optional": true
+      },
+      "@vitest/browser-webdriverio": {
+        "optional": true
+      }
+    },
+    "_npmOperationalInternal": {
+      "tmp": "tmp/vitest_4.1.11_1787063227137_0.09921923508290442",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "vitest@4.1.11",
+    "version": "4.1.11"
+  },
+  "@vitest/coverage-v8": {
+    "bugs": {
+      "url": "https://github.com/vitest-dev/vitest/issues"
+    },
+    "dist": {
+      "shasum": "6f0636abe7e23e86dd35127244554be2c60bc2a5",
+      "tarball": "https://registry.npmjs.org/@vitest/coverage-v8/-/coverage-v8-4.1.11.tgz",
+      "fileCount": 11,
+      "integrity": "sha512-8MVGEFnJIcdGjcbfKmeq8z0pZHH0JlVtoVZH9Q/qwUp6wyFnEJUBMrw9DCaj+ra3vShGmhavjalMIhPNxZAUcw==",
+      "signatures": [
+        {
+          "sig": "MEQCIFJjji4foMUg/PysvZ9FD+UnaR3jcMhjnulNmDloHmPJAiB0/b8bMkd0pA7UV6Aka9lrsce1jkwOl7qIhomLwqOrLA==",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@vitest%2fcoverage-v8@4.1.11",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 23647
+    },
+    "main": "./dist/index.js",
+    "name": "@vitest/coverage-v8",
+    "type": "module",
+    "types": "./dist/index.d.ts",
+    "author": "Anthony Fu <anthonyfu117@hotmail.com>",
+    "module": "./dist/index.js",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./*": "./*",
+      "./browser": {
+        "types": "./dist/browser.d.ts",
+        "default": "./dist/browser.js"
+      }
+    },
+    "funding": "https://opencollective.com/vitest",
+    "license": "MIT",
+    "scripts": {
+      "dev": "rollup -c --watch --watch.include 'src/**'",
+      "build": "premove dist && rollup -c"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "approver": {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "oidc:20ee9559-b9b1-495e-8ed2-682389c4d2a2"
+      }
+    },
+    "homepage": "https://vitest.dev/guide/coverage",
+    "keywords": [
+      "vite",
+      "vitest",
+      "test",
+      "coverage",
+      "v8"
+    ],
+    "repository": {
+      "url": "git+https://github.com/vitest-dev/vitest.git",
+      "type": "git",
+      "directory": "packages/coverage-v8"
+    },
+    "description": "V8 coverage provider for Vitest",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "ariperkkio",
+        "email": "ari.perkkio@gmail.com"
+      },
+      {
+        "name": "antfu",
+        "email": "anthonyfu117@hotmail.com"
+      },
+      {
+        "name": "hiogawa",
+        "email": "hi.ogawa.zz@gmail.com"
+      },
+      {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      {
+        "name": "yyx990803",
+        "email": "yyx990803@gmail.com"
+      }
+    ],
+    "sideEffects": false,
+    "_nodeVersion": "24.19.0",
+    "dependencies": {
+      "obug": "^2.1.1",
+      "std-env": "^4.0.0-rc.1",
+      "magicast": "^0.5.2",
+      "tinyrainbow": "^3.1.0",
+      "@vitest/utils": "4.1.11",
+      "istanbul-reports": "^3.2.0",
+      "@bcoe/v8-coverage": "^1.0.2",
+      "ast-v8-to-istanbul": "^1.0.0",
+      "istanbul-lib-report": "^3.0.1",
+      "istanbul-lib-coverage": "^3.2.2"
+    },
+    "_hasShrinkwrap": false,
+    "devDependencies": {
+      "pathe": "^2.0.3",
+      "vitest": "4.1.11",
+      "@vitest/browser": "4.1.11",
+      "@types/istanbul-reports": "^3.0.4",
+      "@types/istanbul-lib-report": "^3.0.3",
+      "@vitest/browser-playwright": "4.1.11",
+      "@types/istanbul-lib-coverage": "^2.0.6"
+    },
+    "peerDependencies": {
+      "vitest": "4.1.11",
+      "@vitest/browser": "4.1.11"
+    },
+    "peerDependenciesMeta": {
+      "@vitest/browser": {
+        "optional": true
+      }
+    },
+    "_npmOperationalInternal": {
+      "tmp": "tmp/coverage-v8_4.1.11_1787062938804_0.7460401644999204",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "@vitest/coverage-v8@4.1.11",
+    "version": "4.1.11"
+  },
+  "@vitest/spy": {
+    "bugs": {
+      "url": "https://github.com/vitest-dev/vitest/issues"
+    },
+    "dist": {
+      "shasum": "0add45cae953afed9c88f98e2f6fc9164558c32a",
+      "tarball": "https://registry.npmjs.org/@vitest/spy/-/spy-4.1.11.tgz",
+      "fileCount": 6,
+      "integrity": "sha512-apNa/prQy2qCeywhnixOHPRCgGNhvg7T4Dapfl1GahLp/R+uhBm5cPyFoNVyqsNd2h1nJxL6BqqdIjiABL60YA==",
+      "signatures": [
+        {
+          "sig": "MEYCIQDdHxT/31wEcQzzuw+D7bYcnwaaUt6/VJw4MJzITan9zgIhAKktpyJtlRlTOfEgP3OW4KuqHtJpf/Paw9nm+b+g3jWl",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@vitest%2fspy@4.1.11",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 37389
+    },
+    "main": "./dist/index.js",
+    "name": "@vitest/spy",
+    "type": "module",
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.js",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./*": "./*",
+      "./optional-types.js": {
+        "types": "./optional-types.d.ts"
+      }
+    },
+    "funding": "https://opencollective.com/vitest",
+    "license": "MIT",
+    "scripts": {
+      "dev": "rollup -c --watch",
+      "build": "premove dist && rollup -c"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "approver": {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "oidc:e1e61e0a-9414-4607-bb15-b8a009004c66"
+      }
+    },
+    "homepage": "https://vitest.dev/api/mock",
+    "keywords": [
+      "vitest",
+      "test",
+      "mock",
+      "spy",
+      "intercept"
+    ],
+    "repository": {
+      "url": "git+https://github.com/vitest-dev/vitest.git",
+      "type": "git",
+      "directory": "packages/spy"
+    },
+    "description": "Lightweight Jest compatible spy implementation",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "ariperkkio",
+        "email": "ari.perkkio@gmail.com"
+      },
+      {
+        "name": "antfu",
+        "email": "anthonyfu117@hotmail.com"
+      },
+      {
+        "name": "hiogawa",
+        "email": "hi.ogawa.zz@gmail.com"
+      },
+      {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      {
+        "name": "yyx990803",
+        "email": "yyx990803@gmail.com"
+      }
+    ],
+    "sideEffects": false,
+    "_nodeVersion": "24.19.0",
+    "_hasShrinkwrap": false,
+    "_npmOperationalInternal": {
+      "tmp": "tmp/spy_4.1.11_1787063027476_0.40795919100135114",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "@vitest/spy@4.1.11",
+    "version": "4.1.11"
+  },
+  "@vitest/utils": {
+    "bugs": {
+      "url": "https://github.com/vitest-dev/vitest/issues"
+    },
+    "dist": {
+      "shasum": "9b27a4293b827942b223539bfab1bd9f7eada31b",
+      "tarball": "https://registry.npmjs.org/@vitest/utils/-/utils-4.1.11.tgz",
+      "fileCount": 34,
+      "integrity": "sha512-zTCVGpyFsGWBhllOyKlTw/vnr6D9qxsfSDyfbyZmTyjHw5N/VuvzHpHoQjm2ZJzn4RJgx5w4r7V0er69CmLgPQ==",
+      "signatures": [
+        {
+          "sig": "MEYCIQDIg/wqpFBm7f05pI2IfUWrgbExuxkHNwaBtZC5RRfLiwIhANbTUfPOxRyErGMisKDZf7E99w6lirbTe+kxTXAtBtTW",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@vitest%2futils@4.1.11",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 168248
+    },
+    "main": "./dist/index.js",
+    "name": "@vitest/utils",
+    "type": "module",
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.js",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./*": "./*",
+      "./diff": {
+        "types": "./dist/diff.d.ts",
+        "default": "./dist/diff.js"
+      },
+      "./error": {
+        "types": "./dist/error.d.ts",
+        "default": "./dist/error.js"
+      },
+      "./offset": {
+        "types": "./dist/offset.d.ts",
+        "default": "./dist/offset.js"
+      },
+      "./timers": {
+        "types": "./dist/timers.d.ts",
+        "default": "./dist/timers.js"
+      },
+      "./display": {
+        "types": "./dist/display.d.ts",
+        "default": "./dist/display.js"
+      },
+      "./helpers": {
+        "types": "./dist/helpers.d.ts",
+        "default": "./dist/helpers.js"
+      },
+      "./resolver": {
+        "types": "./dist/resolver.d.ts",
+        "default": "./dist/resolver.js"
+      },
+      "./constants": {
+        "types": "./dist/constants.d.ts",
+        "default": "./dist/constants.js"
+      },
+      "./serialize": {
+        "types": "./dist/serialize.d.ts",
+        "default": "./dist/serialize.js"
+      },
+      "./source-map": {
+        "types": "./dist/source-map.d.ts",
+        "default": "./dist/source-map.js"
+      },
+      "./source-map/node": {
+        "types": "./dist/source-map/node.d.ts",
+        "default": "./dist/source-map/node.js"
+      }
+    },
+    "funding": "https://opencollective.com/vitest",
+    "license": "MIT",
+    "scripts": {
+      "dev": "rollup -c --watch",
+      "build": "premove dist && rollup -c"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "approver": {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "oidc:89f657e6-d9c3-494e-ad9f-d8caabff8e97"
+      }
+    },
+    "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/utils",
+    "repository": {
+      "url": "git+https://github.com/vitest-dev/vitest.git",
+      "type": "git",
+      "directory": "packages/utils"
+    },
+    "description": "Shared Vitest utility functions",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "ariperkkio",
+        "email": "ari.perkkio@gmail.com"
+      },
+      {
+        "name": "antfu",
+        "email": "anthonyfu117@hotmail.com"
+      },
+      {
+        "name": "hiogawa",
+        "email": "hi.ogawa.zz@gmail.com"
+      },
+      {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      {
+        "name": "yyx990803",
+        "email": "yyx990803@gmail.com"
+      }
+    ],
+    "sideEffects": false,
+    "_nodeVersion": "24.19.0",
+    "dependencies": {
+      "tinyrainbow": "^3.1.0",
+      "convert-source-map": "^2.0.0",
+      "@vitest/pretty-format": "4.1.11"
+    },
+    "typesVersions": {
+      "*": {
+        "source-map": [
+          "dist/source-map.d.ts"
+        ],
+        "source-map/node": [
+          "dist/source-map/node.d.ts"
+        ]
+      }
+    },
+    "_hasShrinkwrap": false,
+    "devDependencies": {
+      "loupe": "^3.2.1",
+      "@types/estree": "^1.0.8",
+      "diff-sequences": "^29.6.3",
+      "@jridgewell/trace-mapping": "0.3.31",
+      "@types/convert-source-map": "^2.0.3"
+    },
+    "_npmOperationalInternal": {
+      "tmp": "tmp/utils_4.1.11_1787063013706_0.49708936720248476",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "@vitest/utils@4.1.11",
+    "version": "4.1.11"
+  },
+  "@vitest/expect": {
+    "bugs": {
+      "url": "https://github.com/vitest-dev/vitest/issues"
+    },
+    "dist": {
+      "shasum": "5f580d1f9cdbba314dbf23b2d911f8eb23878f5f",
+      "tarball": "https://registry.npmjs.org/@vitest/expect/-/expect-4.1.11.tgz",
+      "fileCount": 5,
+      "integrity": "sha512-VX2x5vNJXET47KAFzwERI+KRMtTTCSWTfSMKsW7JsUsXV4psq++e3DvZpuTDOpHcxytiDs6p2nhVb2tVDiiUYw==",
+      "signatures": [
+        {
+          "sig": "MEUCIQC0/YfNFXD5zc8aVxuwYsMdI0lYKv3J7rx8E4bPmL/hfwIgURP3iVM3NU6cHPBsI0HA+WnXiYNq/qZW3esic3lQf5U=",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@vitest%2fexpect@4.1.11",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 106756
+    },
+    "main": "./dist/index.js",
+    "name": "@vitest/expect",
+    "type": "module",
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.js",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./*": "./*"
+    },
+    "funding": "https://opencollective.com/vitest",
+    "license": "MIT",
+    "scripts": {
+      "dev": "rollup -c --watch",
+      "build": "premove dist && rollup -c"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "approver": {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "oidc:badfd6ed-c6cb-4e94-b08d-0bc601c9aa05"
+      }
+    },
+    "homepage": "https://vitest.dev/api/expect",
+    "keywords": [
+      "vitest",
+      "test",
+      "chai",
+      "assertion"
+    ],
+    "repository": {
+      "url": "git+https://github.com/vitest-dev/vitest.git",
+      "type": "git",
+      "directory": "packages/expect"
+    },
+    "description": "Jest's expect matchers as a Chai plugin",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "ariperkkio",
+        "email": "ari.perkkio@gmail.com"
+      },
+      {
+        "name": "antfu",
+        "email": "anthonyfu117@hotmail.com"
+      },
+      {
+        "name": "hiogawa",
+        "email": "hi.ogawa.zz@gmail.com"
+      },
+      {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      {
+        "name": "yyx990803",
+        "email": "yyx990803@gmail.com"
+      }
+    ],
+    "sideEffects": false,
+    "_nodeVersion": "24.19.0",
+    "dependencies": {
+      "chai": "^6.2.2",
+      "@types/chai": "^5.2.2",
+      "@vitest/spy": "4.1.11",
+      "tinyrainbow": "^3.1.0",
+      "@vitest/utils": "4.1.11",
+      "@standard-schema/spec": "^1.1.0"
+    },
+    "_hasShrinkwrap": false,
+    "devDependencies": {
+      "@vitest/runner": "4.1.11"
+    },
+    "_npmOperationalInternal": {
+      "tmp": "tmp/expect_4.1.11_1787062974403_0.07914819801001305",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "@vitest/expect@4.1.11",
+    "version": "4.1.11"
+  },
+  "@vitest/mocker": {
+    "bugs": {
+      "url": "https://github.com/vitest-dev/vitest/issues"
+    },
+    "dist": {
+      "shasum": "8e2906361bc5dfa271757a858ae80643118fcbb4",
+      "tarball": "https://registry.npmjs.org/@vitest/mocker/-/mocker-4.1.11.tgz",
+      "fileCount": 31,
+      "integrity": "sha512-2XJVD55d1o5AZous5CCGKS74g/riOj9odEt2bQpCVZeblHyHdnMeFl4jl0XjU21stf4mbjUkew2eXQZt65g5CQ==",
+      "signatures": [
+        {
+          "sig": "MEQCIEOYTK+970ESBQxIJosyySHDCs0/No29OZvQ/R7ka4+5AiBa0h8ajvKjVeTZHO6agTDNOhYNB8psMHwhXjJlbPneJA==",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@vitest%2fmocker@4.1.11",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 188057
+    },
+    "main": "./dist/index.js",
+    "name": "@vitest/mocker",
+    "type": "module",
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.js",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./node": {
+        "types": "./dist/node.d.ts",
+        "default": "./dist/node.js"
+      },
+      "./browser": {
+        "types": "./dist/browser.d.ts",
+        "default": "./dist/browser.js"
+      },
+      "./automock": {
+        "types": "./dist/automock.d.ts",
+        "default": "./dist/automock.js"
+      },
+      "./redirect": {
+        "types": "./dist/redirect.d.ts",
+        "default": "./dist/redirect.js"
+      },
+      "./register": {
+        "types": "./dist/register.d.ts",
+        "default": "./dist/register.js"
+      },
+      "./transforms": {
+        "types": "./dist/transforms.d.ts",
+        "default": "./dist/transforms.js"
+      },
+      "./package.json": "./package.json",
+      "./auto-register": {
+        "types": "./dist/register.d.ts",
+        "default": "./dist/register.js"
+      }
+    },
+    "funding": "https://opencollective.com/vitest",
+    "license": "MIT",
+    "scripts": {
+      "dev": "rollup -c --watch",
+      "build": "premove dist && rollup -c"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "approver": {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "oidc:17f5ead6-d884-4dd8-8e6c-e8f45f29ceda"
+      }
+    },
+    "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/mocker",
+    "keywords": [
+      "vitest",
+      "test",
+      "mock"
+    ],
+    "repository": {
+      "url": "git+https://github.com/vitest-dev/vitest.git",
+      "type": "git",
+      "directory": "packages/mocker"
+    },
+    "description": "Vitest module mocker implementation",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "ariperkkio",
+        "email": "ari.perkkio@gmail.com"
+      },
+      {
+        "name": "antfu",
+        "email": "anthonyfu117@hotmail.com"
+      },
+      {
+        "name": "hiogawa",
+        "email": "hi.ogawa.zz@gmail.com"
+      },
+      {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      {
+        "name": "yyx990803",
+        "email": "yyx990803@gmail.com"
+      }
+    ],
+    "sideEffects": false,
+    "_nodeVersion": "24.19.0",
+    "dependencies": {
+      "@vitest/spy": "4.1.11",
+      "magic-string": "^0.30.21",
+      "estree-walker": "^3.0.3"
+    },
+    "_hasShrinkwrap": false,
+    "devDependencies": {
+      "msw": "^2.12.10",
+      "vite": "^6.3.5",
+      "pathe": "^2.0.3",
+      "acorn-walk": "^8.3.5",
+      "@vitest/spy": "4.1.11",
+      "@types/estree": "^1.0.8",
+      "@vitest/utils": "4.1.11",
+      "es-module-lexer": "^2.0.0",
+      "cjs-module-lexer": "^2.2.0"
+    },
+    "peerDependencies": {
+      "msw": "^2.4.9",
+      "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
+    },
+    "peerDependenciesMeta": {
+      "msw": {
+        "optional": true
+      },
+      "vite": {
+        "optional": true
+      }
+    },
+    "_npmOperationalInternal": {
+      "tmp": "tmp/mocker_4.1.11_1787063006407_0.6754579244437351",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "@vitest/mocker@4.1.11",
+    "version": "4.1.11"
+  },
+  "@vitest/runner": {
+    "bugs": {
+      "url": "https://github.com/vitest-dev/vitest/issues"
+    },
+    "dist": {
+      "shasum": "bfbad98c8d6c3f1fb4df12056ad569821ff77f21",
+      "tarball": "https://registry.npmjs.org/@vitest/runner/-/runner-4.1.11.tgz",
+      "fileCount": 13,
+      "integrity": "sha512-LztvUgdwMNJMIkj3hQnnxiC2Xy1zNxq928W/xhjCLaNCzqTZOudjwbQf6v9IntZGPw132i2Lq2rgTRZHD3JHNw==",
+      "signatures": [
+        {
+          "sig": "MEYCIQD5rULX5WOxSEvD8HtvSg/3vGq3KGkzW4UmL16W/TUnmwIhAOowdeS1NTBOlIX9Ivqxpr2F935p7aK+yExIpwxi5/N/",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@vitest%2frunner@4.1.11",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 194011
+    },
+    "main": "./dist/index.js",
+    "name": "@vitest/runner",
+    "type": "module",
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.js",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./*": "./*",
+      "./types": {
+        "types": "./dist/types.d.ts",
+        "default": "./dist/types.js"
+      },
+      "./utils": {
+        "types": "./dist/utils.d.ts",
+        "default": "./dist/utils.js"
+      }
+    },
+    "funding": "https://opencollective.com/vitest",
+    "license": "MIT",
+    "scripts": {
+      "dev": "rollup -c --watch",
+      "build": "premove dist && rollup -c"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "approver": {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "oidc:7a555147-14a7-4ffb-9a62-fbbbed17093a"
+      }
+    },
+    "homepage": "https://vitest.dev/api/advanced/runner",
+    "keywords": [
+      "vitest",
+      "test",
+      "test-runner"
+    ],
+    "repository": {
+      "url": "git+https://github.com/vitest-dev/vitest.git",
+      "type": "git",
+      "directory": "packages/runner"
+    },
+    "description": "Vitest test runner",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "ariperkkio",
+        "email": "ari.perkkio@gmail.com"
+      },
+      {
+        "name": "antfu",
+        "email": "anthonyfu117@hotmail.com"
+      },
+      {
+        "name": "hiogawa",
+        "email": "hi.ogawa.zz@gmail.com"
+      },
+      {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      {
+        "name": "yyx990803",
+        "email": "yyx990803@gmail.com"
+      }
+    ],
+    "sideEffects": true,
+    "_nodeVersion": "24.19.0",
+    "dependencies": {
+      "pathe": "^2.0.3",
+      "@vitest/utils": "4.1.11"
+    },
+    "_hasShrinkwrap": false,
+    "_npmOperationalInternal": {
+      "tmp": "tmp/runner_4.1.11_1787062999705_0.8099372153936766",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "@vitest/runner@4.1.11",
+    "version": "4.1.11"
+  },
+  "@vitest/snapshot": {
+    "bugs": {
+      "url": "https://github.com/vitest-dev/vitest/issues"
+    },
+    "dist": {
+      "shasum": "df461eb165924a3155986dde68e13360f53f3d4c",
+      "tarball": "https://registry.npmjs.org/@vitest/snapshot/-/snapshot-4.1.11.tgz",
+      "fileCount": 13,
+      "integrity": "sha512-pN7ikn1ON7h8ee4gIAp4AzyK+zBtJPzVbqOgu5LCEh4VaJVbPQcgYQYJIMGQPXVeJJq1fnfazis7a5pFNPahog==",
+      "signatures": [
+        {
+          "sig": "MEQCIBFYPKjocRUOT0kjxXt+bE8HwL2KVJ/TWaRPOnPlMBP0AiBTqavrj6tqhHQjGz/df6wmX2cbn3Z0uAmN+8TLt8hG3w==",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@vitest%2fsnapshot@4.1.11",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 59314
+    },
+    "main": "./dist/index.js",
+    "name": "@vitest/snapshot",
+    "type": "module",
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.js",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./*": "./*",
+      "./manager": {
+        "types": "./dist/manager.d.ts",
+        "default": "./dist/manager.js"
+      },
+      "./environment": {
+        "types": "./dist/environment.d.ts",
+        "default": "./dist/environment.js"
+      }
+    },
+    "funding": "https://opencollective.com/vitest",
+    "license": "MIT",
+    "scripts": {
+      "dev": "rollup -c --watch",
+      "build": "premove dist && rollup -c"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "approver": {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "oidc:ae21fa98-4ba9-4146-be24-9feb4cbf959d"
+      }
+    },
+    "homepage": "https://vitest.dev/guide/snapshot",
+    "keywords": [
+      "vitest",
+      "test",
+      "snapshot"
+    ],
+    "repository": {
+      "url": "git+https://github.com/vitest-dev/vitest.git",
+      "type": "git",
+      "directory": "packages/snapshot"
+    },
+    "description": "Vitest snapshot manager",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "ariperkkio",
+        "email": "ari.perkkio@gmail.com"
+      },
+      {
+        "name": "antfu",
+        "email": "anthonyfu117@hotmail.com"
+      },
+      {
+        "name": "hiogawa",
+        "email": "hi.ogawa.zz@gmail.com"
+      },
+      {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      {
+        "name": "yyx990803",
+        "email": "yyx990803@gmail.com"
+      }
+    ],
+    "sideEffects": false,
+    "_nodeVersion": "24.19.0",
+    "dependencies": {
+      "pathe": "^2.0.3",
+      "magic-string": "^0.30.21",
+      "@vitest/utils": "4.1.11",
+      "@vitest/pretty-format": "4.1.11"
+    },
+    "_hasShrinkwrap": false,
+    "devDependencies": {
+      "natural-compare": "^1.4.0",
+      "@types/natural-compare": "^1.4.3"
+    },
+    "_npmOperationalInternal": {
+      "tmp": "tmp/snapshot_4.1.11_1787062981456_0.9574597381929719",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "@vitest/snapshot@4.1.11",
+    "version": "4.1.11"
+  },
+  "@vitest/pretty-format": {
+    "bugs": {
+      "url": "https://github.com/vitest-dev/vitest/issues"
+    },
+    "dist": {
+      "shasum": "8b28eb8240771d6ea970e33beaeb41384b51868e",
+      "tarball": "https://registry.npmjs.org/@vitest/pretty-format/-/pretty-format-4.1.11.tgz",
+      "fileCount": 5,
+      "integrity": "sha512-yiZzPbGTS9Sr/JpFl8zHrcIkAofNbFV6k21vIgQN/cY/oxZeXhJv5sc/MBJ5jFKWmWs+oJHw0UXLZjmf931+Vw==",
+      "signatures": [
+        {
+          "sig": "MEUCIQDkh3DO06AvNJ+eIAhVbldihOFxNw5tbw+v4LxAAeJuPQIgMEc0PeCqlgGjuNMi8Qhc2A/nbDqRMAh5wwfB4Q1U/mw=",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@vitest%2fpretty-format@4.1.11",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 49831
+    },
+    "main": "./dist/index.js",
+    "name": "@vitest/pretty-format",
+    "type": "module",
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.js",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./*": "./*"
+    },
+    "funding": "https://opencollective.com/vitest",
+    "license": "MIT",
+    "scripts": {
+      "dev": "rollup -c --watch",
+      "build": "premove dist && rollup -c"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "approver": {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "oidc:ac4112a6-9b26-4f4b-a83e-b4a42e468814"
+      }
+    },
+    "homepage": "https://github.com/vitest-dev/vitest/tree/main/packages/pretty-format",
+    "keywords": [
+      "vitest",
+      "test",
+      "pretty",
+      "pretty-format"
+    ],
+    "repository": {
+      "url": "git+https://github.com/vitest-dev/vitest.git",
+      "type": "git",
+      "directory": "packages/pretty-format"
+    },
+    "description": "Fork of pretty-format with support for ESM",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "ariperkkio",
+        "email": "ari.perkkio@gmail.com"
+      },
+      {
+        "name": "antfu",
+        "email": "anthonyfu117@hotmail.com"
+      },
+      {
+        "name": "hiogawa",
+        "email": "hi.ogawa.zz@gmail.com"
+      },
+      {
+        "name": "oreanno",
+        "email": "foxzdavinci@gmail.com"
+      },
+      {
+        "name": "yyx990803",
+        "email": "yyx990803@gmail.com"
+      }
+    ],
+    "sideEffects": false,
+    "_nodeVersion": "24.19.0",
+    "dependencies": {
+      "tinyrainbow": "^3.1.0"
+    },
+    "_hasShrinkwrap": false,
+    "devDependencies": {
+      "react-is": "^19.2.4",
+      "react-is-18": "npm:react-is@18.3.1",
+      "@types/react-is": "^19.2.0"
+    },
+    "_npmOperationalInternal": {
+      "tmp": "tmp/pretty-format_4.1.11_1787063020754_0.24209551550562658",
+      "host": "s3://npm-registry-packages-npm-production"
+    },
+    "_id": "@vitest/pretty-format@4.1.11",
+    "version": "4.1.11"
+  }
+}

@@ -74,7 +74,7 @@ pnpm --dir "$tooling_dir" add --save-exact renovate@44.127.1 pnpm@11.20.0 --igno
 node "$tooling_dir/node_modules/renovate/dist/config-validator.js" --strict default.json standards.json
 node scripts/test-vitest-lockstep.mjs \
   --renovate-root "$tooling_dir/node_modules/renovate" \
-  --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.cjs"
+  --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"
 ```
 
 The release-age override applies only to this temporary tooling installation.
@@ -115,7 +115,7 @@ Using the same temporary tooling above:
 ```sh
 node scripts/test-vitest-worker-contract.mjs \
   --renovate-root "$tooling_dir/node_modules/renovate" \
-  --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.cjs"
+  --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"
 ```
 
 At the recorded reference versions, eight real hook cases and four native
@@ -139,15 +139,72 @@ live publication age or fleet compatibility.
 The local runner expects the unchanged native security command to exit **1** for
 the companion mismatch; this known-negative check is not full security acceptance.
 Its artifact summary reports **full security alignment NOT PROVEN**, with fleet
-provenance and required current-HEAD status enforcement **PENDING**. No production
-helper, new consumer preset, worker permission or hook activation is included.
+provenance and required current-HEAD status enforcement **PENDING**. No new consumer preset, worker permission or hook activation is included.
+Maintained helper source and a separate helper-aware suite are described below.
 
 [Issue #37](https://github.com/sebastian-software/renovate-config/issues/37) remains
-open for security alignment. The next stage is a concrete pnpm-helper plan and
-review before implementation or worker rollout. No helper hook is enabled here.
-The worker configuration declares mutable Renovate `:43`; its deployed patch is
-unverified, and its current command permission covers standards tasks only.
-Local 44.127.1 evidence does not establish worker readiness.
+open for hosted security alignment and activation. The cached Renovate 43.288.0
+image / Node 24.18.0 tuple is a compatibility candidate; it is not immutable proof
+of the completed worker run. pnpm 11.17.0 is the measured consumer compatibility
+target; the actual worker installer remains unknown. Command permission still
+covers standards only.
+
+#### Maintained helper source and local same-branch proof
+
+[scripts/vitest-lockstep.mjs](scripts/vitest-lockstep.mjs) reads the actual upgrades
+array from `RENOVATE_POST_UPGRADE_COMMAND_DATA_FILE`. Trusted runner configuration
+supplies an absolute `VITEST_LOCKSTEP_PNPM_CLI`; the helper invokes it with its own
+verified Node binary, package-manager/runtime delegation disabled, and repository
+pnpmfiles/lifecycle scripts disabled. Its dependencies are exact, isolated YAML
+and semver pins under `scripts/vitest-lockstep/`; no root manifest is introduced.
+
+The [helper fixture](tests/fixtures/vitest-helper/README.md) retains native security
+exit **1** and separately checks local helper acceptance **0** through the real
+Renovate post-upgrade boundary. It checks multiple importers, preserved compatible
+caret/tilde/expressive ranges, metadata-derived installed internals, selected
+4.1.11 rather than admitted 5.0.3, exact scoped age exceptions and failure recovery.
+An excluded package keeps its version, integrity and declarations; existing peer
+references into the selected Vitest family follow the new native peer context.
+Unrelated dependencies and resolutions remain protected.
+
+Both existing runners and the helper runner accept
+`--runtime-profile candidate43-consumer11|reference44`; omission retains the
+reference default. Run the exact profile Node binary, bootstrap exact temporary
+tools with scripts disabled, then install the helper-local frozen dependency lock:
+
+```sh
+# Select Node 24.18.0 for this candidate command; use Node 24.21.0 and
+# renovate@44.127.1 / pnpm@11.20.0 for reference44.
+candidate_tools="$(mktemp -d)"
+pnpm --dir "$candidate_tools" add --save-exact renovate@43.288.0 pnpm@11.17.0 --ignore-scripts --config.minimum-release-age=0
+node "$candidate_tools/node_modules/renovate/dist/config-validator.js" --strict default.json standards.json
+node "$candidate_tools/node_modules/pnpm/bin/pnpm.mjs" --dir scripts/vitest-lockstep install --frozen-lockfile --ignore-scripts --ignore-pnpmfile --pm-on-fail=ignore
+node scripts/test-vitest-worker-contract.mjs --runtime-profile candidate43-consumer11 \
+  --renovate-root "$candidate_tools/node_modules/renovate" \
+  --pnpm-cli "$candidate_tools/node_modules/pnpm/bin/pnpm.mjs"
+node scripts/test-vitest-helper.mjs --runtime-profile candidate43-consumer11 \
+  --renovate-root "$candidate_tools/node_modules/renovate" \
+  --pnpm-cli "$candidate_tools/node_modules/pnpm/bin/pnpm.mjs"
+```
+
+The zero-age bootstrap above applies only to isolated temporary tooling. Consumer
+invocations keep their ordinary age policy and inherited exclusions, adding only
+exact selected family `package@version` exceptions. Unsupported catalogs,
+overrides, executable config dependencies, runtime ownership and affected manifest
+peer declarations fail before publication.
+
+Publication is recoverable across several files, not atomic. Catchable failures
+restore owned changed bytes or emit explicit recovery failure; concurrent edits
+are preserved for inspection. SIGKILL or power loss can interrupt recovery. A
+restored advisory branch can still contain the original mismatch and does not
+prove merge safety.
+
+No executable `vitest-pnpm.json` is delivered. A later reviewed release must bind
+an immutable helper commit and its entire dependency layout, establish real worker
+image/binary/installer provenance, narrow command permission, independently
+required current-HEAD alignment checks and stale-green/bypass reconciliation,
+then pass hosted negative cases and canary evidence before opt-in. Local helper
+success leaves these gates pending and keeps #37 open/in-progress.
 
 ## `standards.json` — standards-sync mechanics
 

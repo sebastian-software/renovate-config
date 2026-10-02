@@ -1,0 +1,8 @@
+{
+  "name": "helper-workspace-b",
+  "private": true,
+  "devDependencies": {
+    "vitest": "^4.1.10",
+    "@vitest/coverage-v8": "4.1.10"
+  }
+}

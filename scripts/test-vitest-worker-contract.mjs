@@ -10,9 +10,16 @@ import { dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const { values } = parseArgs({ options: { 'renovate-root': { type: 'string' }, 'pnpm-cli': { type: 'string' }, output: { type: 'string' }, 'timeout-proof-only': { type: 'boolean', default: false } } });
+const { values } = parseArgs({ options: { 'runtime-profile': { type: 'string' }, 'renovate-root': { type: 'string' }, 'pnpm-cli': { type: 'string' }, output: { type: 'string' }, 'timeout-proof-only': { type: 'boolean', default: false } } });
+const profileName = values['runtime-profile'] ?? 'reference44';
+const profiles = {
+  reference44: { renovate: '44.127.1', node: '24.21.0', pnpm: '11.20.0', source: 'f3ec5e6b5166b327833f63a531179d89fd8fc9db' },
+  'candidate43-consumer11': { renovate: '43.288.0', node: '24.18.0', pnpm: '11.17.0' },
+};
+const profile = profiles[profileName];
+assert(profile, 'Unsupported --runtime-profile: ' + profileName);
 assert(values['renovate-root'] && values['pnpm-cli'], 'Supply pinned --renovate-root and --pnpm-cli.');
-assert.equal(process.versions.node, '24.21.0');
+assert.equal(process.versions.node, profile.node);
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const fixture = join(repo, 'tests/fixtures/vitest-worker-contract');
 const renovateRoot = resolve(values['renovate-root']);
@@ -23,7 +30,7 @@ console.log('Artifacts: ' + output);
 const json = async (path) => JSON.parse(await readFile(path, 'utf8'));
 const save = async (path, value) => writeFile(path, JSON.stringify(value, null, 2) + '\n');
 const load = (path) => import(pathToFileURL(join(renovateRoot, 'dist', path)).href);
-assert.equal((await json(join(renovateRoot, 'package.json'))).version, '44.127.1');
+assert.equal((await json(join(renovateRoot, 'package.json'))).version, profile.renovate);
 async function run(command, args, options = {}) {
   assert(['darwin', 'linux'].includes(process.platform), 'Owned process groups require macOS or Linux.');
   const { timeoutMs = 180000, allowTimeout = false, ...spawnOptions } = options;
@@ -95,7 +102,7 @@ async function proveOwnedTimeout() {
 await proveOwnedTimeout();
 if (values['timeout-proof-only']) process.exit(0);
 const pnpmVersion = await run(process.execPath, [pnpmCli, '--version']);
-assert.equal(pnpmVersion.code, 0); assert.equal(pnpmVersion.stdout.trim(), '11.20.0');
+assert.equal(pnpmVersion.code, 0); assert.equal(pnpmVersion.stdout.trim(), profile.pnpm);
 const { init: initLogger, levels } = await load('logger/index.js'); await initLogger(); levels('stdout', 'warn');
 const { GlobalConfig } = await load('config/global.js');
 const { setCustomEnv } = await load('util/env.js');
@@ -104,7 +111,18 @@ const { mergeChildConfig } = await load('config/utils.js');
 const { getConfig } = await load('config/defaults.js');
 const { applyPackageRules } = await load('util/package-rules/index.js');
 const { extractPackageJson } = await load('modules/manager/npm/extract/common/package-file.js');
-const { normalizeDepNames } = await load('workers/repository/extract/manager-files.js');
+const managerFiles = await load('workers/repository/extract/manager-files.js');
+// 43.288.0 keeps extraction massageDepNames and process/fetch lookup name
+// preparation private. Mirror those exact operations at this direct API seam;
+// reference 44 retains its native exported normalization.
+const normalizeDepNames = profileName === 'candidate43-consumer11'
+  ? (dep) => {
+    if (dep.packageName && !dep.depName) dep.depName = dep.packageName;
+    if (typeof dep.depName === 'string') dep.depName = dep.depName.trim();
+    dep.packageName ??= dep.depName;
+  }
+  : managerFiles.normalizeDepNames;
+assert.equal(typeof normalizeDepNames, 'function');
 const { initRepo, syncGit } = await load('util/git/index.js');
 const { default: executePostUpgradeCommands } = await load('workers/repository/update/branch/execute-post-upgrade-commands.js');
 const pin = await json(join(fixture, 'worker-policy.json'));
@@ -132,10 +150,13 @@ await save(join(output, 'policy-observations.json'), { pin, ordinary: observed, 
 console.log('Generating real regular/advisory pipeline branches...');
 const pipeline = join(output, 'pipeline');
 const baseline = await run(process.execPath, [join(repo, 'scripts/test-vitest-lockstep.mjs'), '--renovate-root', renovateRoot,
-  '--pnpm-cli', pnpmCli, '--output', pipeline, '--policy-input', policyPath, '--require-security'], { cwd: repo });
+  '--pnpm-cli', pnpmCli, '--runtime-profile', profileName, '--output', pipeline, '--policy-input', policyPath, '--require-security'], { cwd: repo });
 await writeFile(join(output, 'pipeline.log'), baseline.stdout + baseline.stderr);
 assert.equal(baseline.code, 1, baseline.stdout + baseline.stderr);
-const baselineSummary = await json(join(pipeline, 'summary.json'));
+assert.equal(baseline.signal, null, baseline.stdout + baseline.stderr);
+const baselineSummary = await json(join(pipeline, 'summary.json')).catch((error) => {
+  throw new Error('Native pipeline failed before producing mismatch evidence: ' + baseline.stdout + baseline.stderr, { cause: error });
+});
 assert.equal(baselineSummary.results[0].state, 'PASSED');
 assert.equal(baselineSummary.securityAcceptance, 'FAILED');
 for (const result of baselineSummary.results.slice(1)) {
@@ -254,6 +275,6 @@ await installerCase('installer-baseline', { vitest: '4.1.11' }, []);
 await installerCase('installer-exact-scoped', { vitest: '4.1.11', '@vitest/coverage-v8': '4.1.11' }, ['vitest@4.1.11', '@vitest/coverage-v8@4.1.11']);
 await installerCase('installer-unrelated', { 'is-number': '7.0.0' }, ['vitest@4.1.11', '@vitest/coverage-v8@4.1.11']);
 await installerCase('installer-config-precedence', { vitest: '4.1.11', '@vitest/coverage-v8': '4.1.11' }, [], { conflict: true });
-await save(join(output, 'summary.json'), { reference: { renovate: '44.127.1', source: 'f3ec5e6b5166b327833f63a531179d89fd8fc9db', node: process.versions.node, pnpm: '11.20.0' },
+await save(join(output, 'summary.json'), { runtimeProfile: profileName, reference: { renovate: profile.renovate, source: profile.source ?? null, node: process.versions.node, pnpm: profile.pnpm, renovateRoot, pnpmCli, nodePath: process.execPath, renovatePackageSha256: createHash('sha256').update(await readFile(join(renovateRoot, 'package.json'))).digest('hex') },
   localContracts: 'PASSED', hookResults, installerResults, nativeSecurityAcceptance: 'FAILED: companion mismatch retained', fullSecurityAlignment: 'NOT PROVEN', fleetProvenance: 'PENDING', requiredStatusEnforcement: 'PENDING' });
 console.log('Local contracts: PASSED; full security alignment NOT PROVEN; fleet PENDING.');

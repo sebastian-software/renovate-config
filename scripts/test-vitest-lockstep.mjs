@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Pinned Renovate API integration; this does not create or validate hosted PRs.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { cp, mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -10,24 +11,32 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const { values } = parseArgs({ options: {
+  'runtime-profile': { type: 'string' },
   'renovate-root': { type: 'string' },
   'pnpm-cli': { type: 'string' },
   output: { type: 'string' },
   'require-security': { type: 'boolean', default: false },
   'policy-input': { type: 'string' },
 } });
+const profileName = values['runtime-profile'] ?? 'reference44';
+const profiles = {
+  reference44: { renovate: '44.127.1', node: '24.21.0', pnpm: '11.20.0', source: 'f3ec5e6b5166b327833f63a531179d89fd8fc9db' },
+  'candidate43-consumer11': { renovate: '43.288.0', node: '24.18.0', pnpm: '11.17.0' },
+};
+const profile = profiles[profileName];
+assert(profile, 'Unsupported --runtime-profile: ' + profileName);
 assert(values['renovate-root'] && values['pnpm-cli'],
-  'Supply --renovate-root for renovate@44.127.1 and --pnpm-cli for pnpm@11.20.0; run with Node 24.');
-assert.match(process.version, /^v24\./, 'Use the Node 24 runtime used by CI.');
+  'Supply exact --renovate-root and --pnpm-cli for the selected runtime profile.');
+assert.equal(process.versions.node, profile.node, 'Use the exact selected profile Node runtime.');
 const renovateRoot = resolve(values['renovate-root']);
 const pnpmCli = resolve(values['pnpm-cli']);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const fixture = join(repoRoot, 'tests/fixtures/vitest-lockstep');
 const load = (path) => import(pathToFileURL(join(renovateRoot, 'dist', path)).href);
-assert.equal(JSON.parse(await readFile(join(renovateRoot, 'package.json'), 'utf8')).version, '44.127.1');
+assert.equal(JSON.parse(await readFile(join(renovateRoot, 'package.json'), 'utf8')).version, profile.renovate);
 const toolVersion = spawnSync(process.execPath, [pnpmCli, '--version'], { encoding: 'utf8', timeout: 10000 });
 assert.equal(toolVersion.status, 0, toolVersion.stderr);
-assert.equal(toolVersion.stdout.trim(), '11.20.0');
+assert.equal(toolVersion.stdout.trim(), profile.pnpm);
 
 const { init: initLogger, levels } = await load('logger/index.js');
 await initLogger();
@@ -41,7 +50,18 @@ const { setCustomEnv } = await load('util/env.js');
 const { parseSingleYaml } = await load('util/yaml.js');
 const { applyPackageRules } = await load('util/package-rules/index.js');
 const { extractPackageJson } = await load('modules/manager/npm/extract/common/package-file.js');
-const { normalizeDepNames } = await load('workers/repository/extract/manager-files.js');
+const managerFiles = await load('workers/repository/extract/manager-files.js');
+// 43.288.0 keeps extraction massageDepNames and process/fetch lookup name
+// preparation private. Mirror those exact operations at this direct API seam;
+// reference 44 retains its native exported normalization.
+const normalizeDepNames = profileName === 'candidate43-consumer11'
+  ? (dep) => {
+    if (dep.packageName && !dep.depName) dep.depName = dep.packageName;
+    if (typeof dep.depName === 'string') dep.depName = dep.depName.trim();
+    dep.packageName ??= dep.depName;
+  }
+  : managerFiles.normalizeDepNames;
+assert.equal(typeof normalizeDepNames, 'function');
 const { lookupUpdates } = await load('workers/repository/process/lookup/index.js');
 const { branchifyUpgrades } = await load('workers/repository/updates/branchify.js');
 const { updateDependency } = await load('modules/manager/npm/update/dependency/index.js');
@@ -52,7 +72,9 @@ const { setPlatformApi } = await load('modules/platform/index.js');
 
 const metadata = JSON.parse(await readFile(join(fixture, 'registry-metadata.json'), 'utf8'));
 const advisory = JSON.parse(await readFile(join(fixture, 'advisory.json'), 'utf8'));
-const seed = await readFile(join(fixture, 'package.json'), 'utf8');
+const fixtureManifest = JSON.parse(await readFile(join(fixture, 'package.json'), 'utf8'));
+fixtureManifest.packageManager = 'pnpm@' + profile.pnpm;
+const seed = JSON.stringify(fixtureManifest, null, 2) + '\n';
 const seedManifest = JSON.parse(seed);
 const rawPreset = JSON.parse(await readFile(join(repoRoot, 'default.json'), 'utf8'));
 // Optional local-only policy input preserves normal CLI behavior and exports real
@@ -115,7 +137,8 @@ async function runCase(mode) {
   const security = mode !== 'regular';
   const workspace = join(output, mode);
   await mkdir(workspace);
-  for (const file of ['package.json', 'pnpm-lock.yaml', '.npmrc']) await cp(join(fixture, file), join(workspace, file));
+  for (const file of ['pnpm-lock.yaml', '.npmrc']) await cp(join(fixture, file), join(workspace, file));
+  await writeFile(join(workspace, 'package.json'), seed);
   GlobalConfig.set({ localDir: workspace, cacheDir: join(output, 'cache'), binarySource: 'global',
     allowScripts: false, executionTimeout: 3, internalHostAccess: 'allow' });
   // Only the lookup boundary is replayed. Native pnpm uses real package tarballs
@@ -195,7 +218,7 @@ async function runCase(mode) {
     for (const name of ['@vitest/eslint-plugin', 'is-number']) assert.equal(manifest.devDependencies[name], seedManifest.devDependencies[name]);
     await writeFile(join(workspace, 'package.json'), contents);
     const generated = await generateLockFile('.', {}, { ...branch,
-      constraints: { pnpm: '11.20.0', node: process.versions.node } }, branch.upgrades);
+      constraints: { pnpm: profile.pnpm, node: profile.node } }, branch.upgrades);
     assert(!generated.error, generated.stdout || generated.stderr || 'Native lock generation failed.');
     const lock = parseSingleYaml(generated.lockFile);
     const importer = lock.importers['.'].devDependencies;
@@ -227,8 +250,11 @@ async function runCase(mode) {
 
 const results = [];
 for (const mode of values['require-security'] ? ['regular', 'security-default', 'security-group'] : ['regular']) results.push(await runCase(mode));
-const summary = { renovate: '44.127.1', renovateSourceCommit: 'f3ec5e6b5166b327833f63a531179d89fd8fc9db',
-  node: process.versions.node, pnpm: '11.20.0', results,
+const summary = { runtimeProfile: profileName, renovate: profile.renovate,
+  renovateSourceCommit: profile.source ?? null,
+  renovatePackageSha256: createHash('sha256').update(await readFile(join(renovateRoot, 'package.json'))).digest('hex'),
+  renovateRoot, pnpmCli, nodePath: process.execPath,
+  node: process.versions.node, pnpm: profile.pnpm, results,
   securityAcceptance: values['require-security'] ? (results.every((r) => r.aligned) ? 'PASSED' : 'FAILED') : 'NOT RUN',
   boundary: 'Real Renovate config/extraction/alert/lookup/branchification/update APIs and native pnpm artifacts; no hosted PR or deployed worker failure/status proof.' };
 await writeFile(join(output, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
