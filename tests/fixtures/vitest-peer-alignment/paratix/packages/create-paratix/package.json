@@ -1,0 +1,44 @@
+{
+  "name": "create-paratix",
+  "version": "0.21.0",
+  "description": "Scaffold a new Paratix server project",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "create-paratix": "./dist/index.js"
+  },
+  "dependencies": {
+    "ssh2": "^1.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/ssh2": "^1.15.4",
+    "tsup": "^8.4.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "keywords": [
+    "scaffold",
+    "cli",
+    "create",
+    "paratix",
+    "project-generator",
+    "template",
+    "vps",
+    "server"
+  ],
+  "license": "MIT"
+}
