@@ -1,0 +1,22 @@
+{
+  "name": "@sebastian-gmbh/paratix-workspace",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "packageManager": "pnpm@11.17.0",
+  "devDependencies": {
+    "@cspell/dict-de-de": "^4.1.2",
+    "@types/node": "24.13.3",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "concurrently": "^10.0.4",
+    "eslint": "^10.8.0",
+    "eslint-config-setup": "^0.5.2",
+    "jiti": "^2.7.0",
+    "oxlint": "^1.76.0",
+    "prettier": "^3.9.6",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
+  }
+}

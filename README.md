@@ -206,6 +206,27 @@ required current-HEAD alignment checks and stale-green/bypass reconciliation,
 then pass hosted negative cases and canary evidence before opt-in. Local helper
 success leaves these gates pending and keeps #37 open/in-progress.
 
+#### Independent read-only checker
+
+[scripts/vitest-peer-alignment.mjs](scripts/vitest-peer-alignment.mjs) validates
+manifest/importer and installed peer contexts against trusted exact-head tree,
+file and independent published metadata. Its v1 checker uses its own exact
+runtime and evaluates compatibility independently of mutating helper success.
+
+Prepare the isolated checker-local frozen runtime with **Node 24.18.0** and
+**pnpm 11.17.0**, following the [checker runbook](docs/runbooks/vitest-peer-alignment.md).
+The runbook also owns release binding and fixed clean caller process requirements.
+Then run the [120-case offline fixture suite](tests/fixtures/vitest-peer-alignment/README.md):
+
+```sh
+node scripts/test-vitest-peer-alignment.mjs
+```
+
+CI `vitest-peer-alignment-local` is local source proof, distinct from the future
+trusted consumer publisher's `vitest-peer-alignment` status. This does not prove
+consumer enforcement, deployment, lowest advisory targets or release-age bypass.
+Issue #37 remains open/in-progress; the existing helper interface stays unchanged.
+
 ## `standards.json` — standards-sync mechanics
 
 Drives the [standards](https://github.com/sebastian-software/standards) rollout.

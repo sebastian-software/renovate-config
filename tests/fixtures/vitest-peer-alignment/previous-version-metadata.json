@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "source": "https://registry.npmjs.org",
+  "authenticated": true,
+  "policy": "public-npm-v1",
+  "packages": [
+    {
+      "name": "@vitest/coverage-v8",
+      "version": "4.1.10",
+      "dist": {
+        "integrity": "sha512-IM49HmthevbgAO4anp1hwtoT9wYe59w0LR00gr+eagHE+ZJ5lK4sLPeO0ubgoJcwLk6dehU3R24N+FbEEKDc8g=="
+      },
+      "dependencies": {
+        "obug": "^2.1.1",
+        "std-env": "^4.0.0-rc.1",
+        "magicast": "^0.5.2",
+        "tinyrainbow": "^3.1.0",
+        "@vitest/utils": "4.1.10",
+        "istanbul-reports": "^3.2.0",
+        "@bcoe/v8-coverage": "^1.0.2",
+        "ast-v8-to-istanbul": "^1.0.0",
+        "istanbul-lib-report": "^3.0.1",
+        "istanbul-lib-coverage": "^3.2.2"
+      },
+      "peerDependencies": {
+        "vitest": "4.1.10",
+        "@vitest/browser": "4.1.10"
+      },
+      "peerDependenciesMeta": {
+        "@vitest/browser": {
+          "optional": true
+        }
+      }
+    },
+    {
+      "name": "@vitest/utils",
+      "version": "4.1.10",
+      "dist": {
+        "integrity": "sha512-fy9am/HWxbaGt/Sawrp90vt6Y6jQwf1RX77cz3uwoJwJVMli/e1IEwRPnMNJ7vKfPTwo0diXifkpPvwH9v7nGA=="
+      },
+      "dependencies": {
+        "tinyrainbow": "^3.1.0",
+        "convert-source-map": "^2.0.0",
+        "@vitest/pretty-format": "4.1.10"
+      }
+    },
+    {
+      "name": "@vitest/pretty-format",
+      "version": "4.1.10",
+      "dist": {
+        "integrity": "sha512-W1HsjSH4MXQ9YfmmhLAoIYf1HRfekQCGngeIgcei6MP5QQGWUe0gkopdZQaVCFO+JDJMrAJGwa5pRpNpvy4P8Q=="
+      },
+      "dependencies": {
+        "tinyrainbow": "^3.1.0"
+      }
+    }
+  ]
+}

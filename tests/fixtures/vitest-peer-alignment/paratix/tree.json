@@ -1,0 +1,3072 @@
+{
+  "complete": true,
+  "head": "a34187906871a035a961b863b9fca664a57a6932",
+  "entries": [
+    {
+      "path": ".github/CODEOWNERS",
+      "mode": "100644",
+      "sha": "f0e711c6096fad3e0eedd42edb1ff558d2ee1377",
+      "size": 310
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "mode": "100644",
+      "sha": "e668c8cc7835bb90abedc6c7ee88096e225668f8",
+      "size": 1669
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "mode": "100644",
+      "sha": "d07249f6b96a3d59093733c895829b5e8ac0c4dd",
+      "size": 297
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "mode": "100644",
+      "sha": "94c0fb54bb85cf056fa289d8f0707e882fff4d9d",
+      "size": 895
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "mode": "100644",
+      "sha": "7b42f0d7cde71a37fc621dc9d718bbd00bf02cc4",
+      "size": 237
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "mode": "100644",
+      "sha": "9f0d403c1db654b36d7db08a538076358f940eb2",
+      "size": 785
+    },
+    {
+      "path": ".github/workflows/integration-check.yml",
+      "mode": "100644",
+      "sha": "4a43e2ebcce6e2a433ff8af29fb8d18d2c623911",
+      "size": 1059
+    },
+    {
+      "path": ".github/workflows/publish.yml",
+      "mode": "100644",
+      "sha": "a6f809fa2866c35dc547c4d40a4c2e0a50f72fa9",
+      "size": 6283
+    },
+    {
+      "path": ".gitignore",
+      "mode": "100644",
+      "sha": "05cb403f462aee36fd9774663508fd30491e394a",
+      "size": 261
+    },
+    {
+      "path": ".prettierignore",
+      "mode": "100644",
+      "sha": "0865d45dfa6ebc05ed3b03047799eb7e227a7fd6",
+      "size": 79
+    },
+    {
+      "path": ".prettierrc",
+      "mode": "100644",
+      "sha": "b47782e789f9e73cf96f3a1124a7e76ddeed7a8b",
+      "size": 161
+    },
+    {
+      "path": ".release-please-manifest.json",
+      "mode": "100644",
+      "sha": "139a7886114624a4a5b2c045253c8b7df8e03f7b",
+      "size": 74
+    },
+    {
+      "path": "AGENTS.md",
+      "mode": "100644",
+      "sha": "fc4d7e0de5ff77096c93bba89c139f0e3c074373",
+      "size": 856
+    },
+    {
+      "path": "CLAUDE.md",
+      "mode": "100644",
+      "sha": "43c994c2d3617f947bcb5adf1933e21dabe46bb5",
+      "size": 11
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "mode": "100644",
+      "sha": "9c279cd1febbfafd0af95ab27e21ad755234427b",
+      "size": 3199
+    },
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "sha": "3852cac3b761870bde509eb54e645a16d0ac0267",
+      "size": 1080
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "sha": "cde63eba0d817472c2c0a6792dc5dbd605e5f2cc",
+      "size": 5256
+    },
+    {
+      "path": "SECURITY.md",
+      "mode": "100644",
+      "sha": "601f0779280a4e3dfcee1562c1664b0e3a19635f",
+      "size": 1162
+    },
+    {
+      "path": "context7.json",
+      "mode": "100644",
+      "sha": "4d6ec8c7774b01086d4fb26f0e6806e726a1f24b",
+      "size": 1217
+    },
+    {
+      "path": "cspell.json",
+      "mode": "100644",
+      "sha": "d536551a71bf5b510e474646de14a3c77e967793",
+      "size": 4212
+    },
+    {
+      "path": "docs/adr/0001-unconditional-temp-file-cleanup-in-ssh-uploads.md",
+      "mode": "100644",
+      "sha": "721813e8223bb2c9088fdfde4282eb018c55afe7",
+      "size": 1648
+    },
+    {
+      "path": "docs/adr/0002-defer-broad-integration-matrix-expansion.md",
+      "mode": "100644",
+      "sha": "ce8e3795d9f119a7ee759585b5329396c21b295e",
+      "size": 2562
+    },
+    {
+      "path": "docs/adr/0003-keep-root-bootstrap-sudo-for-automation.md",
+      "mode": "100644",
+      "sha": "7b4b266c1e68b7b3b1d27a7b74853e9213e0e46c",
+      "size": 1249
+    },
+    {
+      "path": "docs/adr/0004-keep-signalbus-globalthis-slot-with-symbol-for.md",
+      "mode": "100644",
+      "sha": "026e2199c95692ebe977fc5df3738b8bdc1bff4e",
+      "size": 2177
+    },
+    {
+      "path": "docs/adr/0005-node-24-native-type-stripping-vs-tsx-for-playbook-loading.md",
+      "mode": "100644",
+      "sha": "92ebc74fbe1d84db10e492f60143df93bf2e0ccd",
+      "size": 9092
+    },
+    {
+      "path": "docs/adr/0006-signal-lists-stop-at-the-first-failed-signal.md",
+      "mode": "100644",
+      "sha": "bd1c2ed72e5ee328f74e83bb4a4cadb5a9f69037",
+      "size": 4316
+    },
+    {
+      "path": "docs/adr/effective-flow-project-setup.md",
+      "mode": "100644",
+      "sha": "5348e7a9ad92b023fe4142a1cf9010e08222f2f9",
+      "size": 2847
+    },
+    {
+      "path": "docs/initialbeschreibung.md",
+      "mode": "100644",
+      "sha": "fb31193784aa80f4365b540b54b4fdffd16caa57",
+      "size": 48884
+    },
+    {
+      "path": "docs/module.md",
+      "mode": "100644",
+      "sha": "ca69fcfb1896f861f52e3324e452f122a32dd2a8",
+      "size": 81537
+    },
+    {
+      "path": "docs/plan/2026-07-10-0089-podman-login-module.md",
+      "mode": "100644",
+      "sha": "36016fdb42b943948997c0c7b87c13b4e2cb42ea",
+      "size": 19331
+    },
+    {
+      "path": "docs/plan/2026-07-10-paratix-open-source-licensing-strategy.md",
+      "mode": "100644",
+      "sha": "ee301e5680b88acfa3d47c16ddf7db47efd10dad",
+      "size": 22101
+    },
+    {
+      "path": "docs/plan/2026-09-23-context7-konfiguration.md",
+      "mode": "100644",
+      "sha": "9eec43193a8c20578c73e52267db9de633a97227",
+      "size": 22972
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0001-core-implementation.md",
+      "mode": "100644",
+      "sha": "b7325052f53e4bb74ea1c3a4609754f219a15646",
+      "size": 4500
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0002-node24-upgrade.md",
+      "mode": "100644",
+      "sha": "21a54a2c9e1827b5f5be4b39e360750341df1616",
+      "size": 2133
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0003-apt-module-completion.md",
+      "mode": "100644",
+      "sha": "5363e13bc568ba672f512014c9013078e69c923a",
+      "size": 3889
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0003-file-module-completion.md",
+      "mode": "100644",
+      "sha": "f9a365f1a1905c31f1bc490891d5c6617edeba68",
+      "size": 4388
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0004-service-module-completion.md",
+      "mode": "100644",
+      "sha": "ae5a510333d918f26bac2fe484d49afbe89d488f",
+      "size": 3653
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0005-systemd-module.md",
+      "mode": "100644",
+      "sha": "c404674e362b0bdc206428db7b7bfc1c5566a451",
+      "size": 3136
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0006-ssh-module.md",
+      "mode": "100644",
+      "sha": "ee6ed316e778e4c38e9694bd9fb1d20323484ad0",
+      "size": 4453
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0007-cron-module.md",
+      "mode": "100644",
+      "sha": "9adbd2209c0159f17409397f873ebccce0581331",
+      "size": 3175
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0008-git-module.md",
+      "mode": "100644",
+      "sha": "3a65b7dd57f8029db480b3937424267089c0f3d6",
+      "size": 3199
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0009-archive-module.md",
+      "mode": "100644",
+      "sha": "9e8881b20ae1a1347b9dbcabd166f7b5ff2a46f0",
+      "size": 4000
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0009-download-module.md",
+      "mode": "100644",
+      "sha": "cc950b8e90b13c5bc94c0bee026b61bf33823361",
+      "size": 3986
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0009-net-module.md",
+      "mode": "100644",
+      "sha": "0ae779eb27e97fc4a201c102fbe0b37ad4d10ae4",
+      "size": 5578
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0010-system-module.md",
+      "mode": "100644",
+      "sha": "3edd6776407f7ca3a67c79180f52659af6091aaa",
+      "size": 2879
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0011-script-module.md",
+      "mode": "100644",
+      "sha": "3fccc40f858630464e90004f88c44cd0642b3423",
+      "size": 3719
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0012-compose-module.md",
+      "mode": "100644",
+      "sha": "0b3fba4c48aa43ca38b43ba4952900b7dea2477e",
+      "size": 2733
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0012-release-upgrade-module.md",
+      "mode": "100644",
+      "sha": "f9f03799b70feb0063fb26e327d5fb44e5c4a99d",
+      "size": 4260
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0013-package-module.md",
+      "mode": "100644",
+      "sha": "f56745e8a35003a2281d53aaaa8825ee5da3fd07",
+      "size": 4434
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0014-sysctl-module.md",
+      "mode": "100644",
+      "sha": "de57d81151e4f96ec76e20b2ede69889d3bc1aad",
+      "size": 3131
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0015-mount-module.md",
+      "mode": "100644",
+      "sha": "58a48f992140fc7d5f1651bee9fe067a93dd37dd",
+      "size": 3344
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0016-rsync-module.md",
+      "mode": "100644",
+      "sha": "c151559a8d68e9b42dfd5e7687546e22079a8113",
+      "size": 2431
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0017-op-module.md",
+      "mode": "100644",
+      "sha": "79b54795fcfd3f19f6cd5ac70fe669ab4a55b8f0",
+      "size": 3710
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0018-missing-submodules.md",
+      "mode": "100644",
+      "sha": "93923a8c279e8e4e287a260ee0ab3bdf5d52c9ce",
+      "size": 3758
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0019-template-regression-tests.md",
+      "mode": "100644",
+      "sha": "cc917f8a2387628e2a4f4beb55e46875e65dee18",
+      "size": 2711
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0020-lazy-function-double-placeholder-test.md",
+      "mode": "100644",
+      "sha": "23bc9d19c347ba81120220dbca54fc6720d02fea",
+      "size": 1345
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0021-cli-import-validation.md",
+      "mode": "100644",
+      "sha": "0b6318f54eeb116a1d29ebf4c72765e6adbaac2d",
+      "size": 3230
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0022-rsync-strict-host-key-checking.md",
+      "mode": "100644",
+      "sha": "a4360f502b06872047da84ba94bc93995c6929ae",
+      "size": 3093
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0023-llm-code-guide.md",
+      "mode": "100644",
+      "sha": "eeff767df572ffc9adbfa2bd5b8b5546bc845384",
+      "size": 3608
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0024-create-paratix-readme.md",
+      "mode": "100644",
+      "sha": "fe8bbc098afce250b1c212577e78b80a1729dc4a",
+      "size": 2170
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0025-readme-env-override-note.md",
+      "mode": "100644",
+      "sha": "20b32171f45d68686a5914845e5745c685591c2e",
+      "size": 1478
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0026-paratix-readme.md",
+      "mode": "100644",
+      "sha": "91a903d7919c0632a9a2f00318e6ec3b51f19d2d",
+      "size": 2524
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0027-create-paratix-files-field.md",
+      "mode": "100644",
+      "sha": "9be24484b613b8df3275a98ad2957c62a07c6381",
+      "size": 1589
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0028-paratix-files-field.md",
+      "mode": "100644",
+      "sha": "90d8341a2bd3031f6dce6544d13eaca4a7455878",
+      "size": 2397
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0029-mit-license-files.md",
+      "mode": "100644",
+      "sha": "c91c29c3a07fb26894c64c6810b8dbb1b44850fc",
+      "size": 782
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0030-root-readme-enhancement.md",
+      "mode": "100644",
+      "sha": "6061c81cb38e201dc8adee0ff6458a1882dab020",
+      "size": 1222
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0031-graceful-ssh-shutdown.md",
+      "mode": "100644",
+      "sha": "17148ed4adc3668be3386e597c409bd59376e269",
+      "size": 2856
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0032-sigint-during-reconnect-test.md",
+      "mode": "100644",
+      "sha": "71f2a302ec61698039986b2be807cf3f0595317b",
+      "size": 2701
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0033-error-message-truncation.md",
+      "mode": "100644",
+      "sha": "088507f3cbdf0297da505191850ab81ac51a3514",
+      "size": 3313
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0034-shutdown-signal-module-loop-test.md",
+      "mode": "100644",
+      "sha": "6053588333a0c751eb194fbc1074de1e09a81249",
+      "size": 1775
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0035-ssh-agent-support.md",
+      "mode": "100644",
+      "sha": "6d8fb7fc9f93728fa25240d62743a7f0a520ee27",
+      "size": 3442
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0036-ssh-host-key-verification.md",
+      "mode": "100644",
+      "sha": "4e97cc4a655c35f12935e3e0576b9a0399fbde78",
+      "size": 4529
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0037-dotenv-parser-enhancements.md",
+      "mode": "100644",
+      "sha": "276eb65b84533d77b1e1cc2f26e62c59cc54f76a",
+      "size": 2344
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0038-totp-algorithm-support.md",
+      "mode": "100644",
+      "sha": "f51abecb602767bf9eb689ea3e2c9a488982567c",
+      "size": 2265
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0039-download-url-scheme-validation.md",
+      "mode": "100644",
+      "sha": "b302d470a14c89a2f6b5c80d22e033d46dec4878",
+      "size": 3143
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0040-accept-new-fingerprint-warning.md",
+      "mode": "100644",
+      "sha": "b58eee2499ee9056b7473887d1118e46cfc9164e",
+      "size": 2334
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0041-host-key-memory-cache.md",
+      "mode": "100644",
+      "sha": "3a6a503cb75dae4809924e6ae7006a515b245805",
+      "size": 2895
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0042-download-large-sha256.md",
+      "mode": "100644",
+      "sha": "193af72a375469db3cdc6af1f2c939d22e8d2c02",
+      "size": 3481
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0043-sftp-transfer-timeout.md",
+      "mode": "100644",
+      "sha": "f905d391df627d349e38d395c6ea7740e18788ba",
+      "size": 3441
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0044-dpkg-configure-before-upgrade.md",
+      "mode": "100644",
+      "sha": "a252c26bc51b28d308b0ea74ecf061dbdf7f944b",
+      "size": 2251
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0045-stats-signals-count-all-attempts.md",
+      "mode": "100644",
+      "sha": "5a83d0bd6861e04975960fd7d8556478435a9957",
+      "size": 1960
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0046-paratix-ssh-integration-tests.md",
+      "mode": "100644",
+      "sha": "7c737e23536ac9bdad823606c08b23068e100a9a",
+      "size": 5530
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0047-integration-test-strategy.md",
+      "mode": "100644",
+      "sha": "6a7fba9e23311e5004fb03eb5cd30bc0a9bc6efd",
+      "size": 5520
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0048-unicode-i18n-tests.md",
+      "mode": "100644",
+      "sha": "a49c5b0db2076e43834d0411a1e931475b30844c",
+      "size": 3721
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0049-create-paratix-secure-bootstrap-defaults.md",
+      "mode": "100644",
+      "sha": "18be4303fa9629714a91b003c356589f85a334c7",
+      "size": 2757
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0050-runner-bootstrap-context-output.md",
+      "mode": "100644",
+      "sha": "f8c75bdee0f7756b9786ad57bcf647b3b054a9f7",
+      "size": 2198
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0051-sshd-dry-run-verification.md",
+      "mode": "100644",
+      "sha": "777c7f1e80d50bf4720572ac708b0d7bf062bd10",
+      "size": 3173
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0052-create-paratix-host-key-bootstrap.md",
+      "mode": "100644",
+      "sha": "e5c48041c3c16896b5bf8bedecb233d514800680",
+      "size": 1388
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0053-ssh-knownhosts-nonstandard-port-support.md",
+      "mode": "100644",
+      "sha": "4d4a347fd6eb2e57d2e5ee898342c5b8d85b3b9f",
+      "size": 1417
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0054-rsync-session-host-key-trust.md",
+      "mode": "100644",
+      "sha": "f97200adf92f6998ce1de5652c70f9b84e54f54e",
+      "size": 1835
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0055-create-paratix-initial-user-selection.md",
+      "mode": "100644",
+      "sha": "393dfd0fecd73de0d7668f79e88b67c8cca22889",
+      "size": 2681
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0056-create-paratix-first-run-bootstrap-flag.md",
+      "mode": "100644",
+      "sha": "86f4648a57438f8dca560e1b7e5610c2a7df1630",
+      "size": 2408
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0057-paratix-cli-first-run-flag.md",
+      "mode": "100644",
+      "sha": "77892067f63c29a278cf1e7e495588176347be55",
+      "size": 2838
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0058-create-paratix-arrow-key-initial-user-prompt.md",
+      "mode": "100644",
+      "sha": "991aae99a6db44e6746da8888feb6a02fd9adc6f",
+      "size": 1823
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0059-create-paratix-host-prompt-and-template.md",
+      "mode": "100644",
+      "sha": "f395264234807f6b596ce34600158efc11a1aa60",
+      "size": 1807
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0060-create-paratix-public-key-selection.md",
+      "mode": "100644",
+      "sha": "d0986fa64483cb4b78f3d94b053428f4383ea572",
+      "size": 890
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0061-create-paratix-cli-host-and-public-key-options.md",
+      "mode": "100644",
+      "sha": "07994bfd10b913fc16b240cddd27e1f6285aeada",
+      "size": 1791
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0062-create-paratix-ssh2-host-fingerprint-bootstrap.md",
+      "mode": "100644",
+      "sha": "78561fbfc9a9afcc9e30b8da875f1d1553c64e3d",
+      "size": 3348
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0063-paratix-live-module-spinner.md",
+      "mode": "100644",
+      "sha": "d0814c09d4ccde36f39608e9cef905fa68291204",
+      "size": 3026
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0064-first-run-stop-module-and-hardened-bootstrap-staging.md",
+      "mode": "100644",
+      "sha": "720743d1bee451b0ccf9fed99cbff9cd550eeaea",
+      "size": 4464
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0065-signal-flush-checkpoints.md",
+      "mode": "100644",
+      "sha": "380c5f61f35ae662fa7d9ad18d838d908c1437e3",
+      "size": 4187
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0066-create-paratix-dx-friendly-tsconfig.md",
+      "mode": "100644",
+      "sha": "aa2c4d679e6a25c9546b5dea057dcc2d1e8b8c21",
+      "size": 1967
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0067-create-paratix-prettier-scaffold-default.md",
+      "mode": "100644",
+      "sha": "70fa1e6f524543f781cbf9f652587586f3c45227",
+      "size": 2033
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0068-create-paratix-eslint-scaffold-default.md",
+      "mode": "100644",
+      "sha": "3043148ca08dfcd558fec4e7264934248d2b2faa",
+      "size": 2037
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0069-paratix-nested-recipe-cli-indentation.md",
+      "mode": "100644",
+      "sha": "6f137b03762826ffe778045675da6ad157396436",
+      "size": 2075
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0070-user-focused-readme-entrypoints.md",
+      "mode": "100644",
+      "sha": "6f6ac3f02493b26b72952a6e51916e8785269078",
+      "size": 2102
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0071-when-host-state-guards-and-ufw-disabled.md",
+      "mode": "100644",
+      "sha": "9f09c1d36fc1be5b7a3bb007642859d38a3b71ed",
+      "size": 1379
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0072-swap-module-for-file-backed-swap-and-tuning.md",
+      "mode": "100644",
+      "sha": "88828e3d5befce8be4f247f196db039dcd891cd1",
+      "size": 1432
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0073-recipe-output-guide-dots.md",
+      "mode": "100644",
+      "sha": "c968c814341c213b921df200945c4464810c37dd",
+      "size": 2199
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0074-cli-version-with-git-short-hash.md",
+      "mode": "100644",
+      "sha": "facc1c69693bcfb0b9f0fc7fcbcf533066687ba0",
+      "size": 2045
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0075-compose-systemd-detached-mode-and-unit-improvements.md",
+      "mode": "100644",
+      "sha": "a61c60dcb817940ee15cd7f24defeabe2a9d1c68",
+      "size": 2176
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0076-podman-quadlet-container-module.md",
+      "mode": "100644",
+      "sha": "99be1757ba8bf6f3dd5d393a5132827804149c86",
+      "size": 2429
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0077-file-chmod-and-chown-modules.md",
+      "mode": "100644",
+      "sha": "7934cc9fc8126de3fc354eef5bcc15f4969999f0",
+      "size": 2295
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0078-quadlet-container-environmentfiles-healthcheck.md",
+      "mode": "100644",
+      "sha": "c3ec906c418f684c7f43c9969768409e23a06b74",
+      "size": 2519
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0079-quadlet-container-complete-field-coverage.md",
+      "mode": "100644",
+      "sha": "9d84fcfcc1e126c715133544847c9f8ec888428f",
+      "size": 6803
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0080-disk-full-detection-on-zero-byte-write.md",
+      "mode": "100644",
+      "sha": "076aad6b9654f75e524c68d647e499fb30d01982",
+      "size": 3199
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0081-quadlet-targeted-image-updates.md",
+      "mode": "100644",
+      "sha": "da4e5be981a1594135fdf5596e12e7c4378849eb",
+      "size": 3903
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0082-quadlet-image-update-output-detail.md",
+      "mode": "100644",
+      "sha": "4ff3f51599000a01caf89ab435f66aee5868c448",
+      "size": 4372
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0083-timer-scheduled-module.md",
+      "mode": "100644",
+      "sha": "159891e52d48b7ae42c306df2b7d49b1d4977c96",
+      "size": 8704
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0084-cron-and-timer-absent-modules.md",
+      "mode": "100644",
+      "sha": "8a5d52955458763102bca0aaa3842c2de1a6b159",
+      "size": 5390
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0085-create-paratix-admin-public-key-validation-hardening.md",
+      "mode": "100644",
+      "sha": "20ee29f4a4c53351de3ee23a9b50a42f6e40086c",
+      "size": 2711
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0085-flag-apply-locks.md",
+      "mode": "100644",
+      "sha": "8aedc52567ae51d72fcc606cf0aededc402af199",
+      "size": 4940
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0085-mock-ssh-fail-closed-module-tests.md",
+      "mode": "100644",
+      "sha": "ccab0409c51d6bfd116bd3e1d671ed51f49e0530",
+      "size": 3753
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0086-create-paratix-runtime-dependency-range.md",
+      "mode": "100644",
+      "sha": "8e49be83a18b8aa9d3e5c732ede6c16de37f4bfa",
+      "size": 3073
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0087-pull-request-ci-checks.md",
+      "mode": "100644",
+      "sha": "1149ad79c4d5bc21429cd28cd223ed7c1553affa",
+      "size": 2282
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0088-create-paratix-dist-cli-success-path.md",
+      "mode": "100644",
+      "sha": "f98cb9f2b2c3f0ea74ad7583718b0797aef4407a",
+      "size": 2773
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0088-create-paratix-root-bootstrap-typecheck.md",
+      "mode": "100644",
+      "sha": "cdb38974aaba1d410409299d8add07f7f0c557a3",
+      "size": 2485
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0088-publish-integration-gate.md",
+      "mode": "100644",
+      "sha": "ff495ea522d7e1c9edc1748672bd9cdeb2156de3",
+      "size": 2807
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0090-dry-run-diff-output.md",
+      "mode": "100644",
+      "sha": "9c9db93982f58160edc7e681494b6db85470acf6",
+      "size": 20096
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0091-dry-run-diff-followup-modules.md",
+      "mode": "100644",
+      "sha": "dc093ab2517af2f9d67298fdeceab2cab8436f60",
+      "size": 13110
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0092-flag-lock-diagnostics-and-shell-pattern-tests.md",
+      "mode": "100644",
+      "sha": "6fc1eff43433920e644d916fb381d50b79c79991",
+      "size": 19028
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0093-cli-recipe-filter.md",
+      "mode": "100644",
+      "sha": "4e597d04156c78d2afa0930e03cb77c8ecdede7c",
+      "size": 19641
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0094-user-guides-and-lightweight-migration-notes.md",
+      "mode": "100644",
+      "sha": "f856e4985840232943ff1005ca34af0d3d722e66",
+      "size": 15248
+    },
+    {
+      "path": "docs/plan/archive/2026-07-10-0095-paratix-live-task-elapsed-time.md",
+      "mode": "100644",
+      "sha": "7d4f965619c59a58a0809de34eb89d05ad8ca019",
+      "size": 15477
+    },
+    {
+      "path": "docs/plan/archive/2026-07-15-compose-pull-podman-compose-fallback.md",
+      "mode": "100644",
+      "sha": "d5383cd0e75b2bb1d3629a7a134a77ef056710f2",
+      "size": 13857
+    },
+    {
+      "path": "docs/plan/archive/2026-07-15-quadlet-network-module.md",
+      "mode": "100644",
+      "sha": "e437081d1cc9b0764f150a59a7ff732ed97c98e8",
+      "size": 22542
+    },
+    {
+      "path": "docs/plan/archive/2026-07-28-dependency-update-pending-approvals.md",
+      "mode": "100644",
+      "sha": "8efd02d749b8636837c00fc751027aa79a78b7e9",
+      "size": 40143
+    },
+    {
+      "path": "docs/plan/archive/2026-07-29-scaffold-postbuild-verification.md",
+      "mode": "100644",
+      "sha": "4d144d134fa2073f204690bc3f1046e730c5dd64",
+      "size": 17688
+    },
+    {
+      "path": "docs/plan/archive/2026-08-06-op-secrets-vorab-aufloesen.md",
+      "mode": "100644",
+      "sha": "4e95e69991bb1a9134abeba45ce38e577eff6382",
+      "size": 52086
+    },
+    {
+      "path": "docs/plan/archive/2026-09-22-github-hosted-runner-ohne-private-minuten.md",
+      "mode": "100644",
+      "sha": "f565c202491351a9a9bf1e82b2d8862f46b324cf",
+      "size": 40453
+    },
+    {
+      "path": "docs/plan/archive/2026-09-23-agent-discovery-und-create-paratix-api.md",
+      "mode": "100644",
+      "sha": "7761e127813459b6077bccb46f2947b20da491b8",
+      "size": 17681
+    },
+    {
+      "path": "docs/plan/archive/2026-09-23-automatische-drift-pruefungen.md",
+      "mode": "100644",
+      "sha": "8cf9703da1cf4e633a1dbd0e25304db090e719d9",
+      "size": 14483
+    },
+    {
+      "path": "docs/plan/archive/2026-09-23-paketsichere-dokumentationslinks.md",
+      "mode": "100644",
+      "sha": "8f6da95be359b0eaf89a6349700cdb07e96406ee",
+      "size": 10856
+    },
+    {
+      "path": "docs/plan/archive/2026-09-23-paratix-0-18-0-signal-list-migration.md",
+      "mode": "100644",
+      "sha": "6658a258a7cb82dc45aa7df540a4a31b939e0a1e",
+      "size": 18141
+    },
+    {
+      "path": "docs/plan/archive/2026-09-23-public-api-typdeklarationen-und-guide-synchronisieren.md",
+      "mode": "100644",
+      "sha": "b4ea7841eae13520ef9a6a733c1aad9f67465ba3",
+      "size": 22951
+    },
+    {
+      "path": "docs/review-areas.md",
+      "mode": "100644",
+      "sha": "0a3445927b6ac4aa146927d2490a74a0c23d24dd",
+      "size": 2026
+    },
+    {
+      "path": "docs/user-guide/README.md",
+      "mode": "100644",
+      "sha": "8f9991ee8898655d983fc65ad750c43f7d083601",
+      "size": 524
+    },
+    {
+      "path": "docs/user-guide/comparison.md",
+      "mode": "100644",
+      "sha": "c7b3dfc707e7881a5178b5cad17667f99af9d86a",
+      "size": 4349
+    },
+    {
+      "path": "docs/user-guide/migration.md",
+      "mode": "100644",
+      "sha": "e10cae5a94905a02fc4b5da803df7b4050cebbe8",
+      "size": 9174
+    },
+    {
+      "path": "docs/user-guide/troubleshooting.md",
+      "mode": "100644",
+      "sha": "6c3b3944dc17ee881a68adb027519022fb17e47e",
+      "size": 10950
+    },
+    {
+      "path": "eslint.config.ts",
+      "mode": "100644",
+      "sha": "3dfa6848c7aa8e584bf932e829d4dafd40128709",
+      "size": 1699
+    },
+    {
+      "path": "oxlint.config.ts",
+      "mode": "100644",
+      "sha": "eb1bd6094e8007fdfd40bc9ee61161c1d3497753",
+      "size": 1634
+    },
+    {
+      "path": "package.json",
+      "mode": "100644",
+      "sha": "7181fddbabbe85ffec5f55943fccb3e26958f5c7",
+      "size": 554
+    },
+    {
+      "path": "packages/create-paratix/CHANGELOG.md",
+      "mode": "100644",
+      "sha": "3e0efb94752d40b730a1e7eda2a4ef7775185b3c",
+      "size": 21168
+    },
+    {
+      "path": "packages/create-paratix/LICENSE",
+      "mode": "100644",
+      "sha": "3852cac3b761870bde509eb54e645a16d0ac0267",
+      "size": 1080
+    },
+    {
+      "path": "packages/create-paratix/README.md",
+      "mode": "100644",
+      "sha": "e0dea5fb360ecf0371860ea9abaa6813db96837b",
+      "size": 12864
+    },
+    {
+      "path": "packages/create-paratix/package.json",
+      "mode": "100644",
+      "sha": "e8b07f3dd879f646d3866ccd06ed28525122c3dd",
+      "size": 827
+    },
+    {
+      "path": "packages/create-paratix/src/cliExitError.ts",
+      "mode": "100644",
+      "sha": "ab275e4709a69c2baa9e97d93f745e4d916d370b",
+      "size": 974
+    },
+    {
+      "path": "packages/create-paratix/src/cliFormat.ts",
+      "mode": "100644",
+      "sha": "4da9921f4fff4c8ec294c6b0c6f30cbc289eadc0",
+      "size": 1054
+    },
+    {
+      "path": "packages/create-paratix/src/cliValidation.ts",
+      "mode": "100644",
+      "sha": "db371c48d11c4bab4563e8b8575db3fa0078316a",
+      "size": 4528
+    },
+    {
+      "path": "packages/create-paratix/src/dependencyRange.ts",
+      "mode": "100644",
+      "sha": "9714b40cf3a30d537bde84588365d304c2a1237b",
+      "size": 2980
+    },
+    {
+      "path": "packages/create-paratix/src/directExecution.ts",
+      "mode": "100644",
+      "sha": "4d4c27908bb1396066437e1ecf4414be3f0b4fcc",
+      "size": 575
+    },
+    {
+      "path": "packages/create-paratix/src/hostFingerprintBootstrap.ts",
+      "mode": "100644",
+      "sha": "0181577aec8b89e38766362ae66bd88d498bae9b",
+      "size": 12553
+    },
+    {
+      "path": "packages/create-paratix/src/hostKeyBlobValidation.ts",
+      "mode": "100644",
+      "sha": "ce50fe6afdc0eb1ff60ac1907595ee5219096467",
+      "size": 8394
+    },
+    {
+      "path": "packages/create-paratix/src/index.ts",
+      "mode": "100644",
+      "sha": "a6f508bb75a44a56473f4a145c22a6a42b9683fe",
+      "size": 14467
+    },
+    {
+      "path": "packages/create-paratix/src/interactivePrompts.ts",
+      "mode": "100644",
+      "sha": "945dbc3f1b0050c2a8ab7c3efd65231df062ce74",
+      "size": 18140
+    },
+    {
+      "path": "packages/create-paratix/src/openSshPublicKeyWire.ts",
+      "mode": "100644",
+      "sha": "b38d9f890c1ef5fbc986925e3a517580b9f60ad3",
+      "size": 8014
+    },
+    {
+      "path": "packages/create-paratix/src/projectDirectory.ts",
+      "mode": "100644",
+      "sha": "6367d95bcdc8c2037e486028157c1f6cdfc504a6",
+      "size": 11019
+    },
+    {
+      "path": "packages/create-paratix/src/promptUi.ts",
+      "mode": "100644",
+      "sha": "64892d221f74169af07881ad389ce1af02c4de0a",
+      "size": 6553
+    },
+    {
+      "path": "packages/create-paratix/src/publicKeyBase64.ts",
+      "mode": "100644",
+      "sha": "25b9f171c78ce686e60e3bd5df27dd3c4410da82",
+      "size": 2456
+    },
+    {
+      "path": "packages/create-paratix/src/publicKeyProvenanceLog.ts",
+      "mode": "100644",
+      "sha": "6006a8eca9b69459052a65e84853f742fee345cc",
+      "size": 647
+    },
+    {
+      "path": "packages/create-paratix/src/publicKeySelection.ts",
+      "mode": "100644",
+      "sha": "c6bad03508ddcc43d69707ab882284d39fac8ee2",
+      "size": 15205
+    },
+    {
+      "path": "packages/create-paratix/src/scaffoldConfig.ts",
+      "mode": "100644",
+      "sha": "ea9d32956a924a7c3017c28d7350e95dec6d499a",
+      "size": 13605
+    },
+    {
+      "path": "packages/create-paratix/src/scaffoldFiles.ts",
+      "mode": "100644",
+      "sha": "ed507345ff2aae9270c57a6e2ba6f1d0c27e6689",
+      "size": 7239
+    },
+    {
+      "path": "packages/create-paratix/src/scaffoldRuntime.ts",
+      "mode": "100644",
+      "sha": "1949e1cba8cec8fdc0b1ce8aa01d9f41bcbe8427",
+      "size": 4589
+    },
+    {
+      "path": "packages/create-paratix/src/serverTemplate.ts",
+      "mode": "100644",
+      "sha": "f31f8aa131941ab127cf284d55140d6b1db7b055",
+      "size": 8275
+    },
+    {
+      "path": "packages/create-paratix/src/templates.ts",
+      "mode": "100644",
+      "sha": "443b805c23ed11e47d4df1d9553351941560d762",
+      "size": 2874
+    },
+    {
+      "path": "packages/create-paratix/src/unsafeCodepoints.ts",
+      "mode": "100644",
+      "sha": "49efdae5d66dc25fa731a765cf220fa0128fc739",
+      "size": 1832
+    },
+    {
+      "path": "packages/create-paratix/test/cli-config.test.ts",
+      "mode": "100644",
+      "sha": "ade62b6664636c53cedd5e140b2e2680979a11f1",
+      "size": 51876
+    },
+    {
+      "path": "packages/create-paratix/test/generated-project.test.ts",
+      "mode": "100644",
+      "sha": "2ae78a9c6fe105cd830e5807d962aa9bfe205bcb",
+      "size": 3662
+    },
+    {
+      "path": "packages/create-paratix/test/helpers.ts",
+      "mode": "100644",
+      "sha": "9e7657cbef0cd44c9e107956129a59000a3c91de",
+      "size": 11792
+    },
+    {
+      "path": "packages/create-paratix/test/host-fingerprint.test.ts",
+      "mode": "100644",
+      "sha": "199a167bad934e0a467fa2f8b18c472c00d9a43e",
+      "size": 20446
+    },
+    {
+      "path": "packages/create-paratix/test/integration/generated-project.install.test.ts",
+      "mode": "100644",
+      "sha": "347d642a4749fd31f204f57bb226aee08214bca6",
+      "size": 3846
+    },
+    {
+      "path": "packages/create-paratix/test/postbuild/cli.dist.test.ts",
+      "mode": "100644",
+      "sha": "779294d1216ec24bf2bf0a8646bb9557e30683c8",
+      "size": 24241
+    },
+    {
+      "path": "packages/create-paratix/test/project-files.test.ts",
+      "mode": "100644",
+      "sha": "2cb4afb990512e16ad85070b303796ccf1a4db8c",
+      "size": 42188
+    },
+    {
+      "path": "packages/create-paratix/test/prompts.test.ts",
+      "mode": "100644",
+      "sha": "71f58f76f4e6de97466ca917d5f27625a822349a",
+      "size": 31767
+    },
+    {
+      "path": "packages/create-paratix/test/scaffold-project.test.ts",
+      "mode": "100644",
+      "sha": "ca00da77da11417ba7d8b7e6cba51eaa57907c98",
+      "size": 24359
+    },
+    {
+      "path": "packages/create-paratix/test/scaffold-runtime.test.ts",
+      "mode": "100644",
+      "sha": "074b70c3148bc863a6338cb4bc5b3e9e9d6e72db",
+      "size": 5370
+    },
+    {
+      "path": "packages/create-paratix/test/scaffoldFixtures.ts",
+      "mode": "100644",
+      "sha": "23164bd634667b911fcbbebf564df10b0c150949",
+      "size": 8156
+    },
+    {
+      "path": "packages/create-paratix/test/templates-cspell.test.ts",
+      "mode": "100644",
+      "sha": "f86b9b995a647060a4d880d5c8df1fda7371fa84",
+      "size": 1073
+    },
+    {
+      "path": "packages/create-paratix/tsconfig.json",
+      "mode": "100644",
+      "sha": "e4598991f1101107a376d8203b392d28abc087cd",
+      "size": 144
+    },
+    {
+      "path": "packages/create-paratix/tsconfig.typecheck.json",
+      "mode": "100644",
+      "sha": "e1f2da1bcae7ba57ed93adf3f58db93137024e52",
+      "size": 242
+    },
+    {
+      "path": "packages/create-paratix/tsup.config.ts",
+      "mode": "100644",
+      "sha": "1d5f6de2fa1f5f6b48d4f8a4908054b3ca151ac3",
+      "size": 528
+    },
+    {
+      "path": "packages/create-paratix/vitest.config.ts",
+      "mode": "100644",
+      "sha": "b300d29046723423764fac062d7e938b5b45995b",
+      "size": 505
+    },
+    {
+      "path": "packages/create-paratix/vitest.distribution.config.ts",
+      "mode": "100644",
+      "sha": "afd0e07399432d456b37c5b37a33df5e34990da2",
+      "size": 216
+    },
+    {
+      "path": "packages/create-paratix/vitest.integration.config.ts",
+      "mode": "100644",
+      "sha": "3089c9752b9daa2953251728a72f70672fbbaeea",
+      "size": 379
+    },
+    {
+      "path": "packages/paratix/AGENTS.md",
+      "mode": "100644",
+      "sha": "0ab97740d57e864d7fb90c2f9b8e7301bba0c620",
+      "size": 845
+    },
+    {
+      "path": "packages/paratix/CHANGELOG.md",
+      "mode": "100644",
+      "sha": "873b1fe552470e2fc7e5f7599a1e0f2edc7763a2",
+      "size": 119131
+    },
+    {
+      "path": "packages/paratix/CLAUDE.md",
+      "mode": "100644",
+      "sha": "fce6c1d958bfbd9a86114f7da5fdaa1e408f3f0c",
+      "size": 178
+    },
+    {
+      "path": "packages/paratix/LICENSE",
+      "mode": "100644",
+      "sha": "3852cac3b761870bde509eb54e645a16d0ac0267",
+      "size": 1080
+    },
+    {
+      "path": "packages/paratix/README.md",
+      "mode": "100644",
+      "sha": "8b3a3fccfb61c584fd9a16522037b19e4b20af33",
+      "size": 9445
+    },
+    {
+      "path": "packages/paratix/llm-guide.md",
+      "mode": "100644",
+      "sha": "d6e7e0f6e01e4c050216aee402eee80bd2939bb7",
+      "size": 103196
+    },
+    {
+      "path": "packages/paratix/package.json",
+      "mode": "100644",
+      "sha": "56912007f07edf2b3b0f4b7be9f13d7bd8c94439",
+      "size": 908
+    },
+    {
+      "path": "packages/paratix/src/builtins.ts",
+      "mode": "100644",
+      "sha": "8cd7e3b3fdcecba31ce854cff1ef30e95c6eebc3",
+      "size": 13865
+    },
+    {
+      "path": "packages/paratix/src/cli.ts",
+      "mode": "100644",
+      "sha": "05c59dc4f714aea4f9db03f2dec3e5cfd86f9fef",
+      "size": 47059
+    },
+    {
+      "path": "packages/paratix/src/cliTsxHelpers.ts",
+      "mode": "100644",
+      "sha": "4b037175002d8da7b6e2eaa93103fe3b024f1839",
+      "size": 1569
+    },
+    {
+      "path": "packages/paratix/src/conditionalExecution.ts",
+      "mode": "100644",
+      "sha": "02b928c68df3a0eb3f28914dac67e0e194806a68",
+      "size": 12059
+    },
+    {
+      "path": "packages/paratix/src/conditionalGuards.ts",
+      "mode": "100644",
+      "sha": "687fa6977a0edb41b92ad5e9a2ee6b633a57a6ba",
+      "size": 2063
+    },
+    {
+      "path": "packages/paratix/src/conditionalModules.ts",
+      "mode": "100644",
+      "sha": "1cdd164e52d6b4ba7d5f9a16b8e21d5d4f818f9f",
+      "size": 6875
+    },
+    {
+      "path": "packages/paratix/src/dryRunDispatch.ts",
+      "mode": "100644",
+      "sha": "0be64423a1287e901e79c18d290ec166084f4276",
+      "size": 1834
+    },
+    {
+      "path": "packages/paratix/src/dryRunRecipe.ts",
+      "mode": "100644",
+      "sha": "28ed0da0f3e1acf95efbca47d9714d93ae87d856",
+      "size": 12094
+    },
+    {
+      "path": "packages/paratix/src/environment.ts",
+      "mode": "100644",
+      "sha": "79f9b0ed6c361ca31ea58c4ed41aa9a1f424bf07",
+      "size": 13602
+    },
+    {
+      "path": "packages/paratix/src/errorRedaction.ts",
+      "mode": "100644",
+      "sha": "06c3eb9143c6d8b6e5f5e998bbd71d72582dac59",
+      "size": 5221
+    },
+    {
+      "path": "packages/paratix/src/firstRunContext.ts",
+      "mode": "100644",
+      "sha": "9f4b3b7b7489a076a25493cf2506bf4504f198bd",
+      "size": 3619
+    },
+    {
+      "path": "packages/paratix/src/hostValidation.ts",
+      "mode": "100644",
+      "sha": "3ab7cd0322226468ba140c0bfef1da8cf481dc70",
+      "size": 1434
+    },
+    {
+      "path": "packages/paratix/src/index.ts",
+      "mode": "100644",
+      "sha": "64bce66261f3bff757f1747e3cf6344d9217fdf4",
+      "size": 2553
+    },
+    {
+      "path": "packages/paratix/src/knownHostPatterns.ts",
+      "mode": "100644",
+      "sha": "e803771084ac2f7a2182b9c5691a76f10a9c28db",
+      "size": 2792
+    },
+    {
+      "path": "packages/paratix/src/knownHosts.ts",
+      "mode": "100644",
+      "sha": "958168688bb4a23c952be2c9deadd86a591ffaf2",
+      "size": 29828
+    },
+    {
+      "path": "packages/paratix/src/meta.ts",
+      "mode": "100644",
+      "sha": "993ee36d1a6ff3850f39d5a04a516d2956de03f2",
+      "size": 12480
+    },
+    {
+      "path": "packages/paratix/src/moduleFailure.ts",
+      "mode": "100644",
+      "sha": "99d26f0f9727e2b982bcd175ab73829f66bb5ed5",
+      "size": 6993
+    },
+    {
+      "path": "packages/paratix/src/moduleFilter.ts",
+      "mode": "100644",
+      "sha": "99622c967abea57984a3b3361a92e2f438d8a103",
+      "size": 5765
+    },
+    {
+      "path": "packages/paratix/src/modules/apt.ts",
+      "mode": "100644",
+      "sha": "5f16d6a2a7a0fbaece7bb1478765381e0dc7b038",
+      "size": 48196
+    },
+    {
+      "path": "packages/paratix/src/modules/aptKeyHelpers.ts",
+      "mode": "100644",
+      "sha": "98c1657f908c24c4099ea6671d63fd05fa1fc0cd",
+      "size": 10118
+    },
+    {
+      "path": "packages/paratix/src/modules/aptKeyStaging.ts",
+      "mode": "100644",
+      "sha": "90b01f43840c82fd12c065cd9afe8a5f979963c5",
+      "size": 13251
+    },
+    {
+      "path": "packages/paratix/src/modules/archive.ts",
+      "mode": "100644",
+      "sha": "eee1d39e51241ab12aacc257317e2dda86aa812b",
+      "size": 78607
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveContainmentBackstop.ts",
+      "mode": "100644",
+      "sha": "3b656866fb38998d4ace1f1a6fceb5f2f28de8b2",
+      "size": 31350
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveContainmentEnforcement.ts",
+      "mode": "100644",
+      "sha": "f0cb1edc51f3ed92e9b619809af5d8de2e7137ed",
+      "size": 13460
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveContainmentFlag.ts",
+      "mode": "100644",
+      "sha": "7d0250cd601798d0f5c46ba74da7186fe84a1ca7",
+      "size": 38957
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveContainmentScope.ts",
+      "mode": "100644",
+      "sha": "a562926ee08fed393b47a4c0e39b191ab5330f73",
+      "size": 5579
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveDestinationValidation.ts",
+      "mode": "100644",
+      "sha": "69d5033071c65959832b559e01969234ea8cfcce",
+      "size": 17338
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveKernelCrossCheck.ts",
+      "mode": "100644",
+      "sha": "7dd9f0730ff9f436712891fd150671cc7858e703",
+      "size": 22306
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveKernelCrossCheckReport.ts",
+      "mode": "100644",
+      "sha": "5a685818cc51782e233f2526b9b8e8d983e64024",
+      "size": 6783
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveLinkAnalysis.ts",
+      "mode": "100644",
+      "sha": "8bbad0b26511f5bd925ca4d83b16de5338257765",
+      "size": 2414
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveLinkValidation.ts",
+      "mode": "100644",
+      "sha": "dac225d553658aa6a6945d2eb2289a8285c52178",
+      "size": 25134
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveMemberValidation.ts",
+      "mode": "100644",
+      "sha": "b4d826c24a8a416d39beb661d6d81c03ccd7f970",
+      "size": 20345
+    },
+    {
+      "path": "packages/paratix/src/modules/archivePostMergeJudgement.ts",
+      "mode": "100644",
+      "sha": "6ec6d75e57d4f1bf6ae72a553ed3e433616c72df",
+      "size": 9180
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveProbe.ts",
+      "mode": "100644",
+      "sha": "934d154216969d4e98c93628ee5a550870a99bc1",
+      "size": 26205
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveSymlinkListing.ts",
+      "mode": "100644",
+      "sha": "01f4fdecd3b4264804877cc2e8e87f269572c3c4",
+      "size": 19565
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveSymlinkResolver.ts",
+      "mode": "100644",
+      "sha": "42400b4696088068502ccf4034a75ae8bf1ce8dc",
+      "size": 28423
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveTarListing.ts",
+      "mode": "100644",
+      "sha": "c3091595751b6a14e66561b0f83cda88f96b50c2",
+      "size": 10317
+    },
+    {
+      "path": "packages/paratix/src/modules/archiveTarListingParser.ts",
+      "mode": "100644",
+      "sha": "225233df09dc55bec5321aea02f6251949489a05",
+      "size": 14231
+    },
+    {
+      "path": "packages/paratix/src/modules/command.ts",
+      "mode": "100644",
+      "sha": "494c1c64cbc4eb7dca1019a70eb994aac4ff3a50",
+      "size": 3895
+    },
+    {
+      "path": "packages/paratix/src/modules/compose.ts",
+      "mode": "100644",
+      "sha": "78b93dedd47f2d3b6d55fb45f9cc67d1001e2823",
+      "size": 70808
+    },
+    {
+      "path": "packages/paratix/src/modules/cron.ts",
+      "mode": "100644",
+      "sha": "50534347814828adba8cb9e8ed11641ca45b952d",
+      "size": 30354
+    },
+    {
+      "path": "packages/paratix/src/modules/cronMutation.ts",
+      "mode": "100644",
+      "sha": "e258f4a0bacc45467c4a1528a0a1c1a2b76ca4bc",
+      "size": 8558
+    },
+    {
+      "path": "packages/paratix/src/modules/cronWarningHelpers.ts",
+      "mode": "100644",
+      "sha": "980c0e42652a0971c9f6b413e709f00be1596c71",
+      "size": 3538
+    },
+    {
+      "path": "packages/paratix/src/modules/curlHelpers.ts",
+      "mode": "100644",
+      "sha": "0ce04e8408cc4ae0f062c4233ef444182696c988",
+      "size": 10523
+    },
+    {
+      "path": "packages/paratix/src/modules/diffHelpers.ts",
+      "mode": "100644",
+      "sha": "c59608c4c6cc10de1591cb6f873dd0a770f13bc0",
+      "size": 12756
+    },
+    {
+      "path": "packages/paratix/src/modules/download.ts",
+      "mode": "100644",
+      "sha": "a9a1797d359057cb56f153998a33ed71bb6ba2a3",
+      "size": 63304
+    },
+    {
+      "path": "packages/paratix/src/modules/file.ts",
+      "mode": "100644",
+      "sha": "d9b4161f34b062b1693ed640dff7b765fd3da41b",
+      "size": 28614
+    },
+    {
+      "path": "packages/paratix/src/modules/fileDirectoryHelpers.ts",
+      "mode": "100644",
+      "sha": "ffae4eedb4d625bca388609d815c55a1843be711",
+      "size": 11745
+    },
+    {
+      "path": "packages/paratix/src/modules/fileExtra.ts",
+      "mode": "100644",
+      "sha": "5348a5489443822e4c0cee9f37f83d26f7ffddec",
+      "size": 32470
+    },
+    {
+      "path": "packages/paratix/src/modules/fileHelpers.ts",
+      "mode": "100644",
+      "sha": "19096e9e14efc7f34d1c45bdde4713c9eebbd10e",
+      "size": 3143
+    },
+    {
+      "path": "packages/paratix/src/modules/fileMetadataHelpers.ts",
+      "mode": "100644",
+      "sha": "80ebcaa5163ec7ddca4b820605276c4d7e664852",
+      "size": 13057
+    },
+    {
+      "path": "packages/paratix/src/modules/flagLock.ts",
+      "mode": "100644",
+      "sha": "a8f7e396c60a0ae7561e3ada69ce68376f6b6040",
+      "size": 21439
+    },
+    {
+      "path": "packages/paratix/src/modules/git.ts",
+      "mode": "100644",
+      "sha": "b6abdbf284b8cfc44129b4666221be748ded2ea9",
+      "size": 21944
+    },
+    {
+      "path": "packages/paratix/src/modules/group.ts",
+      "mode": "100644",
+      "sha": "9db241594cca7ff52ff4c1c9d87cbeee21c9bb93",
+      "size": 8639
+    },
+    {
+      "path": "packages/paratix/src/modules/hostname.ts",
+      "mode": "100644",
+      "sha": "195cffbc9e4eef9b6a1202fb4ebef8c1ead19a70",
+      "size": 4663
+    },
+    {
+      "path": "packages/paratix/src/modules/index.ts",
+      "mode": "100644",
+      "sha": "753b28eeaf44f61cd235bfd7a977528bb97435e6",
+      "size": 1345
+    },
+    {
+      "path": "packages/paratix/src/modules/moduleHelpers.ts",
+      "mode": "100644",
+      "sha": "5f795720ee868bf9806e85ac5bb95a03f15a0a1d",
+      "size": 15710
+    },
+    {
+      "path": "packages/paratix/src/modules/mount.ts",
+      "mode": "100644",
+      "sha": "b0ddd794f59aba8dd15306e73f36b123e0b251e8",
+      "size": 33983
+    },
+    {
+      "path": "packages/paratix/src/modules/mountBind.ts",
+      "mode": "100644",
+      "sha": "ddcba5f81c5790795c554c5d4ea8d8b42509c59e",
+      "size": 9697
+    },
+    {
+      "path": "packages/paratix/src/modules/mountConvergence.ts",
+      "mode": "100644",
+      "sha": "84e9b0b94425f84148ef88ee2925807a79ef67dc",
+      "size": 5376
+    },
+    {
+      "path": "packages/paratix/src/modules/mountFailureHelpers.ts",
+      "mode": "100644",
+      "sha": "52f5d65a5ad9441e7a550bef3f91b6b0707d6c90",
+      "size": 2436
+    },
+    {
+      "path": "packages/paratix/src/modules/mountOptions.ts",
+      "mode": "100644",
+      "sha": "3e1e1cfb938e72bb6377d5e6176bc8f67badf9f0",
+      "size": 11631
+    },
+    {
+      "path": "packages/paratix/src/modules/mountProbe.ts",
+      "mode": "100644",
+      "sha": "cd032ebef6a72e0e3b625155f9f662a33c7cd32d",
+      "size": 9239
+    },
+    {
+      "path": "packages/paratix/src/modules/mountRollback.ts",
+      "mode": "100644",
+      "sha": "cfbcf36989ee24576804ca45166b47f9c86e5088",
+      "size": 5164
+    },
+    {
+      "path": "packages/paratix/src/modules/mountTypes.ts",
+      "mode": "100644",
+      "sha": "7ee0d2b740c3b21d102f8d477352b02289cb400d",
+      "size": 1911
+    },
+    {
+      "path": "packages/paratix/src/modules/net.ts",
+      "mode": "100644",
+      "sha": "1f4efcde7e00b0d5ee80a8ff66f3676b26f5db16",
+      "size": 84538
+    },
+    {
+      "path": "packages/paratix/src/modules/netHelpers.ts",
+      "mode": "100644",
+      "sha": "838d2ee3dfa630454b5acda63d8217fbdf162a16",
+      "size": 18434
+    },
+    {
+      "path": "packages/paratix/src/modules/op.ts",
+      "mode": "100644",
+      "sha": "637bdf972e450d65dd1224de04e3b9a6b13bd6d7",
+      "size": 12382
+    },
+    {
+      "path": "packages/paratix/src/modules/opFailureMasking.ts",
+      "mode": "100644",
+      "sha": "f228979d6ddd7dc1f338432395f942789d67aff9",
+      "size": 6901
+    },
+    {
+      "path": "packages/paratix/src/modules/opOutputCapture.ts",
+      "mode": "100644",
+      "sha": "1649c23536f1cf3cacb86ac1677d301ec4fbead4",
+      "size": 2589
+    },
+    {
+      "path": "packages/paratix/src/modules/opReferenceResolution.ts",
+      "mode": "100644",
+      "sha": "8a94e098d6af9b39fc535289bfe6f4a6c4508268",
+      "size": 5584
+    },
+    {
+      "path": "packages/paratix/src/modules/opSpawnError.ts",
+      "mode": "100644",
+      "sha": "187de530b32fb5b64ff896c1c8f060404871a3c6",
+      "size": 2289
+    },
+    {
+      "path": "packages/paratix/src/modules/opSpawnLifecycle.ts",
+      "mode": "100644",
+      "sha": "80b4914f6675651060dfcca5e15e82968bc62b25",
+      "size": 4149
+    },
+    {
+      "path": "packages/paratix/src/modules/opSpawnRunner.ts",
+      "mode": "100644",
+      "sha": "28128d35f6a355766a5a758a6797621665ee5778",
+      "size": 8592
+    },
+    {
+      "path": "packages/paratix/src/modules/package.ts",
+      "mode": "100644",
+      "sha": "2e4b38fea29413be2d5a5de63a0c12f296aa6bdc",
+      "size": 23333
+    },
+    {
+      "path": "packages/paratix/src/modules/packageAbsent.ts",
+      "mode": "100644",
+      "sha": "4eb4c10f7ce00b4af35f6f12d2c4bdfb3ac99a2e",
+      "size": 8972
+    },
+    {
+      "path": "packages/paratix/src/modules/packageUpgradeSummary.ts",
+      "mode": "100644",
+      "sha": "cbb38827aece7e6a87ac40bc96610c51d6683635",
+      "size": 2009
+    },
+    {
+      "path": "packages/paratix/src/modules/packageVersion.ts",
+      "mode": "100644",
+      "sha": "15c0de360a0d03cb9d65f9dc819236ca7576c75c",
+      "size": 16921
+    },
+    {
+      "path": "packages/paratix/src/modules/posixNames.ts",
+      "mode": "100644",
+      "sha": "59d39e4b5c7283389a6e226149104447954ff3f4",
+      "size": 695
+    },
+    {
+      "path": "packages/paratix/src/modules/quadlet.ts",
+      "mode": "100644",
+      "sha": "56b5f0d95d052dc629ae103b1b3682ad41f01a12",
+      "size": 15121
+    },
+    {
+      "path": "packages/paratix/src/modules/quadletConflictGuard.ts",
+      "mode": "100644",
+      "sha": "7b1463ef72a6f1d8c461b820073c35a95d8d9129",
+      "size": 7963
+    },
+    {
+      "path": "packages/paratix/src/modules/quadletFileHelpers.ts",
+      "mode": "100644",
+      "sha": "8bc77983a9a1d0c3f9c8a798312612d604755dbc",
+      "size": 7194
+    },
+    {
+      "path": "packages/paratix/src/modules/quadletHelpers.ts",
+      "mode": "100644",
+      "sha": "3b80831f034f9c9efd2e1f10c3b8f10e838eae86",
+      "size": 14665
+    },
+    {
+      "path": "packages/paratix/src/modules/quadletImageInspectHelpers.ts",
+      "mode": "100644",
+      "sha": "e226ce0d6f7553d87a87fa2a38c19e6b7fc11c85",
+      "size": 2537
+    },
+    {
+      "path": "packages/paratix/src/modules/quadletImageUpdateFlow.ts",
+      "mode": "100644",
+      "sha": "f08f04f5df4f0f6b946f99237a4618e3e1c8b74d",
+      "size": 4748
+    },
+    {
+      "path": "packages/paratix/src/modules/quadletNetworkHelpers.ts",
+      "mode": "100644",
+      "sha": "0e5185b06bba670ea6a79dab912456cac1a1bc06",
+      "size": 2945
+    },
+    {
+      "path": "packages/paratix/src/modules/quadletValidationHelpers.ts",
+      "mode": "100644",
+      "sha": "7600834e4d23bb32e46d077ffb7ee701de025f7f",
+      "size": 4846
+    },
+    {
+      "path": "packages/paratix/src/modules/releaseUpgrade.ts",
+      "mode": "100644",
+      "sha": "5b4e6634bf835ee204b3882a866e651e876b8467",
+      "size": 52926
+    },
+    {
+      "path": "packages/paratix/src/modules/releaseUpgradeDistro.ts",
+      "mode": "100644",
+      "sha": "c92482f5ddbc26bc85f736b2188a73ab784a74ca",
+      "size": 1810
+    },
+    {
+      "path": "packages/paratix/src/modules/releaseUpgradeSources.ts",
+      "mode": "100644",
+      "sha": "cb32cc778a01ad3ad0587979d76051f080fc9397",
+      "size": 10397
+    },
+    {
+      "path": "packages/paratix/src/modules/remoteFileChecks.ts",
+      "mode": "100644",
+      "sha": "e788fcdb777fe0da5188b656de2c4305f2296315",
+      "size": 6906
+    },
+    {
+      "path": "packages/paratix/src/modules/resolveHostTimeout.ts",
+      "mode": "100644",
+      "sha": "6399769cc2531d12b67f98124d101b30299b19d4",
+      "size": 6832
+    },
+    {
+      "path": "packages/paratix/src/modules/rsync.ts",
+      "mode": "100644",
+      "sha": "c7813d6c4efe2a0add57d680dfe87b437b6fb4bb",
+      "size": 18816
+    },
+    {
+      "path": "packages/paratix/src/modules/rsyncProcess.ts",
+      "mode": "100644",
+      "sha": "d724a815017afa2bca591d161dedb88523fad17e",
+      "size": 7311
+    },
+    {
+      "path": "packages/paratix/src/modules/rsyncValidation.ts",
+      "mode": "100644",
+      "sha": "af249e13f8746f1c48783b1dbd8450e76afa8184",
+      "size": 3435
+    },
+    {
+      "path": "packages/paratix/src/modules/script.ts",
+      "mode": "100644",
+      "sha": "0e21165cd88fee55d53de2bf32257b7ac9318a34",
+      "size": 12870
+    },
+    {
+      "path": "packages/paratix/src/modules/service.ts",
+      "mode": "100644",
+      "sha": "7c3e705ef2b0797e7e0eb94358143ec5926a0e8e",
+      "size": 14067
+    },
+    {
+      "path": "packages/paratix/src/modules/ssh.ts",
+      "mode": "100644",
+      "sha": "4a863d8855f0814730c3c4663bd388e6b92057d4",
+      "size": 38762
+    },
+    {
+      "path": "packages/paratix/src/modules/sshAuthorizedKeysHelpers.ts",
+      "mode": "100644",
+      "sha": "89d3eaebfb30d80b6ef0f2dce7a3db592ba7b74c",
+      "size": 29028
+    },
+    {
+      "path": "packages/paratix/src/modules/sshPublicKeyValidation.ts",
+      "mode": "100644",
+      "sha": "6ea62b5b818700b4b032f471d069c8de913058a1",
+      "size": 4882
+    },
+    {
+      "path": "packages/paratix/src/modules/sshd.ts",
+      "mode": "100644",
+      "sha": "6c78302cc4e0e13b5dacbb5d7bfe01462bcbd435",
+      "size": 88802
+    },
+    {
+      "path": "packages/paratix/src/modules/sshdConfigHelpers.ts",
+      "mode": "100644",
+      "sha": "d6403167a2562b6a60be683811832b80ba2b0838",
+      "size": 10563
+    },
+    {
+      "path": "packages/paratix/src/modules/sshdPortLivenessProbe.ts",
+      "mode": "100644",
+      "sha": "08fb50016d02e2a681e623f918d9f80519d6dc0a",
+      "size": 4686
+    },
+    {
+      "path": "packages/paratix/src/modules/swap.ts",
+      "mode": "100644",
+      "sha": "c74a8a8a4574452179720c7b0a088de088472b22",
+      "size": 4764
+    },
+    {
+      "path": "packages/paratix/src/modules/swapAbsentFlow.ts",
+      "mode": "100644",
+      "sha": "0cb4525776871ce6147c29a7881dafb03d7610d8",
+      "size": 13682
+    },
+    {
+      "path": "packages/paratix/src/modules/swapAbsentRollbackHelpers.ts",
+      "mode": "100644",
+      "sha": "2cb67f95a12b5003e98e2614cc8689c8e815a874",
+      "size": 2406
+    },
+    {
+      "path": "packages/paratix/src/modules/swapBackupHelpers.ts",
+      "mode": "100644",
+      "sha": "86243f0ef28a0fb0b46aa3f1964d74b7a6cecb38",
+      "size": 10742
+    },
+    {
+      "path": "packages/paratix/src/modules/swapFileCreateHelpers.ts",
+      "mode": "100644",
+      "sha": "53a607cbb0fb31a62a5ae6e415a890a7365c07b8",
+      "size": 9563
+    },
+    {
+      "path": "packages/paratix/src/modules/swapFileHelpers.ts",
+      "mode": "100644",
+      "sha": "40b0e134a88c5aae879a2f024183bc4f2d1be4e0",
+      "size": 10315
+    },
+    {
+      "path": "packages/paratix/src/modules/swapFileTypes.ts",
+      "mode": "100644",
+      "sha": "946db3bcaf6967c9e5bcd1b3a37e3419b9572922",
+      "size": 507
+    },
+    {
+      "path": "packages/paratix/src/modules/swapFstabHelpers.ts",
+      "mode": "100644",
+      "sha": "efd6dfca40d3fb261e931355bed4ce248f16027b",
+      "size": 6869
+    },
+    {
+      "path": "packages/paratix/src/modules/swapHelpers.ts",
+      "mode": "100644",
+      "sha": "ca8c113d4c94d97013c3c0b88a1c5792d8f15a6f",
+      "size": 11403
+    },
+    {
+      "path": "packages/paratix/src/modules/sysctl.ts",
+      "mode": "100644",
+      "sha": "f71472499ec71646a2871b190fe60636c8e145a6",
+      "size": 26230
+    },
+    {
+      "path": "packages/paratix/src/modules/system.ts",
+      "mode": "100644",
+      "sha": "730fe5b5db5871401084d6a94c8298eb8a9b643b",
+      "size": 13593
+    },
+    {
+      "path": "packages/paratix/src/modules/systemctlRestart.ts",
+      "mode": "100644",
+      "sha": "ed263ec832d89fbdc51abce220749df5b968793a",
+      "size": 8811
+    },
+    {
+      "path": "packages/paratix/src/modules/systemd.ts",
+      "mode": "100644",
+      "sha": "12def117b913b249c205134fcebc4c199af7f599",
+      "size": 17918
+    },
+    {
+      "path": "packages/paratix/src/modules/systemdUnitSnapshot.ts",
+      "mode": "100644",
+      "sha": "290c6bd34c7dd4782fc5f07e8e928626c4f47fbc",
+      "size": 8636
+    },
+    {
+      "path": "packages/paratix/src/modules/timer.ts",
+      "mode": "100644",
+      "sha": "f679876917adb9a3692bd04d35cdb36fb1c4d748",
+      "size": 44877
+    },
+    {
+      "path": "packages/paratix/src/modules/timerFileSnapshots.ts",
+      "mode": "100644",
+      "sha": "42a493426511a13d4014c52c6546184102a462a0",
+      "size": 4049
+    },
+    {
+      "path": "packages/paratix/src/modules/timerHelpers.ts",
+      "mode": "100644",
+      "sha": "48dc0d1c28ddfd3ce769a85452fad7aa26cab02b",
+      "size": 13319
+    },
+    {
+      "path": "packages/paratix/src/modules/ufw.ts",
+      "mode": "100644",
+      "sha": "11d0ddc7a18fdd02f80e3d271d9aac295ecef2bf",
+      "size": 18110
+    },
+    {
+      "path": "packages/paratix/src/modules/ufwRuleHelpers.ts",
+      "mode": "100644",
+      "sha": "498c2417a0693abaff981c32077a48fc351b66f9",
+      "size": 17047
+    },
+    {
+      "path": "packages/paratix/src/modules/ufwStatus.ts",
+      "mode": "100644",
+      "sha": "5330547bbf16d8378671fa26c899fde6cf6db1de",
+      "size": 11812
+    },
+    {
+      "path": "packages/paratix/src/modules/user.ts",
+      "mode": "100644",
+      "sha": "25ffb8e5a5fa147456892d2a27a59d4e3ef7d8f3",
+      "size": 38136
+    },
+    {
+      "path": "packages/paratix/src/output.ts",
+      "mode": "100644",
+      "sha": "85818307f72ce988acc7ab6cddb15e586a3ecff0",
+      "size": 31742
+    },
+    {
+      "path": "packages/paratix/src/outputFormatting.ts",
+      "mode": "100644",
+      "sha": "8a8c416bf0d13f24ca6dcd08ef228fd1b275a3c4",
+      "size": 5210
+    },
+    {
+      "path": "packages/paratix/src/recipe.ts",
+      "mode": "100644",
+      "sha": "f42663bd0614a0b914f2d08a89bb4456ff85fbd4",
+      "size": 22972
+    },
+    {
+      "path": "packages/paratix/src/recipeGuard.ts",
+      "mode": "100644",
+      "sha": "412badb163b1c13077a77dc99ee79d21b40b2a59",
+      "size": 1135
+    },
+    {
+      "path": "packages/paratix/src/runner.ts",
+      "mode": "100644",
+      "sha": "6133c437e2cc5cec2105d00507e72e3d02184e60",
+      "size": 46151
+    },
+    {
+      "path": "packages/paratix/src/runnerAbortSignal.ts",
+      "mode": "100644",
+      "sha": "de5195b3598d22dbc98353ea0b512f22db6b1af9",
+      "size": 3780
+    },
+    {
+      "path": "packages/paratix/src/runnerHelpers.ts",
+      "mode": "100644",
+      "sha": "7f2888e7e6464d1272adf27397a602d20135ead2",
+      "size": 1178
+    },
+    {
+      "path": "packages/paratix/src/secretPrewarm.ts",
+      "mode": "100644",
+      "sha": "3f93a265a94e195b6b729077a362412342a16cab",
+      "size": 10273
+    },
+    {
+      "path": "packages/paratix/src/secretSink.ts",
+      "mode": "100644",
+      "sha": "cca7fc72fa72eff08d01ec5e906a73291ea4dc68",
+      "size": 15123
+    },
+    {
+      "path": "packages/paratix/src/server.ts",
+      "mode": "100644",
+      "sha": "3b595823c15de548ec6e32b0e03d97de19656e5a",
+      "size": 2810
+    },
+    {
+      "path": "packages/paratix/src/serverDefinitionValidation.ts",
+      "mode": "100644",
+      "sha": "d5c8327d40039fda826b6cbc44ab262622668330",
+      "size": 7290
+    },
+    {
+      "path": "packages/paratix/src/sftp.ts",
+      "mode": "100644",
+      "sha": "5c17e343f8327a3a5924500d3e761f539d9d82a8",
+      "size": 29540
+    },
+    {
+      "path": "packages/paratix/src/signalBus.ts",
+      "mode": "100644",
+      "sha": "c0a760bb06f941b465debe511810cf6ccc475ec4",
+      "size": 3094
+    },
+    {
+      "path": "packages/paratix/src/signalOrchestration.ts",
+      "mode": "100644",
+      "sha": "804eea440fc22c038a35b1c5817d86de260cb0f0",
+      "size": 5232
+    },
+    {
+      "path": "packages/paratix/src/ssh.ts",
+      "mode": "100644",
+      "sha": "16685cb6b0414e10438d94b68a786cf17514cdc5",
+      "size": 122138
+    },
+    {
+      "path": "packages/paratix/src/sshHelpers.ts",
+      "mode": "100644",
+      "sha": "0c3d10622d0d05cfe58b70a7aa8461c4c1c10fe9",
+      "size": 25869
+    },
+    {
+      "path": "packages/paratix/src/template.ts",
+      "mode": "100644",
+      "sha": "28aaafcc35fb6952464ff2da9d3d77c2ec3069fa",
+      "size": 12420
+    },
+    {
+      "path": "packages/paratix/src/terminal.ts",
+      "mode": "100644",
+      "sha": "ad8c5bad9fa8cf1d7d88683d88a3601b43957f85",
+      "size": 5969
+    },
+    {
+      "path": "packages/paratix/src/terminalSanitizer.ts",
+      "mode": "100644",
+      "sha": "d2017347ccec932f1c49437a26b8031131a4538a",
+      "size": 3466
+    },
+    {
+      "path": "packages/paratix/src/totp.ts",
+      "mode": "100644",
+      "sha": "f5bf5a173447204d7e8210ad7ab108ccbc717b93",
+      "size": 9624
+    },
+    {
+      "path": "packages/paratix/src/types.ts",
+      "mode": "100644",
+      "sha": "2cb29288b0f6c704b366e4dc304c6d8efcf65f52",
+      "size": 18300
+    },
+    {
+      "path": "packages/paratix/test/builtins.test.ts",
+      "mode": "100644",
+      "sha": "b955c0ae595e9db5e71a664afacf03c5679c8e73",
+      "size": 34884
+    },
+    {
+      "path": "packages/paratix/test/cli.test.ts",
+      "mode": "100644",
+      "sha": "9c65c04295a122cfb1a7715b1efa32369b2f873e",
+      "size": 96620
+    },
+    {
+      "path": "packages/paratix/test/cliTsxHelpers.test.ts",
+      "mode": "100644",
+      "sha": "7a8ded63972e6b78f9bbd37eb7d58278f2a1e3e5",
+      "size": 2442
+    },
+    {
+      "path": "packages/paratix/test/conditionalGuards.test.ts",
+      "mode": "100644",
+      "sha": "aa6ad49fe8778f11dc4a275231e68669bbd497e5",
+      "size": 7573
+    },
+    {
+      "path": "packages/paratix/test/conditionalModules.test.ts",
+      "mode": "100644",
+      "sha": "f791be54ec4169a90711602d98495458a7eb9a4a",
+      "size": 20640
+    },
+    {
+      "path": "packages/paratix/test/environment.test.ts",
+      "mode": "100644",
+      "sha": "8561f5bbc2b93be4c0fb418b0a3dfcc2b4b97439",
+      "size": 13995
+    },
+    {
+      "path": "packages/paratix/test/guardedWriteFile.test.ts",
+      "mode": "100644",
+      "sha": "68d6aa644da5f87710f43870a0afdd3d0cc753b4",
+      "size": 5759
+    },
+    {
+      "path": "packages/paratix/test/harness.test.ts",
+      "mode": "100644",
+      "sha": "364947c7784904fad9505e976b0f2f9450d9f705",
+      "size": 12420
+    },
+    {
+      "path": "packages/paratix/test/helpers/localShell.ts",
+      "mode": "100644",
+      "sha": "e6f5c0261c053d6e1d7d027d052df11a830ad397",
+      "size": 2556
+    },
+    {
+      "path": "packages/paratix/test/helpers/mockQuadletSsh.ts",
+      "mode": "100644",
+      "sha": "c6dc9b4928555a2320369525abcc49cd0c8ab492",
+      "size": 1576
+    },
+    {
+      "path": "packages/paratix/test/helpers/mockSsh.test.ts",
+      "mode": "100644",
+      "sha": "71c48d7c7b33c723fcf2ff0a21e75bb820488441",
+      "size": 26141
+    },
+    {
+      "path": "packages/paratix/test/helpers/mockSsh.ts",
+      "mode": "100644",
+      "sha": "e1ef7595cd636ce5b63113ce8ebbd242ab72339a",
+      "size": 4538
+    },
+    {
+      "path": "packages/paratix/test/helpers/mockSshCommandResponses.ts",
+      "mode": "100644",
+      "sha": "b4ec56ef6403be734281b5e4ef4642dfaccb3604",
+      "size": 8474
+    },
+    {
+      "path": "packages/paratix/test/helpers/mockSshFlagLock.ts",
+      "mode": "100644",
+      "sha": "8337c9392e7717d17f6ad228a98769f8a924da21",
+      "size": 8661
+    },
+    {
+      "path": "packages/paratix/test/helpers/mockSshSideEffects.ts",
+      "mode": "100644",
+      "sha": "a5779978eb9539a5e4faab9b29ceaa2aff247580",
+      "size": 7191
+    },
+    {
+      "path": "packages/paratix/test/helpers/runnerMocks.test.ts",
+      "mode": "100644",
+      "sha": "1036e7dd89bba1e57d9fd15fa4c0024748699c61",
+      "size": 3074
+    },
+    {
+      "path": "packages/paratix/test/helpers/runnerMocks.ts",
+      "mode": "100644",
+      "sha": "ec82aa2db4d8f69e91e818fbd565147449201274",
+      "size": 8695
+    },
+    {
+      "path": "packages/paratix/test/hostValidation.test.ts",
+      "mode": "100644",
+      "sha": "01aa3c91f79c2698a76d6b2765caaa551e1ae93b",
+      "size": 2485
+    },
+    {
+      "path": "packages/paratix/test/integration/docker/Dockerfile",
+      "mode": "100644",
+      "sha": "8e2e4b2d1bb15d1c9c892eac455d3894407580e2",
+      "size": 1315
+    },
+    {
+      "path": "packages/paratix/test/integration/docker/sshd_config",
+      "mode": "100644",
+      "sha": "2ac95e2eb329ded9176cf751b0a848fe1839f2e0",
+      "size": 752
+    },
+    {
+      "path": "packages/paratix/test/integration/docker/start-sshd.sh",
+      "mode": "100644",
+      "sha": "3b8307396b6bab0f5392a5966864254903841266",
+      "size": 64
+    },
+    {
+      "path": "packages/paratix/test/integration/harness.ts",
+      "mode": "100644",
+      "sha": "8b327ce1993f9669ddf346f87123a5fdc1cd055e",
+      "size": 15116
+    },
+    {
+      "path": "packages/paratix/test/integration/paratix.integration.test.ts",
+      "mode": "100644",
+      "sha": "e79f3ee3141b71fece319d4c189717f5418a4afc",
+      "size": 55976
+    },
+    {
+      "path": "packages/paratix/test/jsdoc-examples.test.ts",
+      "mode": "100644",
+      "sha": "7d69fe5dadc0aefd1639a17096f769e3043d285c",
+      "size": 3586
+    },
+    {
+      "path": "packages/paratix/test/knownHosts.test.ts",
+      "mode": "100644",
+      "sha": "2be9a1b2bbc65d1d5efc9b788a3e5c2db66467cf",
+      "size": 66763
+    },
+    {
+      "path": "packages/paratix/test/meta.test.ts",
+      "mode": "100644",
+      "sha": "96d75e5420d3600ff2b900f45258146b6314c7eb",
+      "size": 14499
+    },
+    {
+      "path": "packages/paratix/test/module-filter.test.ts",
+      "mode": "100644",
+      "sha": "02ab959757ddda4de1757684ab9a606546822939",
+      "size": 11887
+    },
+    {
+      "path": "packages/paratix/test/moduleFailure.test.ts",
+      "mode": "100644",
+      "sha": "87e913be3f4647e0c93e1a189a63ef6209fc75c9",
+      "size": 7946
+    },
+    {
+      "path": "packages/paratix/test/modules/apt.test.ts",
+      "mode": "100644",
+      "sha": "c77e8e193e8d41af68da7c07d3925297a7c7ace6",
+      "size": 82765
+    },
+    {
+      "path": "packages/paratix/test/modules/archive.shell.smoke.test.ts",
+      "mode": "100644",
+      "sha": "8c017e356969e40243b703dff4b2a41d3a1cdfb2",
+      "size": 156519
+    },
+    {
+      "path": "packages/paratix/test/modules/archive.test.ts",
+      "mode": "100644",
+      "sha": "40b2021b1ec90f732d7d489c0abfe94daf7047f9",
+      "size": 355801
+    },
+    {
+      "path": "packages/paratix/test/modules/archiveContainmentFlag.test.ts",
+      "mode": "100644",
+      "sha": "fec3603e2960c1852161d43c69f373e017a255d4",
+      "size": 31134
+    },
+    {
+      "path": "packages/paratix/test/modules/archiveKernelCrossCheck.test.ts",
+      "mode": "100644",
+      "sha": "78e245dabc6ac0ceea7945c26cdac2da542e191a",
+      "size": 20359
+    },
+    {
+      "path": "packages/paratix/test/modules/archiveLinkValidation.test.ts",
+      "mode": "100644",
+      "sha": "adce36e1b3f453e607a014bea95ed1541f54a2ae",
+      "size": 63167
+    },
+    {
+      "path": "packages/paratix/test/modules/archiveProbe.shell.smoke.test.ts",
+      "mode": "100644",
+      "sha": "5e208537db4df15f7097e9392ada4775a71fce47",
+      "size": 19231
+    },
+    {
+      "path": "packages/paratix/test/modules/archiveProbe.test.ts",
+      "mode": "100644",
+      "sha": "0c15bd4ee4177e660bd25c86d2c74a3e899af78b",
+      "size": 9124
+    },
+    {
+      "path": "packages/paratix/test/modules/archiveTarListing.shell.smoke.test.ts",
+      "mode": "100644",
+      "sha": "b74a80c892f7a96a402cf0c8906f3995c2f59f0b",
+      "size": 11232
+    },
+    {
+      "path": "packages/paratix/test/modules/archiveTarListing.test.ts",
+      "mode": "100644",
+      "sha": "b24c6c1bf3f82400e99bae06c427fb25a8a131f6",
+      "size": 18482
+    },
+    {
+      "path": "packages/paratix/test/modules/command.test.ts",
+      "mode": "100644",
+      "sha": "1c03a58f5f7e5b6be2f7ec1ebc47b526d6f17bd7",
+      "size": 11901
+    },
+    {
+      "path": "packages/paratix/test/modules/compose.test.ts",
+      "mode": "100644",
+      "sha": "ea1cc583909e46fc6a89a23a2243179979da8a7a",
+      "size": 91513
+    },
+    {
+      "path": "packages/paratix/test/modules/cron.test.ts",
+      "mode": "100644",
+      "sha": "a2db240dd5c3cf727e95c9bfd7835e961133b8f7",
+      "size": 52642
+    },
+    {
+      "path": "packages/paratix/test/modules/curlHelpers.test.ts",
+      "mode": "100644",
+      "sha": "172a1f54d28e12edb1592fe78e9f1c155ba0c751",
+      "size": 3193
+    },
+    {
+      "path": "packages/paratix/test/modules/diffHelpers.test.ts",
+      "mode": "100644",
+      "sha": "eb00c0b4008a07f6dd3c4d4a33f9551d62ec0ad6",
+      "size": 4003
+    },
+    {
+      "path": "packages/paratix/test/modules/download.test.ts",
+      "mode": "100644",
+      "sha": "8d135ec7f8f4e83c8273b127e674b9902411614b",
+      "size": 144696
+    },
+    {
+      "path": "packages/paratix/test/modules/dry-run-diff-followup.test.ts",
+      "mode": "100644",
+      "sha": "affaac36a80e85417ffe2d6196b603e5edafac4f",
+      "size": 13143
+    },
+    {
+      "path": "packages/paratix/test/modules/file.test.ts",
+      "mode": "100644",
+      "sha": "73b5d44cf9cc4418ed69b8a44c69aa93a35b14ca",
+      "size": 153798
+    },
+    {
+      "path": "packages/paratix/test/modules/fileHelpers.test.ts",
+      "mode": "100644",
+      "sha": "7089f935d995309478c220ee0b2e64ac4c1b0675",
+      "size": 2505
+    },
+    {
+      "path": "packages/paratix/test/modules/flagLock.shell.smoke.test.ts",
+      "mode": "100644",
+      "sha": "f6286a5b0ddfdfa0cce1fff5009982fa0fb83fec",
+      "size": 9890
+    },
+    {
+      "path": "packages/paratix/test/modules/git.test.ts",
+      "mode": "100644",
+      "sha": "c4c3cd2fc44d9e7160fc3f9c0f887518e10bc763",
+      "size": 41267
+    },
+    {
+      "path": "packages/paratix/test/modules/group.test.ts",
+      "mode": "100644",
+      "sha": "96d4d3b186ff9758a9aefeed37360083b14b3d51",
+      "size": 15182
+    },
+    {
+      "path": "packages/paratix/test/modules/hostname.test.ts",
+      "mode": "100644",
+      "sha": "42f9513ed8359afcba18442dceec704f80983786",
+      "size": 4983
+    },
+    {
+      "path": "packages/paratix/test/modules/moduleHelpers.test.ts",
+      "mode": "100644",
+      "sha": "c766a7eeb6c0f09173a34150e5b3b2fc221b204d",
+      "size": 44228
+    },
+    {
+      "path": "packages/paratix/test/modules/mount.test.ts",
+      "mode": "100644",
+      "sha": "e9b3d34ddbd5c4c1f4fce9b9eec26cbbebfa2632",
+      "size": 106827
+    },
+    {
+      "path": "packages/paratix/test/modules/net/01-net-hosts-validation.test.ts",
+      "mode": "100644",
+      "sha": "cc5ee7e859c48589cb384280c142989250ebbdd4",
+      "size": 1659
+    },
+    {
+      "path": "packages/paratix/test/modules/net/02-net-hosts-check.test.ts",
+      "mode": "100644",
+      "sha": "a8fed2477714bc32633d3e0743cdb9681c9f2f01",
+      "size": 6390
+    },
+    {
+      "path": "packages/paratix/test/modules/net/03-net-hosts-apply.test.ts",
+      "mode": "100644",
+      "sha": "5a1839263d77c568811328cb7340b03fc021b057",
+      "size": 21847
+    },
+    {
+      "path": "packages/paratix/test/modules/net/04-net-resolv-check.test.ts",
+      "mode": "100644",
+      "sha": "e91b1e65d58d39f28757198d6980d3375fd8aa60",
+      "size": 4994
+    },
+    {
+      "path": "packages/paratix/test/modules/net/05-net-resolv-apply.test.ts",
+      "mode": "100644",
+      "sha": "39becd4d20c4164ae7db3da70863258e11e2514b",
+      "size": 7922
+    },
+    {
+      "path": "packages/paratix/test/modules/net/06-net-route-check.test.ts",
+      "mode": "100644",
+      "sha": "090a7ec08caad9d15b0f27fed903897ff38236ae",
+      "size": 16989
+    },
+    {
+      "path": "packages/paratix/test/modules/net/07-net-route-apply.test.ts",
+      "mode": "100644",
+      "sha": "4550f3e47e2e103698a7d8ddc60f7ef49e6d7295",
+      "size": 37801
+    },
+    {
+      "path": "packages/paratix/test/modules/net/08-net-interface-r-0000100-name-validation.test.ts",
+      "mode": "100644",
+      "sha": "fbc22944fe168ab39df8a6a4e7fce67de298cf53",
+      "size": 2112
+    },
+    {
+      "path": "packages/paratix/test/modules/net/09-net-writers-cr-lf-validation.test.ts",
+      "mode": "100644",
+      "sha": "c037905f7f571ca4c98653457aa21101f602c01a",
+      "size": 3200
+    },
+    {
+      "path": "packages/paratix/test/modules/net/10-net-interface-check.test.ts",
+      "mode": "100644",
+      "sha": "d35b0ae09299d485324e8c2a481d8641fd10b2b1",
+      "size": 12182
+    },
+    {
+      "path": "packages/paratix/test/modules/net/11-net-interface-apply.test.ts",
+      "mode": "100644",
+      "sha": "7478d8b04de5de3fe380207fbdba61edf2066a25",
+      "size": 20463
+    },
+    {
+      "path": "packages/paratix/test/modules/net/12-net-waitfor-check.test.ts",
+      "mode": "100644",
+      "sha": "6281e380f1452cff8adc20c5d899222710690f0c",
+      "size": 5710
+    },
+    {
+      "path": "packages/paratix/test/modules/net/13-net-waitfor-apply.test.ts",
+      "mode": "100644",
+      "sha": "6d2ee0db0eef56e62e87069399da16823374df03",
+      "size": 6347
+    },
+    {
+      "path": "packages/paratix/test/modules/net/14-net-request-check.test.ts",
+      "mode": "100644",
+      "sha": "16b3dfcdada16683a50bfc5a5c8d694c21e295a5",
+      "size": 9976
+    },
+    {
+      "path": "packages/paratix/test/modules/net/15-net-request-apply.test.ts",
+      "mode": "100644",
+      "sha": "f52b8c0af9d3bcf8b630f9439d9bfff24f382d53",
+      "size": 1928
+    },
+    {
+      "path": "packages/paratix/test/modules/net/16-net-request-header-masking.test.ts",
+      "mode": "100644",
+      "sha": "3e79a6f39fdb7ae6d9f466be503dd829d2229989",
+      "size": 10189
+    },
+    {
+      "path": "packages/paratix/test/modules/netHelpers.test.ts",
+      "mode": "100644",
+      "sha": "79cec65576e3b23f3a014eb5b3af2581ca18fbaf",
+      "size": 2603
+    },
+    {
+      "path": "packages/paratix/test/modules/op.test.ts",
+      "mode": "100644",
+      "sha": "865511b3f64b95e9f1c9bb6095e7457fadfedd15",
+      "size": 44673
+    },
+    {
+      "path": "packages/paratix/test/modules/package.test.ts",
+      "mode": "100644",
+      "sha": "e3e4509a76755738e35a01515ce135786da9c6ca",
+      "size": 79993
+    },
+    {
+      "path": "packages/paratix/test/modules/packageUpgradeSummary.test.ts",
+      "mode": "100644",
+      "sha": "6dc09fd375bf81c9fd9621131eebb51382fd02e8",
+      "size": 2276
+    },
+    {
+      "path": "packages/paratix/test/modules/quadlet.test.ts",
+      "mode": "100644",
+      "sha": "02f2494df01a872e00778ff45e7f85e9c051ce13",
+      "size": 53947
+    },
+    {
+      "path": "packages/paratix/test/modules/quadletConflictGuard.test.ts",
+      "mode": "100644",
+      "sha": "7145d298e28ef1b398dee4a754906305255934d7",
+      "size": 9144
+    },
+    {
+      "path": "packages/paratix/test/modules/releaseUpgrade.test.ts",
+      "mode": "100644",
+      "sha": "065b40fb5b96851386e628f197c0a25c5c1e48b7",
+      "size": 93956
+    },
+    {
+      "path": "packages/paratix/test/modules/releaseUpgradeDistro.test.ts",
+      "mode": "100644",
+      "sha": "67709f1c0952efdc1eabccbf2d9e0233a5c305ce",
+      "size": 1700
+    },
+    {
+      "path": "packages/paratix/test/modules/remoteFileChecks.test.ts",
+      "mode": "100644",
+      "sha": "9e8ded0c6c09e20744a011f49f50580e82df1782",
+      "size": 6096
+    },
+    {
+      "path": "packages/paratix/test/modules/resolveHostTimeout.test.ts",
+      "mode": "100644",
+      "sha": "506d35d390ec8d86aa9faaeaa6554ffb252d3f95",
+      "size": 10069
+    },
+    {
+      "path": "packages/paratix/test/modules/rsync.test.ts",
+      "mode": "100644",
+      "sha": "44726ca4734670e92d489e056c7d6bdb45db57db",
+      "size": 38723
+    },
+    {
+      "path": "packages/paratix/test/modules/script.test.ts",
+      "mode": "100644",
+      "sha": "9010387f8fd4754db1bbf03120865eee750d7968",
+      "size": 21728
+    },
+    {
+      "path": "packages/paratix/test/modules/service.test.ts",
+      "mode": "100644",
+      "sha": "ca0b90442c2ba6cd3fbdf13428f0f90b412a1205",
+      "size": 29471
+    },
+    {
+      "path": "packages/paratix/test/modules/ssh/01-ssh-knownhosts.test.ts",
+      "mode": "100644",
+      "sha": "220ecc36b21f268db0251bf961978991c8d52a47",
+      "size": 46446
+    },
+    {
+      "path": "packages/paratix/test/modules/ssh/02-ssh-authorizedkeys.test.ts",
+      "mode": "100644",
+      "sha": "ec8b8e7aa40f4e54f1c6da919cae036f039f4c01",
+      "size": 58508
+    },
+    {
+      "path": "packages/paratix/test/modules/sshPublicKeyValidation.test.ts",
+      "mode": "100644",
+      "sha": "e55e32e2b0e823ede813f1bcbc5a5a6abae8fdd6",
+      "size": 4486
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/01-sshd-config-apply.test.ts",
+      "mode": "100644",
+      "sha": "dd8449fc05ecf6c9ce6ecffbd55275df388c87d6",
+      "size": 18959
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/02-sshd-config-check.test.ts",
+      "mode": "100644",
+      "sha": "1a00d3b44ad9c5fabba5f6f6e746e1a27985e118",
+      "size": 10585
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/03-sshd-config-dry-run.test.ts",
+      "mode": "100644",
+      "sha": "74504bda9beec789e97bd7a7740e4d1438a4cb1b",
+      "size": 6371
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/04-sshd-port-check.test.ts",
+      "mode": "100644",
+      "sha": "658c873d19a86b2b03c7c49683e2f8029e5d833c",
+      "size": 9033
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/05-sshd-config-apply-validation-and-rollback.test.ts",
+      "mode": "100644",
+      "sha": "9eb1fb3e477ac2e270e6ea22c65386499b7d9ac9",
+      "size": 31937
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/06-sshd-port-apply-validation-and-rollback.test.ts",
+      "mode": "100644",
+      "sha": "e600046bcbf967527e6c32ff256c941e635e3a05",
+      "size": 69271
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/07-sshd-port-dry-run.test.ts",
+      "mode": "100644",
+      "sha": "1df6503d517741958e994a850d160e05f2d53256",
+      "size": 6039
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/08-sshd-config-module-name.test.ts",
+      "mode": "100644",
+      "sha": "cabeed297f63875aad536c8a194d9e0ee2a20e25",
+      "size": 4814
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/09-sshd-config-input-validation.test.ts",
+      "mode": "100644",
+      "sha": "b308418a2d69adb90eb87abecf5f85857f7d8b6c",
+      "size": 5351
+    },
+    {
+      "path": "packages/paratix/test/modules/sshd/10-sshd-port-ufw-guard.test.ts",
+      "mode": "100644",
+      "sha": "e2c11b0ba94262c1dfcc80b0f0a3ce19a81a5bf2",
+      "size": 22173
+    },
+    {
+      "path": "packages/paratix/test/modules/swap.test.ts",
+      "mode": "100644",
+      "sha": "ac06fa81323fba183dc61025cb07970d657699fc",
+      "size": 75916
+    },
+    {
+      "path": "packages/paratix/test/modules/sysctl.test.ts",
+      "mode": "100644",
+      "sha": "c01e6b9a9c014cd684f0a2571d5ed7ed0ca9653f",
+      "size": 36894
+    },
+    {
+      "path": "packages/paratix/test/modules/system.test.ts",
+      "mode": "100644",
+      "sha": "0140b8bd6ff93258bb30a242ff49be7761321eee",
+      "size": 18576
+    },
+    {
+      "path": "packages/paratix/test/modules/systemctlRestart.test.ts",
+      "mode": "100644",
+      "sha": "b23a0c41932ac4710b262e4bc18054ed01973215",
+      "size": 6862
+    },
+    {
+      "path": "packages/paratix/test/modules/systemd.test.ts",
+      "mode": "100644",
+      "sha": "f90bfa96bebbc58e53826057818a71dee2d06180",
+      "size": 39073
+    },
+    {
+      "path": "packages/paratix/test/modules/timer/01-timer-scheduled-check-state-present.test.ts",
+      "mode": "100644",
+      "sha": "e029e2c1f0fb0cb75780f7a8d62757a12d84daf4",
+      "size": 11196
+    },
+    {
+      "path": "packages/paratix/test/modules/timer/02-timer-scheduled-check-state-absent.test.ts",
+      "mode": "100644",
+      "sha": "eb95e41996d443db51be8c1f08c560c29b239967",
+      "size": 4867
+    },
+    {
+      "path": "packages/paratix/test/modules/timer/03-timer-scheduled-apply-state-present.test.ts",
+      "mode": "100644",
+      "sha": "a8fcfc5dbdb81fc0d5df1b68b748bccb1bb442e0",
+      "size": 17429
+    },
+    {
+      "path": "packages/paratix/test/modules/timer/04-timer-scheduled-apply-state-absent.test.ts",
+      "mode": "100644",
+      "sha": "c05dba323135ee9269373ecd4aa287b2998ac456",
+      "size": 9047
+    },
+    {
+      "path": "packages/paratix/test/modules/timer/05-timer-scheduled-unit-content.test.ts",
+      "mode": "100644",
+      "sha": "9873e214d8585b71c5fdbf0026dc4ec1de3e6acf",
+      "size": 8670
+    },
+    {
+      "path": "packages/paratix/test/modules/timer/06-timer-scheduled-apply-state-present-idempotency.test.ts",
+      "mode": "100644",
+      "sha": "2d8df54626575892ededc47c077d56ea0d223175",
+      "size": 16932
+    },
+    {
+      "path": "packages/paratix/test/modules/timer/07-timer-scheduled-environment-quoting.test.ts",
+      "mode": "100644",
+      "sha": "ae128634a9adf475bee45e92163ce32ff394d87d",
+      "size": 6868
+    },
+    {
+      "path": "packages/paratix/test/modules/timer/08-timer-scheduled-module-name-and-validation.test.ts",
+      "mode": "100644",
+      "sha": "0067243441a6b881565a397cd907b862f5ba2fb1",
+      "size": 13310
+    },
+    {
+      "path": "packages/paratix/test/modules/timer/09-timer-absent.test.ts",
+      "mode": "100644",
+      "sha": "a47e036b8c729cfe51772f564a3fe2a03f1c9a59",
+      "size": 25565
+    },
+    {
+      "path": "packages/paratix/test/modules/ufw.test.ts",
+      "mode": "100644",
+      "sha": "e7452f9d9ee9f2f4f774db72531dfeb95c018385",
+      "size": 62210
+    },
+    {
+      "path": "packages/paratix/test/modules/user.test.ts",
+      "mode": "100644",
+      "sha": "937dd82e707792d9900652c8c3cad5a3f9a7d1ed",
+      "size": 44047
+    },
+    {
+      "path": "packages/paratix/test/output.test.ts",
+      "mode": "100644",
+      "sha": "cc4cda1cf2735f6933f8b0df8e08c45115f558de",
+      "size": 44864
+    },
+    {
+      "path": "packages/paratix/test/postbuild/cli.dist.test.ts",
+      "mode": "100644",
+      "sha": "be23c91d9f3ef8da84aecb3b554fb7e4988a96e9",
+      "size": 41720
+    },
+    {
+      "path": "packages/paratix/test/publicApi.test.ts",
+      "mode": "100644",
+      "sha": "e453f9e6b8bf05fa7e9fda0e57a96961bd03e0a0",
+      "size": 2718
+    },
+    {
+      "path": "packages/paratix/test/recipe.test.ts",
+      "mode": "100644",
+      "sha": "21edb38d377beab1a973e968fd1024fa1eaac4ab",
+      "size": 44701
+    },
+    {
+      "path": "packages/paratix/test/runner-dry-run.test.ts",
+      "mode": "100644",
+      "sha": "02474c632062be7524f1e2a3ca2fa8ea6ddfb7b9",
+      "size": 46833
+    },
+    {
+      "path": "packages/paratix/test/runner-lifecycle.test.ts",
+      "mode": "100644",
+      "sha": "71733aa4c7df40b156dfb9baefd101703750fa81",
+      "size": 33685
+    },
+    {
+      "path": "packages/paratix/test/runner-meta.test.ts",
+      "mode": "100644",
+      "sha": "007afd7bc43849b93842f721cdaec1ee10fe8cee",
+      "size": 11510
+    },
+    {
+      "path": "packages/paratix/test/runner-reconnect.test.ts",
+      "mode": "100644",
+      "sha": "ea6939718e6a8db009d4e6d474c6e08b13f4fb5d",
+      "size": 42173
+    },
+    {
+      "path": "packages/paratix/test/runner-secrets-environment.test.ts",
+      "mode": "100644",
+      "sha": "76758fe595e1c6243f7d629bfad4c5c7a0e5d58f",
+      "size": 21082
+    },
+    {
+      "path": "packages/paratix/test/runner-signals.test.ts",
+      "mode": "100644",
+      "sha": "e6f4a7ae53dcb309edfd7e16b97dc8e1a886148d",
+      "size": 53120
+    },
+    {
+      "path": "packages/paratix/test/runnerAbortSignal.test.ts",
+      "mode": "100644",
+      "sha": "4628adbf6aabd527659e51a610dcd6b8303010cb",
+      "size": 3386
+    },
+    {
+      "path": "packages/paratix/test/secretPrewarm.test.ts",
+      "mode": "100644",
+      "sha": "ecc7ffef33c73a6c61cdcf21fb39b83ffe997af4",
+      "size": 10463
+    },
+    {
+      "path": "packages/paratix/test/secretSink.test.ts",
+      "mode": "100644",
+      "sha": "17ecb66008bce6c8bb6b216a6e764009fccfba72",
+      "size": 17189
+    },
+    {
+      "path": "packages/paratix/test/server.test.ts",
+      "mode": "100644",
+      "sha": "a9721804e3d58e5f50c7a5fd144a31f35cf02696",
+      "size": 9631
+    },
+    {
+      "path": "packages/paratix/test/serverDefinitionValidation.test.ts",
+      "mode": "100644",
+      "sha": "4e0845cabd282d1fd0d1b405158b8dda54a843b3",
+      "size": 7200
+    },
+    {
+      "path": "packages/paratix/test/sftp.test.ts",
+      "mode": "100644",
+      "sha": "3c22f6c3f656d9bd9310ec2887e553724a302eec",
+      "size": 54639
+    },
+    {
+      "path": "packages/paratix/test/signalBus.test.ts",
+      "mode": "100644",
+      "sha": "2fc1878a3bf8f590a719ebe58fd6e4f99b83605b",
+      "size": 4225
+    },
+    {
+      "path": "packages/paratix/test/ssh.test.ts",
+      "mode": "100644",
+      "sha": "5cc405cdb81d1ccc802ebb4e093d58c0053a9f9a",
+      "size": 211347
+    },
+    {
+      "path": "packages/paratix/test/sshHelpers.test.ts",
+      "mode": "100644",
+      "sha": "adb43a3c370f282aa2bc4439ced407001fc33260",
+      "size": 48700
+    },
+    {
+      "path": "packages/paratix/test/template.test.ts",
+      "mode": "100644",
+      "sha": "47fe24391458aa02282b41e3efa32aab05aee128",
+      "size": 13462
+    },
+    {
+      "path": "packages/paratix/test/terminal.test.ts",
+      "mode": "100644",
+      "sha": "6cac3567a4d4bf5f0722020817540b27446595df",
+      "size": 7951
+    },
+    {
+      "path": "packages/paratix/test/terminalSanitizer.test.ts",
+      "mode": "100644",
+      "sha": "213ec076aa3b1b6faf1f4c716fd643936bc56f23",
+      "size": 1123
+    },
+    {
+      "path": "packages/paratix/test/totp.test.ts",
+      "mode": "100644",
+      "sha": "aacf2178bc814e2613404dc95e21c2fea5814ca6",
+      "size": 12503
+    },
+    {
+      "path": "packages/paratix/test/writeFile.test.ts",
+      "mode": "100644",
+      "sha": "3ce92126dd86be802d3b8b5e9bca64913d066ed3",
+      "size": 29481
+    },
+    {
+      "path": "packages/paratix/tsconfig.json",
+      "mode": "100644",
+      "sha": "e4598991f1101107a376d8203b392d28abc087cd",
+      "size": 144
+    },
+    {
+      "path": "packages/paratix/tsconfig.typecheck.json",
+      "mode": "100644",
+      "sha": "e1f2da1bcae7ba57ed93adf3f58db93137024e52",
+      "size": 242
+    },
+    {
+      "path": "packages/paratix/tsup.config.ts",
+      "mode": "100644",
+      "sha": "5e08a587a6c48986f80ebb9be2d39f2de9064be1",
+      "size": 4102
+    },
+    {
+      "path": "packages/paratix/vitest.config.ts",
+      "mode": "100644",
+      "sha": "6f2cc3689047ad010986ca1315a6ec024527a8eb",
+      "size": 2338
+    },
+    {
+      "path": "packages/paratix/vitest.distribution.config.ts",
+      "mode": "100644",
+      "sha": "513e750d507217bcdab80bac616b324b4728ef78",
+      "size": 601
+    },
+    {
+      "path": "packages/paratix/vitest.integration.config.ts",
+      "mode": "100644",
+      "sha": "3551d6099296ebf391bb17e53f79c0d3f58504cc",
+      "size": 655
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "mode": "100644",
+      "sha": "cb19c91f3d829ca2020f7034e022a801fee163da",
+      "size": 368288
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "mode": "100644",
+      "sha": "6366df93f22438c38f2b98b3607314600574b4ad",
+      "size": 127
+    },
+    {
+      "path": "release-please-config.json",
+      "mode": "100644",
+      "sha": "fbd1f99df8f216956f675f37169472c1d2bc5a24",
+      "size": 591
+    },
+    {
+      "path": "renovate.json",
+      "mode": "100644",
+      "sha": "e6b184d331cc64347a92569077e50c22bf080149",
+      "size": 174
+    },
+    {
+      "path": "scripts/migrationDocumentation.test.mjs",
+      "mode": "100644",
+      "sha": "11569787b163a3c97a10fa0b9bf357ec329dd8f3",
+      "size": 11726
+    },
+    {
+      "path": "scripts/publishWorkspacePackages.mjs",
+      "mode": "100644",
+      "sha": "07e08ceae66c22504755294320e02f0f2dfb99f4",
+      "size": 32280
+    },
+    {
+      "path": "scripts/publishWorkspacePackages.test.mjs",
+      "mode": "100644",
+      "sha": "d2af558ca6ad5e4f48a70a0419bd23248ebeabd5",
+      "size": 40677
+    },
+    {
+      "path": "scripts/tsconfig.json",
+      "mode": "100644",
+      "sha": "7ba2b1e026883ae3e5f67e58044111963f74161b",
+      "size": 296
+    },
+    {
+      "path": "tsconfig.json",
+      "mode": "100644",
+      "sha": "ca8ad71d74ad6d1703597f9f8b09bce4ee658c48",
+      "size": 336
+    },
+    {
+      "path": "tsconfig.root.json",
+      "mode": "100644",
+      "sha": "7066736d4032e663294b325eaf631d1f898b3e2c",
+      "size": 343
+    },
+    {
+      "path": "website/README.md",
+      "mode": "100644",
+      "sha": "076b05cc64ed1e5a94d4b76ef5e819920f97fcb0",
+      "size": 611
+    },
+    {
+      "path": "website/app/root.tsx",
+      "mode": "100644",
+      "sha": "9b3ecb9eac956f5ad08964b4fa3608c58001ffd2",
+      "size": 782
+    },
+    {
+      "path": "website/app/routes.ts",
+      "mode": "100644",
+      "sha": "fbe3170c2e4daba15b5dbd6930d88835e344f95f",
+      "size": 132
+    },
+    {
+      "path": "website/app/routes/home.tsx",
+      "mode": "100644",
+      "sha": "e114719ade0f86361e57b8ed11dc5c7e8c88e3b4",
+      "size": 15161
+    },
+    {
+      "path": "website/app/styles.css",
+      "mode": "100644",
+      "sha": "b7de6e9ad373d59ce848c98a1e71a31312bbf5c2",
+      "size": 13852
+    },
+    {
+      "path": "website/package.json",
+      "mode": "100644",
+      "sha": "52c8cde898b6a647464a8e26395e8a22e46692a6",
+      "size": 468
+    },
+    {
+      "path": "website/public/icon.svg",
+      "mode": "100644",
+      "sha": "943d68af338a7c4e27055a7ebe116e6e9e800a11",
+      "size": 241
+    },
+    {
+      "path": "website/public/paratix-og.png",
+      "mode": "100644",
+      "sha": "bc07cf729588af6ac84acc8825ba9028aeb383f2",
+      "size": 57311
+    },
+    {
+      "path": "website/react-router.config.ts",
+      "mode": "100644",
+      "sha": "a4815d3ad9128d9a1870f7a8199da7e92c7e454b",
+      "size": 539
+    },
+    {
+      "path": "website/test/prerender.test.mjs",
+      "mode": "100644",
+      "sha": "c987b8cd06892e2618588ece10e183804a32c3f9",
+      "size": 1507
+    },
+    {
+      "path": "website/tsconfig.json",
+      "mode": "100644",
+      "sha": "3a262e3bf4744978af9daab051d88722eee9746d",
+      "size": 620
+    },
+    {
+      "path": "website/vite.config.ts",
+      "mode": "100644",
+      "sha": "b96b5d09d512201356897bc14654a6201efd4877",
+      "size": 151
+    }
+  ]
+}

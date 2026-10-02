@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/sebastian-software/paratix",
+  "sourceCommit": "de00be779511a13efb737aefbcc2825de8893a98",
+  "fixtureHead": "a34187906871a035a961b863b9fca664a57a6932",
+  "headKind": "synthetic sanitized fixture identity; not an actual Git commit",
+  "treeLeaves": 511,
+  "packageRecords": 1104,
+  "snapshots": 1112,
+  "originalLockBytes": 368288,
+  "lockSha256": "854bdc33762b3f8339fe897c2a9c628aae8da57ef6d63d57705995ee746c1c5c",
+  "sanitization": "Remove manifest author/scripts/repository/bugs only; preserve dependency declarations, workspace definitions and complete original lock. Tree retains all original leaf paths; supplied sanitized manifest blob IDs/sizes are recalculated. Unsupplied source payloads are absent.",
+  "registryAcquisition": {
+    "started": "2026-10-02T11:10:24.217Z",
+    "completed": "2026-10-02T11:11:10.081Z",
+    "packages": 1104,
+    "bytes": 351532,
+    "sha256": "bfa93a2633436dee9a59ede6eeb37d9fa259ff7cbd56977b5d511b6e2f5512e2",
+    "source": "https://registry.npmjs.org",
+    "policy": "public-npm-v1"
+  }
+}

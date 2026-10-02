@@ -45,6 +45,29 @@ jobs:
             --renovate-root "$tooling_dir/node_modules/renovate" \
             --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"
 
+  vitest-peer-alignment-local:
+    name: vitest-peer-alignment-local
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+      - name: Independent read-only checker contracts (consumer enforcement pending)
+        run: |
+          install_root="$(mktemp -d "$RUNNER_TEMP/vitest-alignment-install.XXXXXX")"
+          mkdir -p "$install_root/home" "$install_root/config" "$install_root/cache"
+          env -i HOME="$install_root/home" XDG_CONFIG_HOME="$install_root/config" \
+            XDG_CACHE_HOME="$install_root/cache" PATH="$PATH" CI=true \
+            npm_config_userconfig=/dev/null npm_config_globalconfig=/dev/null \
+            pnpm --dir scripts/vitest-peer-alignment install --frozen-lockfile \
+              --ignore-scripts --ignore-pnpmfile --pm-on-fail=ignore \
+              --registry=https://registry.npmjs.org --store-dir="$install_root/store"
+          node scripts/test-vitest-peer-alignment.mjs
+
   vitest-helper-local:
     name: vitest-helper-local (${{ matrix.profile }})
     runs-on: ubuntu-latest
