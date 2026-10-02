@@ -11,7 +11,7 @@ Renovate 44.127.1 / pnpm 11.20.0 bootstrap:
 ```sh
 node scripts/test-vitest-worker-contract.mjs \
   --renovate-root "$tooling_dir/node_modules/renovate" \
-  --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.cjs"
+  --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"
 ```
 
 The runner prints its unique temporary artifact directory. Optional `--output`
@@ -64,3 +64,12 @@ group, escalates to SIGKILL, and bounds pipe cleanup. Timeout state is explicit;
 both recorded fixture PIDs must be gone and no delayed marker may exist. This
 checks macOS/Linux owned-group cleanup, not processes that deliberately create a
 new session outside that group.
+
+The explicit `--runtime-profile candidate43-consumer11` selects Renovate43.288.0,
+Node24.18.0 and pnpm11.17.0. `reference44` (also the default) retains the exact
+reference tuple above. The profile propagates to the native runner and generated
+fixture packageManager. The candidate fixture reproduces only43's private name
+preparation at the direct API seam; all observed branch/hook/age assertions remain
+the same. A compatibility candidate does not establish historical worker or
+installer provenance. The separate helper-aware suite lives in
+[../vitest-helper/README.md](../vitest-helper/README.md).
