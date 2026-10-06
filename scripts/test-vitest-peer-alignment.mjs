@@ -34,6 +34,10 @@ const baseline = { schemaVersion: 1,
   tree, files, metadata: JSON.parse(metadataBytes.toString('utf8')) };
 const serialized = JSON.stringify(baseline);
 const results = [];
+// Optional focused selection preserves the default complete suite and records
+// omitted cases explicitly. No matching cases is a failed test invocation.
+const caseFilter = process.env.VITEST_ALIGNMENT_TEST_FILTER;
+const skipped = [];
 async function fixtureDigest(root) {
   const entries = [];
   async function walk(dir, prefix = '') {
@@ -48,6 +52,7 @@ async function fixtureDigest(root) {
 }
 const fixtureBefore = await fixtureDigest(fixture);
 async function test(name, action) {
+  if (caseFilter && !name.includes(caseFilter)) { skipped.push(name); return; }
   const started = performance.now();
   try {
     const evidence = await action();
@@ -486,6 +491,64 @@ await negative('lock graph node count limit is fixed', (input) => {
     lock.packages = Object.fromEntries(Array.from({ length: LIMITS.lockNodes + 1 }, (_, i) => ['fixture-' + i + '@1.0.0', {}]));
   });
 }, /RESOURCE_LIMIT/);
+// The same real complete lock is retained; only a data-only probe map is
+// appended. Invalid key ownership must be rejected before object conversion.
+function appendYamlProbe(input, source) {
+  const original = input.files.find((file) => file.path === 'pnpm-lock.yaml').content;
+  replaceFile(input, 'pnpm-lock.yaml', original + '\nciProbe:\n' + source);
+}
+for (const [name, source] of [
+  ['block quoted scalar duplicate', '  same: first\n  "same": second\n'],
+  ['flow quoted scalar duplicate', '  {same: first, "same": second}\n'],
+  ['nested block duplicate', '  child:\n    same: first\n    same: second\n'],
+  ['nested flow duplicate', '  {child: {same: first, same: second}}\n'],
+  ['explicit string tag duplicate', '  same: first\n  !!str same: second\n'],
+  ['boolean-looking string duplicate', '  true: first\n  "true": second\n'],
+  ['numeric-looking string duplicate', '  1: first\n  "1": second\n'],
+  ['explicit nonstring tag', '  !!int 1: first\n'],
+  ['complex key', '  ? [first, second]\n  : value\n'],
+]) {
+  await negative('CI YAML ' + name, (input) => appendYamlProbe(input, source), /^INVALID_YAML$/);
+}
+for (const [name, source] of [
+  ['separate nested maps own their keys', '  left: {same: first}\n  right: {same: second}\n'],
+  ['stringKeys preserves numeric and boolean spelling', '  01: first\n  1: second\n  true: third\n  True: fourth\n'],
+  ['explicit string tag remains admissible', '  !!str same: first\n'],
+]) {
+  await test('CI YAML ' + name, async () => {
+    const input = structuredClone(baseline); appendYamlProbe(input, source);
+    const output = await checkAlignment(input, config);
+    assert.equal(output.verdict, 'aligned', JSON.stringify(output.diagnostics));
+    return { verdict: output.verdict };
+  });
+}
+await negative('CI YAML late nested duplicate in large unique block map', (input) => {
+  const unique = Array.from({ length: LIMITS.lockNodes }, (_, i) => '    key-' + i + ': value').join('\n');
+  appendYamlProbe(input, '  child:\n' + unique + '\n    key-0: changed\n');
+}, /^INVALID_YAML$/);
+await negative('CI YAML large flow graph exceeds unchanged node limit', (input) => {
+  const lock = YAML.parse(input.files.find((file) => file.path === 'pnpm-lock.yaml').content);
+  lock.packages = {};
+  const entries = Array.from({ length: LIMITS.lockNodes + 1 }, (_, i) => 'fixture-' + i + '@1.0.0: {}').join(', ');
+  replaceFile(input, 'pnpm-lock.yaml', YAML.stringify(lock).replace('packages: {}', 'packages: {' + entries + '}'));
+}, /^RESOURCE_LIMIT$/);
+await test('CI YAML exact graph node budget reaches normal discovery', async () => {
+  const input = structuredClone(baseline);
+  editLock(input, (lock) => {
+    const originalCount = Object.keys(lock.packages).length;
+    for (let extra = 0; extra < LIMITS.lockNodes - originalCount; extra++) {
+      lock.packages['ci-extra-' + extra + '@1.0.0'] = {};
+    }
+    assert.equal(Object.keys(lock.packages).length, LIMITS.lockNodes);
+  });
+  delete input.metadata;
+  const output = await discoverMetadata(input, config);
+  assert.equal(output.verdict, 'metadata-required', JSON.stringify(output.diagnostics));
+  assert.equal(output.stats.snapshots, 1112);
+  assert.equal(output.diagnostics.length, 0);
+  return { verdict: output.verdict, stats: output.stats, graphNodeBudget: LIMITS.lockNodes };
+});
+
 await negative('duplicate published coordinates are ambiguous', (input) => {
   input.metadata.packages.push(structuredClone(input.metadata.packages[0]));
 }, /AMBIGUOUS_METADATA/);
@@ -908,9 +971,9 @@ await test('modeled independent Vitest 3 and 4 runtimes retain authentic complet
 });
 
 const summary = { schemaVersion: 1, sourceCommit: provenance.sourceCommit, fixtureHead: provenance.fixtureHead,
-  node: process.versions.node, artifact, results, passed: results.filter((result) => result.state === 'PASSED').length,
+  node: process.versions.node, artifact, results, caseFilter: caseFilter ?? null, skipped, passed: results.filter((result) => result.state === 'PASSED').length,
   failed: results.filter((result) => result.state === 'FAILED').length,
   boundary: 'Offline trusted fixture/checker source proof only; deployment and consumer enforcement pending.' };
 await writeFile(join(artifact, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
 console.log('Artifacts: ' + artifact);
-if (summary.failed) process.exitCode = 1;
+if (summary.failed || results.length === 0) process.exitCode = 1;

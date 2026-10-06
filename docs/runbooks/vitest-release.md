@@ -24,6 +24,13 @@ official checksums or registry integrity records. Unsupported archive layouts,
 generated pnpm wrappers/metadata and derived instrumented runtimes fail closed;
 do not relabel them as original published bytes.
 
+The checker rejects duplicate keys in every YAML mapping with a linear scan before
+conversion. Only the existing scalar-string key semantics are accepted; aliases,
+complex keys and unsupported key tags remain rejected. The fixed graph budgets
+and 10-second deadline are unchanged. Any checker source correction requires a
+fresh selected Git revision and rebuilt complete bundle inventories. Older
+candidate hashes remain historical evidence, never authority for changed bytes.
+
 The six source leaves are the checker/helper entry files, nested `package.json`
 files and frozen `pnpm-lock.yaml` files. They must match the selected real Git
 revision, executable mode and working source bytes. Each checker/helper includes the complete
