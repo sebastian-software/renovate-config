@@ -107,3 +107,38 @@ jobs:
           node scripts/test-vitest-helper.mjs --runtime-profile "$PROFILE" \
             --renovate-root "$tooling_dir/node_modules/renovate" \
             --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"
+
+  vitest-native-observation-local:
+    name: vitest-native-observation-local (source only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+      - name: Authentic candidate and differing Linux interpreter preparation
+        run: |
+          tooling_dir="$(mktemp -d "$RUNNER_TEMP/vitest-native-tools.XXXXXX")"
+          pnpm --dir "$tooling_dir" add --save-exact renovate@43.288.0 --ignore-scripts --ignore-pnpmfile --config.minimum-release-age=0
+          curl --fail --silent --show-error --location https://registry.npmjs.org/pnpm/-/pnpm-11.17.0.tgz -o "$tooling_dir/pnpm.tgz"
+          echo "644eb5079654e87dae59a07e62d7f098162b9ce58f06077328b5ddefca1c8541  $tooling_dir/pnpm.tgz" | sha256sum --check
+          mkdir "$tooling_dir/stock"
+          tar --extract --gzip --file "$tooling_dir/pnpm.tgz" --directory "$tooling_dir/stock" --no-same-owner
+          curl --fail --silent --show-error https://nodejs.org/dist/v24.21.0/SHASUMS256.txt -o "$tooling_dir/SHASUMS256.txt"
+          curl --fail --silent --show-error https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.gz -o "$tooling_dir/node-v24.21.0-linux-x64.tar.gz"
+          (cd "$tooling_dir" && awk '$2 == "node-v24.21.0-linux-x64.tar.gz" {print}' SHASUMS256.txt | sha256sum --check --strict)
+          tar --extract --gzip --file "$tooling_dir/node-v24.21.0-linux-x64.tar.gz" --directory "$tooling_dir" --no-same-owner
+          echo "NATIVE_TOOLING=$tooling_dir" >> "$GITHUB_ENV"
+      - name: Native dispatch, differing actual Node, delegation and whole-lifecycle negatives
+        run: |
+          node scripts/test-vitest-release-trust.mjs
+          node scripts/test-vitest-native-collector.mjs
+          node scripts/test-vitest-native-identity.mjs --child-node "$NATIVE_TOOLING/node-v24.21.0-linux-x64/bin/node"
+          node scripts/test-vitest-native.mjs \
+            --pnpm-archive "$NATIVE_TOOLING/pnpm.tgz" \
+            --pnpm-root "$NATIVE_TOOLING/stock/package" \
+            --renovate-root "$NATIVE_TOOLING/node_modules/renovate" \
+            --child-node "$NATIVE_TOOLING/node-v24.21.0-linux-x64/bin/node"

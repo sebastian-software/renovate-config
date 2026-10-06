@@ -227,6 +227,12 @@ trusted consumer publisher's `vitest-peer-alignment` status. This does not prove
 consumer enforcement, deployment, lowest advisory targets or release-age bypass.
 Issue #37 remains open/in-progress; the existing helper interface stays unchanged.
 
+Prepare complete authenticated stock checker/helper/Node/pnpm candidates with the
+[release packager](docs/runbooks/vitest-release.md). It requires an independently
+pinned preparation document and complete original archive correspondence. Its
+read-only candidates remain ineligible for production until reviewed release
+selection and all separate activation gates are satisfied.
+
 ## `standards.json` — standards-sync mechanics
 
 Drives the [standards](https://github.com/sebastian-software/standards) rollout.

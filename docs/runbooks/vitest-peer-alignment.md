@@ -14,6 +14,11 @@ Issue 37 remains open and in progress until that separate delivery is complete.
 
 ## Prepare a complete owned release
 
+The [authenticated release packager](vitest-release.md) provides bounded stock
+archive-to-layout verification and read-only candidate assembly for the checker,
+helper and owned native toolchain. Its external preparation authority and pending
+production eligibility are separate from this checker's runtime fingerprint.
+
 The trusted release owner selects a reviewed immutable repository revision after
 source delivery and authenticates the complete artifact, including every runtime
 module source file. Keep this layout together:
