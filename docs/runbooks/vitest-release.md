@@ -132,17 +132,30 @@ correlation. Observation failures preserve the native child result. Custom
 stdio, executable inherited preloads, unowned delegation, replacement and
 unproven executable hooks cannot produce accepted evidence. Interrupted dispatch
 is retained as incomplete. Receipts contain bounded process/tool identities and
-repository/branch/input-head correlation; the eventual PR-head mapping API still
-needs its trusted caller integration.
+repository/branch/input-head correlation; the authenticated Renovate 43 `with-pr` seam now maps the actual SCM branch commit to the
+returned PR head. Failed mapping retains incomplete evidence and preserves native outcomes.
 
 `vitest-native-observation-local` runs source validation in Linux CI with different
 parent and child Node binaries, stock/derived lock and outcome comparison,
 replacement and interrupted-run negatives. Darwin preparation and native outcome
-comparison explicitly report unsupported Linux observation. A passing supported
-install case does not prove complete install/update/dedupe coverage: unchanged
-native dedupe lacks an enforced whole-lifecycle hook boundary and remains
-unsupported. Production full closure pins, runtime read-only mounts, externally
-bound worker/container/image context, native channel wiring and complete safe
-dedupe coverage remain source/release acceptance obligations. Candidate receipts
+comparison explicitly report unsupported Linux observation. The fixed empty-hook profile
+binds owned local/global pnpmfile modules through trusted environment settings and checks the
+actual effective configuration before hook loading, at dispatch and at completion. It requires
+no config dependencies and no executable hook/finder collections. Native command strings, flags
+and tool selection stay unchanged. Both stock and derived runtimes use this same authenticated
+profile for real install, update and dedupe lock/outcome comparison; separate unprofiled controls
+require the original native hook to execute. Unsafe configuration and replaced profile bytes
+retain unsupported evidence rather than changing native outcomes. The actual three-category
+Darwin comparison does not supply Linux process or whole-worker observation proof.
+Dormant Proxmox source wiring now supplies read-only complete artifact mounts and native
+Node/pnpm aliases, a host-written launch document after captured container identity and before
+start, and a retained native receipt channel. The outside host verifier and runtime loader
+bind full inventories, independently selected authority/proof pins and worker/container/image
+context. Node aliases use authenticated file SHA256; pnpm aliases use SHA256 of compact JSON
+ASCII inventory tuples sorted by relative path: `[path, type, hash-or-link-target]`. Matching
+alias and original-image labels alone cannot replace authenticated source equality. Actual
+image-alias byte equivalence, published full authority, immutable Linux proof and complete safe
+install/update/dedupe coverage remain acceptance obligations; all activation defaults and pins
+remain disabled or null. Candidate receipts
 always retain `productionEligible: false`; this preparation does not satisfy
 consumer activation or the issue's full security gates.

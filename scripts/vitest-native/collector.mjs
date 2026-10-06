@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { holdInterpreter } from './identity.mjs';
 const hash=/^[a-f0-9]{64}$/;
+const retained = [];
 const reasons=new Set(['unowned-or-unobservable-runtime','non-data-only-lifecycle','changed-or-unsupported-dispatch','ambiguous-dispatch','changed-cli-closure','unowned-delegation']);
 function exact(value,keys) { return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).every(key=>keys.includes(key)); }
 function interpreter(value) {
@@ -53,7 +54,7 @@ function prepareCollection(profile,loader,options) {
     worker:profile.context.worker,wrapperInvocation:profile.context.wrapperInvocation,containerId:profile.context.containerId,
     imageId:profile.context.imageId,imageDigest:profile.context.imageDigest,repository,branch,inputHead:inputHead(options.cwd),
     generatedPrHead:null,state:'launch',events:[],nativeExit:null,nativeSignal:null,completed:false};
-  let invalid=false,failedWrite=false,bytes=0,pending='';
+  let invalid=!parent,failedWrite=false,bytes=0,pending='';
   function save() {
     try {
       const output=path.join(directory,`${invocation}.json`),temporary=path.join(directory,`${invocation}.new`);
@@ -81,6 +82,8 @@ function prepareCollection(profile,loader,options) {
   save();
   const {stdin,stdout,stderr,...rest}=options;
   return { options:{...rest,stdio:[stdin??'pipe',stdout??'pipe',stderr??'pipe','pipe'],env:{...options.env,
+    ...(profile.launchProfileSha256?{VITEST_NATIVE_PROFILE_SHA256:profile.launchProfileSha256}:{}),
+    ...(profile.launchAuthoritySha256?{VITEST_NATIVE_RUNTIME_AUTHORITY_SHA256:profile.launchAuthoritySha256}:{}),
     VITEST_NATIVE_CHANNEL:JSON.stringify({invocation,nonce}),NODE_OPTIONS:`${stripped} --import=${loader}`.trim()}},
     dispose(){try{if(parent)fs.closeSync(parent.fd);}catch{}},
     attach(child) {
@@ -94,10 +97,11 @@ function prepareCollection(profile,loader,options) {
           const bootstraps=receipt.events.filter(event=>event.state==='bootstrap');
           const linked=bootstraps.length===1&&dispatches.length===1&&bootstraps[0].pid===dispatches[0].pid&&
             exits.length===1&&exits[0].pid===dispatches[0].pid&&exits[0].exitCode===code;
-          receipt.completed=linked&&(!parent||parent.unchanged())&&!invalid&&!pending&&code!==null&&!signal&&!failedWrite;
+          receipt.completed=linked&&Boolean(parent)&&parent.unchanged()&&!invalid&&!pending&&code!==null&&!signal&&!failedWrite;
           receipt.state=receipt.completed?(repository&&branch&&receipt.inputHead?'completed':'uncorrelated'):
             invalid?'unsupported':dispatches.length?'incomplete':'absent';
           save();
+          if(receipt.state==='completed'&&!failedWrite&&retained.length<256)retained.push({profile,receipt,directory});
         }catch{ /* Evidence failure only. */ }
         finally{try{if(parent)fs.closeSync(parent.fd);}catch{}}
       });
@@ -107,4 +111,27 @@ export function mapGeneratedHead(receipt,identity) {
   if(receipt.state!=='completed'||identity.repository!==receipt.repository||identity.branch!==receipt.branch||
     identity.inputHead!==receipt.inputHead||! /^[a-f0-9]{40}$/.test(identity.generatedPrHead))throw Error('Uncorrelated generated PR head');
   return {...receipt,generatedPrHead:identity.generatedPrHead};
+}
+// Called only by the authenticated Renovate with-pr branch seam. A failed
+// collection/mapping write is evidence failure and cannot change the PR result.
+export async function recordGeneratedHead(profile,config,pr,scm) {
+  try {
+    if(pr?.sourceBranch!==config.branchName||! /^[a-f0-9]{40}$/.test(pr.sha))return;
+    const generatedPrHead=await scm.getBranchCommit(config.branchName);
+    if(!/^[a-f0-9]{40}$/.test(generatedPrHead)||generatedPrHead!==pr.sha)return;
+    for(const pending of retained.filter(item=>item.profile===profile&&
+      item.receipt.repository===config.repository&&item.receipt.branch===config.branchName)) {
+      const mapped=mapGeneratedHead(pending.receipt,{repository:config.repository,branch:config.branchName,
+        inputHead:pending.receipt.inputHead,generatedPrHead});
+      const file=path.join(pending.directory,`${mapped.invocation}.json`);
+      // Reauthenticate the complete retained receipt before adding one head.
+      const fd=fs.openSync(file,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
+      let bytes;try{if(fs.fstatSync(fd).size>65536)continue;bytes=fs.readFileSync(fd);}finally{fs.closeSync(fd);}
+      if(JSON.stringify(JSON.parse(bytes))!==JSON.stringify(pending.receipt))continue;
+      const temporary=path.join(pending.directory,`${mapped.invocation}.mapped`);
+      fs.writeFileSync(temporary,JSON.stringify(mapped)+'\n',{flag:'wx',mode:0o600});
+      fs.renameSync(temporary,file);
+      pending.receipt=mapped;
+    }
+  }catch{ /* Missing mapping never rewrites native/forge outcomes. */ }
 }

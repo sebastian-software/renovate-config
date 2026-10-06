@@ -3,8 +3,10 @@ import * as fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { digest, transformPnpm, transformRenovate, ORIGINAL_PNPM_BUNDLE } from './transform.mjs';
+import { dataOnlyEnvironment, EMPTY_SHA256 } from './data-only.mjs';
 import { createProbe } from './probe.mjs';
-import { nativeExeca } from './collector.mjs';
+import { nativeExeca, recordGeneratedHead } from './collector.mjs';
+import { verifyRuntime } from './runtime.mjs';
 
 const root=path.dirname(fileURLToPath(import.meta.url));
 let profile;
@@ -22,6 +24,20 @@ try {
   // A fixed independent launch pin authenticates host-written context; the
   // context's own self-hash cannot establish worker/container provenance.
   profile.contextAuthenticated=false;
+  profile.launchProfileSha256=process.env.VITEST_NATIVE_PROFILE_SHA256;
+  profile.launchAuthoritySha256=process.env.VITEST_NATIVE_RUNTIME_AUTHORITY_SHA256??null;
+  if(process.env.VITEST_NATIVE_RUNTIME_AUTHORITY_SHA256) {
+    const runtime=verifyRuntime('/opt/renovate-native-authority/authority.json',
+      process.env.VITEST_NATIVE_RUNTIME_AUTHORITY_SHA256,'/opt/renovate-native-context/launch.json');
+    const authority=runtime.authority;
+    if(authority.profileSha256!==process.env.VITEST_NATIVE_PROFILE_SHA256||
+      authority.originalArchiveSha256!==profile.originalArchiveSha256||
+      authority.originalBundleSha256!==profile.originalBundleSha256||
+      authority.derivedBundleSha256!==profile.derivedBundleSha256||
+      authority.transformRevision!==profile.transformRevision){runtime.close();throw Error('Runtime authority differs');}
+    process.env.VITEST_NATIVE_CONTEXT_SHA256=runtime.contextSha256;
+    process.once('exit',()=>{try{runtime.close();}catch{}});
+  }
   const contextFile=profile.contextFile;
   if(contextFile){
     const fd=fs.openSync(contextFile,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
@@ -39,10 +55,13 @@ try {
   if(startup&&!/^(?:--max-old-space-size=\d{1,6})(?:\s+--max-old-space-size=\d{1,6})*$/.test(startup))throw Error('Executable inherited preload');
 }catch{profile=null;}
 if(profile) {
+  profile.dataOnlyRoot=root;
   let probe;
   const slot=Symbol.for('vitest.native.observation.v1');
   Object.defineProperty(globalThis,slot,{value:Object.freeze({
     nativeExeca:(execa,command,args,options)=>nativeExeca(profile,fileURLToPath(import.meta.url),execa,command,args,options),
+    generatedHead:(config,pr,scm)=>recordGeneratedHead(profile,config,pr,scm),
+    dataOnlyEnvironment:()=>profile.dataOnlyProfile?dataOnlyEnvironment(root):{},
     delegation:()=>probe?.delegation(),beforeHooks:(...args)=>probe?.beforeHooks(...args),dispatch:(...args)=>probe?.dispatch(...args),
   }),writable:false,configurable:false});
   registerHooks({load(url,context,nextLoad) {
@@ -50,6 +69,10 @@ if(profile) {
     if(!url.startsWith('file:')||!result.source)return result;
     const filename=fileURLToPath(url),bytes=Buffer.from(result.source);
     try {
+      if(profile.dataOnlyProfile&&filename===path.join(root,'empty-pnpmfile.mjs')) {
+        if(digest(bytes)!==EMPTY_SHA256)probe?.hookRejected();else probe?.hookLoaded();
+        return result;
+      }
       if(filename.endsWith('/dist/pnpm.mjs')&&digest(bytes)===ORIGINAL_PNPM_BUNDLE) {
         const derived=transformPnpm(bytes);
         if(digest(derived)!==profile.derivedBundleSha256)throw Error('Changed derived observation');

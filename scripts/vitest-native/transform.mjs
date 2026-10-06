@@ -23,7 +23,11 @@ export function transformRenovate(bytes, kind, expectedDigest) {
   const source = bytes.toString('utf8');
   if (kind === 'manager') {
     const anchor = '\t\tconst execOptions = {';
-    return Buffer.from(once(source, anchor, '\t\textraEnv.VITEST_NATIVE_TAG = JSON.stringify({ repository: config.repository ?? null, branch: config.branchName ?? null });\n'+anchor));
+    return Buffer.from(once(source, anchor, '\t\textraEnv.VITEST_NATIVE_TAG = JSON.stringify({ repository: config.repository ?? null, branch: config.branchName ?? null });\n\t\tObject.assign(extraEnv, '+slot+'.dataOnlyEnvironment());\n'+anchor));
+  }
+  if (kind === 'branch') {
+    const anchor = '\t\t\tconst { pr } = ensurePrResult;';
+    return Buffer.from(once(source,anchor,anchor+`\n\t\t\tawait ${slot}.generatedHead(config, pr, scm);`));
   }
   const anchor = '\t\tconst cp = execa(cmd, args, {';
   return Buffer.from(once(source, anchor, `\t\tconst cp = ${slot}.nativeExeca(execa, cmd, args, {`));

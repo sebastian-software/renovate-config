@@ -136,7 +136,12 @@ jobs:
         run: |
           node scripts/test-vitest-release-trust.mjs
           node scripts/test-vitest-native-collector.mjs
+          node scripts/test-vitest-native-runtime.mjs "$NATIVE_TOOLING/node_modules/renovate/dist/workers/repository/update/branch/index.js"
           node scripts/test-vitest-native-identity.mjs --child-node "$NATIVE_TOOLING/node-v24.21.0-linux-x64/bin/node"
+          node scripts/test-vitest-native-data-only.mjs \
+            --pnpm-archive "$NATIVE_TOOLING/pnpm.tgz" \
+            --pnpm-root "$NATIVE_TOOLING/stock/package" \
+            --renovate-root "$NATIVE_TOOLING/node_modules/renovate"
           node scripts/test-vitest-native.mjs \
             --pnpm-archive "$NATIVE_TOOLING/pnpm.tgz" \
             --pnpm-root "$NATIVE_TOOLING/stock/package" \

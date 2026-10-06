@@ -70,7 +70,7 @@ function run(directory,observed=true,{dedupe=false,timeout=60000,killAfterDispat
     const before=new Set(names);
     const child=spawn(process.execPath,[path.join(repository,'scripts/test-vitest-native-runner.mjs'),
       '--root',directory,'--renovate',values['renovate-root'],'--node',childNode,'--pnpm',path.join(stock,'bin/pnpm.mjs'),
-      '--bin',bin,'--profile-sha256',preparation.profileSha256,...dedupe?['--dedupe']:[]],
+      '--bin',bin,'--profile-sha256',preparation.profileSha256,...dedupe?['--dedupe','--unprofiled']:[]],
       {env:{...process.env,NODE_OPTIONS:observed?`--import=${loader}`:'',VITEST_NATIVE_PROFILE_SHA256:preparation.profileSha256},
         detached:true,stdio:['ignore','pipe','pipe']});
     let stdout='',stderr='';
