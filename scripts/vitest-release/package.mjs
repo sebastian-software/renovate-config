@@ -5,7 +5,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { archiveMembers } from './archive.mjs';
 import {
-  budgets, compareInventory, consumerFiles, copyInventory, digestPattern, hashFile,
+  authenticateImplementation, readPinnedJson, budgets, compareInventory, consumerFiles, copyInventory, digestPattern, hashFile,
   inventory, jsonBytes, realDirectory, relativeName, requireValue, sealDirectories, sha256, verifyReadOnly,
 } from './files.mjs';
 
@@ -44,14 +44,36 @@ function inventoryRecord(record) {
 }
 
 async function readAuthority(options) {
-  requireValue(options.candidate || process.platform === 'linux', 'Production packaging requires held-directory Linux procfs traversal');
+  requireValue(options.candidate || process.platform === 'linux' || options.sourceFixture===true, 'Production packaging requires held-directory Linux procfs traversal');
   requireValue(digestPattern.test(options['provenance-sha256']), 'An independent provenance SHA256 pin is required');
   const identity = await hashFile(options.provenance, 16_777_216);
   requireValue(identity.sha256 === options['provenance-sha256'], 'Provenance pin mismatch');
   const bytes = await fs.readFile(options.provenance);
   requireValue(sha256(bytes) === identity.sha256, 'Provenance changed while reading');
   const document = JSON.parse(bytes.toString('utf8'));
-  keys(document, ['schemaVersion', 'sourceRevision', 'sourceOrigin', 'attestationOrigin', 'artifacts', 'components', 'toolchain']);
+  keys(document, ['schemaVersion', 'sourceRevision', 'sourceOrigin', 'attestationOrigin', 'artifacts', 'components', 'toolchain',
+    ...(!options.candidate ? ['packager','trustScope'] : [])]);
+  let selection=null;
+  if (!options.candidate) {
+    requireValue(['release-owner','source-fixture'].includes(document.trustScope), 'Explicit preparation trust scope required');
+    requireValue(document.trustScope!=='source-fixture'||options.sourceFixture===true, 'Fixture cannot authorize production packaging');
+    requireValue(process.platform==='linux'||document.trustScope==='source-fixture', 'Production packaging requires held-directory Linux procfs traversal');
+    selection=(await readPinnedJson(options.selection,options['selection-sha256'])).document;
+    requireValue(selection.schemaVersion===1 && selection.trustScope===document.trustScope &&
+      selection.provenanceSha256===identity.sha256 && selection.verifierRevision===document.packager?.revision,
+      'Outside selection differs from preparation');
+    const attestation=selection.publicationAttestation;
+    requireValue(attestation && attestation.trustScope===document.trustScope &&
+      attestation.provenanceSha256===identity.sha256 && attestation.sourceRevision===document.sourceRevision &&
+      attestation.verifierRevision===document.packager.revision &&
+      attestation.immutableOrigin===document.attestationOrigin &&
+      attestation.sourceInventorySha256===sha256(jsonBytes(selection.sourceInventory)), 'Publication attestation does not bind selected bytes');
+    const executingRoot=fileURLToPath(new URL('../../',import.meta.url)).replace(/\/$/,'');
+    await authenticateImplementation(options['source-root'],executingRoot,document.packager,
+      ['scripts/vitest-release.mjs','scripts/vitest-release/package.mjs','scripts/vitest-release/files.mjs','scripts/vitest-release/archive.mjs']);
+    requireValue(JSON.stringify(Object.fromEntries(document.packager.files.map(file=>[file.path,file.sha256]).sort()))===
+      JSON.stringify(Object.fromEntries(Object.entries(selection.verifierFiles??{}).sort())), 'Outside selected verifier closure mismatch');
+  }
   requireValue(document.schemaVersion === 1 && /^[a-f0-9]{40}$/.test(document.sourceRevision), 'Invalid selected source revision');
   immutableOrigin(document.sourceOrigin);
   requireValue(document.sourceOrigin === `https://github.com/sebastian-software/renovate-config/commit/${document.sourceRevision}`,
@@ -94,6 +116,13 @@ async function readAuthority(options) {
     artifacts.set(artifact.id, { ...artifact, members });
   }
   const gitRoot = await realDirectory(options['source-root']);
+  if (!options.candidate) {
+    const { stdout: objectType } = await runFile('/usr/bin/git', ['--no-pager', '--no-replace-objects', '-C', gitRoot,
+      'cat-file', '-t', document.sourceRevision], { encoding: 'utf8', maxBuffer: 4096,
+      env: { PATH: '/usr/bin:/bin', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null',
+        GIT_NO_REPLACE_OBJECTS: '1', GIT_NO_LAZY_FETCH: '1', GIT_TERMINAL_PROMPT: '0' } });
+    requireValue(objectType.trim() === 'commit', 'Selected source revision must identify an actual Git commit');
+  }
   const source = new Map();
   for (const name of Object.values(entries)) {
     for (const filename of sourcePaths(name)) {
@@ -114,6 +143,10 @@ async function readAuthority(options) {
       requireValue(actual.sha256 === sha256(stdout) && actual.executable === executable, 'Source working bytes/mode differ from selected Git revision');
       source.set(filename, { type: 'file', sha256: sha256(stdout), size: stdout.length, executable });
     }
+  }
+  if (selection) {
+    requireValue(selection.sourceInventory && Object.keys(selection.sourceInventory).length===source.size &&
+      [...source].every(([name,leaf])=>selection.sourceInventory[name]===leaf.sha256), 'Outside selected source inventory mismatch');
   }
   const expected = {};
   for (const component of Object.keys(budgets)) {
@@ -178,7 +211,7 @@ async function readAuthority(options) {
   }
   requireValue(new Set(document.artifacts.map((artifact) => artifact.name)).size === 4 && document.artifacts.length === 4,
     'Expected exactly the owned Node, pnpm, semver and yaml archives');
-  return { document, expected, pin: identity.sha256, candidate: options.candidate === true };
+  return { document, expected, pin: identity.sha256, candidate: options.candidate === true, selection, eligible:!options.candidate && document.trustScope==='release-owner' };
 }
 
 async function verifyToolchain(root, contract) {
@@ -212,17 +245,22 @@ async function documents(authority) {
   }
   result.release = jsonBytes({ schemaVersion: 1, sourceRevision: authority.document.sourceRevision,
     sourceOrigin: authority.document.sourceOrigin, provenanceSha256: authority.pin,
-    attestationOrigin: authority.document.attestationOrigin, productionEligible: false,
+    attestationOrigin: authority.document.attestationOrigin, productionEligible: authority.eligible,
+    ...(!authority.candidate?{trustScope:authority.document.trustScope}:{}),
     provenanceClass: authority.candidate ? 'unpublished-candidate' : 'independently-pinned-attestation',
-    directoryAncestry: process.platform === 'linux' ? 'held-directory-fd' : 'candidate-unverified-pathname',
+    directoryAncestry: process.platform === 'linux' ? 'held-directory-fd' :
+      authority.candidate?'candidate-unverified-pathname':'fixture-unverified-pathname',
     originals: authority.document.artifacts, derived: [],
-    packager: { revision: null, state: 'pending-reviewed-commit', files: packager },
+    packager: authority.candidate?{ revision: null, state: 'pending-reviewed-commit', files: packager }:
+      {revision:authority.document.packager.revision,files:packager},
     inventories: Object.fromEntries(Object.keys(budgets).map((name) => [name,
       { path: `${name}/${manifests[name]}`, sha256: sha256(result[name]) }])) });
   return result;
 }
 
 async function verifyLayout(root, authority, expectedDocuments) {
+  if (authority.selection?.releaseSha256) requireValue(authority.selection.releaseSha256===sha256(expectedDocuments.release),
+    'Outside selected finalized release receipt differs');
   await realDirectory(root);
   requireValue((await fs.readdir(root)).sort().join(',') === 'checker,helper,release.json,toolchain', 'Unexpected bundle layout');
   for (const component of Object.keys(budgets)) {
@@ -240,10 +278,12 @@ export async function packageRelease(mode, options) {
   const authority = await readAuthority(options);
   const expectedDocuments = await documents(authority);
   requireValue(path.isAbsolute(options.output), 'Output must be absolute');
-  if (mode === 'verify') {
+  if (mode === 'verify' || mode === 'finalize') {
+    if (!authority.candidate) requireValue(typeof authority.selection.releaseSha256 === 'string' &&
+      digestPattern.test(authority.selection.releaseSha256), 'Final verification requires independently selected receipt pin releaseSha256');
     await verifyLayout(options.output, authority, expectedDocuments);
     await verifyReadOnly(options.output);
-    return { verified: true, productionEligible: false, sourceRevision: authority.document.sourceRevision, provenanceSha256: authority.pin };
+    return { verified: true, productionEligible: authority.eligible, sourceRevision: authority.document.sourceRevision, provenanceSha256: authority.pin };
   }
   await realDirectory(path.dirname(options.output));
   try { await fs.lstat(options.output); throw new Error('Output already exists'); }
@@ -277,5 +317,5 @@ export async function packageRelease(mode, options) {
     await fs.rm(staging, { recursive: true, force: true });
     throw error;
   }
-  return { packaged: true, productionEligible: false, sourceRevision: authority.document.sourceRevision, provenanceSha256: authority.pin };
+  return { packaged: true, productionEligible: authority.eligible, sourceRevision: authority.document.sourceRevision, provenanceSha256: authority.pin };
 }

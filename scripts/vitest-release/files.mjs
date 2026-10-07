@@ -2,6 +2,8 @@ import { constants } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 export class ReleaseError extends Error {
   constructor(message, options) { super(message, options); this.name = 'ReleaseError'; }
@@ -40,7 +42,7 @@ export async function openedDirectory(filename) {
     requireValue(before.isDirectory() && sameStat(before, await handle.stat({ bigint: true })), 'Directory changed before opening');
     // Linux procfs anchors descendants to the held directory inode, even when
     // its old pathname is replaced with a symlink. Darwin has no builtin openat
-    // equivalent here; only explicitly non-production candidate mode uses paths.
+    // equivalent here; non-production candidates and explicit source fixtures use paths.
     return { handle, location: process.platform === 'linux' ? `/proc/self/fd/${handle.fd}` : filename };
   } catch (error) { await handle.close(); throw error; }
 }
@@ -165,4 +167,50 @@ export async function verifyReadOnly(root, remaining = { entries: 200_000 }) {
       await verifyReadOnly(path.join(root, name), remaining);
     }
   }
+}
+
+// The outside pin selects this record. Git shape alone never authenticates the
+// executing implementation: both selected working bytes and this process's
+// complete owned implementation closure must match immutable Git bytes/modes.
+export async function authenticateImplementation(root, executingRoot, binding, names) {
+  await realDirectory(root);
+  requireValue(binding && /^[a-f0-9]{40}$/.test(binding.revision) && Array.isArray(binding.files), 'Missing containing implementation');
+  requireValue(binding.files.length === names.length && new Set(binding.files.map(file => file.path)).size === names.length &&
+    names.every(name => binding.files.some(file => file.path === name)), 'Incomplete implementation closure');
+  const run = promisify(execFile);
+  const env = { PATH:'/usr/bin:/bin', GIT_CONFIG_NOSYSTEM:'1', GIT_CONFIG_GLOBAL:'/dev/null',
+    GIT_NO_REPLACE_OBJECTS:'1', GIT_NO_LAZY_FETCH:'1', GIT_TERMINAL_PROMPT:'0' };
+  const {stdout:kind}=await run('/usr/bin/git',['--no-pager','--no-replace-objects','-C',root,'cat-file','-t',binding.revision],
+    {encoding:'utf8',maxBuffer:4096,env});
+  requireValue(kind.trim()==='commit','Containing implementation revision is not an actual Git commit');
+  for (const record of binding.files) {
+    relativeName(record.path);
+    requireValue(record.type === 'file' && digestPattern.test(record.sha256) && Number.isSafeInteger(record.size) &&
+      record.size >= 0 && typeof record.executable === 'boolean', 'Invalid implementation leaf');
+    const args = ['--no-pager','--no-replace-objects','-C',root];
+    const {stdout: bytes} = await run('/usr/bin/git', [...args,'show',`${binding.revision}:${record.path}`],
+      {encoding:'buffer',maxBuffer:2_097_152,env});
+    const {stdout: tree} = await run('/usr/bin/git', [...args,'ls-tree',binding.revision,'--',record.path],
+      {encoding:'utf8',maxBuffer:4096,env});
+    requireValue(/^100(644|755) blob [a-f0-9]{40}\t/.test(tree), 'Unsupported implementation Git mode');
+    requireValue(sha256(bytes) === record.sha256 && bytes.length === record.size &&
+      tree.startsWith('100755 ') === record.executable, 'Implementation differs from containing Git bytes/mode');
+    for (const directory of new Set([root,executingRoot])) {
+      const filename = path.join(directory,record.path);
+      requireValue(await fs.realpath(filename) === filename, 'Implementation path traverses symlinks');
+      const actual = await hashFile(filename,2_097_152);
+      requireValue(actual.sha256 === record.sha256 && actual.size === record.size && actual.executable === record.executable,
+        'Executing implementation differs from selected containing revision');
+    }
+  }
+  return binding;
+}
+export async function readPinnedJson(filename, pin, limit = 16_777_216) {
+  requireValue(digestPattern.test(pin), 'Independent input pin required');
+  requireValue(path.isAbsolute(filename) && await fs.realpath(filename)===filename, 'Pinned input path traverses symlinks');
+  const identity = await hashFile(filename,limit);
+  requireValue(identity.sha256 === pin, 'Independent input pin mismatch');
+  const bytes = await fs.readFile(filename);
+  requireValue(bytes.length <= limit && sha256(bytes) === pin, 'Pinned input changed while reading');
+  return {document:JSON.parse(bytes),bytes,pin};
 }
