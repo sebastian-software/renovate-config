@@ -177,7 +177,7 @@ async function runtime() {
 }
 function parseYaml(text, label, YAML) {
   let doc;
-  try { doc = YAML.parseDocument(text, { strict: true, uniqueKeys: true, stringKeys: true }); }
+  try { doc = YAML.parseDocument(text, { strict: true, uniqueKeys: false, stringKeys: true }); }
   catch { throw new ValidationError('INVALID_YAML', 'Malformed ' + label); }
   requireThat(doc.errors.length === 0, 'INVALID_YAML', 'Malformed or ambiguous ' + label);
   let count = 0;
@@ -185,6 +185,21 @@ function parseYaml(text, label, YAML) {
     requireThat(++count <= LIMITS.dataNodes && path.length <= LIMITS.dataDepth,
       'RESOURCE_LIMIT', label + ' exceeds YAML complexity limits');
     requireThat(!YAML.isAlias(node), 'UNSUPPORTED_YAML', label + ' contains an alias');
+    if (YAML.isMap(node)) {
+      // yaml 2.9.1's compose-time items.some duplicate scan is quadratic.
+      // Accepted keys are scalar strings (stringKeys); retain that exact
+      // equality contract in every map before any toJS object conversion.
+      requireThat(node.items.length <= LIMITS.dataNodes, 'RESOURCE_LIMIT', label + ' exceeds YAML complexity limits');
+      const seen = new Set();
+      for (const pair of node.items) {
+        const key = pair.key;
+        requireThat(YAML.isScalar(key) && typeof key.value === 'string' &&
+          (key.tag === undefined || key.tag === 'tag:yaml.org,2002:str'),
+        'INVALID_YAML', 'Malformed or ambiguous ' + label);
+        requireThat(!seen.has(key.value), 'INVALID_YAML', 'Malformed or ambiguous ' + label);
+        seen.add(key.value);
+      }
+    }
   });
   let value;
   try { value = doc.toJS({ maxAliasCount: 0 }); } catch { throw new ValidationError('INVALID_YAML', 'Unsupported ' + label); }
