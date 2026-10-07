@@ -131,10 +131,23 @@ jobs:
           curl --fail --silent --show-error https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.gz -o "$tooling_dir/node-v24.21.0-linux-x64.tar.gz"
           (cd "$tooling_dir" && awk '$2 == "node-v24.21.0-linux-x64.tar.gz" {print}' SHASUMS256.txt | sha256sum --check --strict)
           tar --extract --gzip --file "$tooling_dir/node-v24.21.0-linux-x64.tar.gz" --directory "$tooling_dir" --no-same-owner
+          # Complete original stock distributions for test-only source fixtures.
+          # Fixed test-fixture pins, not production release-owner authority; no archive execution.
+          mkdir "$tooling_dir/q1-archives"
+          cp "$tooling_dir/pnpm.tgz" "$tooling_dir/q1-archives/pnpm-11.17.0.tgz"
+          curl --fail --silent --show-error --location https://registry.npmjs.org/yaml/-/yaml-2.9.1.tgz -o "$tooling_dir/q1-archives/yaml-2.9.1.tgz"
+          curl --fail --silent --show-error --location https://registry.npmjs.org/semver/-/semver-7.8.5.tgz -o "$tooling_dir/q1-archives/semver-7.8.5.tgz"
+          curl --fail --silent --show-error https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.gz -o "$tooling_dir/q1-archives/node-v24.18.0-linux-x64.tar.gz"
+          echo "4ef6c54cf559b8a207b7b518378230805a1c84af239b14960e8c67c7d59de5d3  $tooling_dir/q1-archives/yaml-2.9.1.tgz" | sha256sum --check
+          echo "d85045d4300d7d57c891336b95df532e73f34c22ffcd222452b6d08b9d127d5d  $tooling_dir/q1-archives/semver-7.8.5.tgz" | sha256sum --check
+          echo "783130984963db7ba9cbd01089eaf2c2efb055c7c1693c943174b967b3050cb8  $tooling_dir/q1-archives/node-v24.18.0-linux-x64.tar.gz" | sha256sum --check
           echo "NATIVE_TOOLING=$tooling_dir" >> "$GITHUB_ENV"
       - name: Native dispatch, differing actual Node, delegation and whole-lifecycle negatives
         run: |
           node scripts/test-vitest-release-trust.mjs
+          node scripts/test-vitest-native-prepare.mjs --pnpm-archive "$NATIVE_TOOLING/pnpm.tgz" --pnpm-root "$NATIVE_TOOLING/stock/package"
+          node scripts/test-vitest-release-production.mjs --archives "$NATIVE_TOOLING/q1-archives" --platform linux-x64 --require-linux
+          node scripts/test-vitest-native-authority.mjs --archives "$NATIVE_TOOLING/q1-archives" --platform linux-x64 --require-linux
           node scripts/test-vitest-native-collector.mjs
           node scripts/test-vitest-native-runtime.mjs "$NATIVE_TOOLING/node_modules/renovate/dist/workers/repository/update/branch/index.js"
           node scripts/test-vitest-native-identity.mjs --child-node "$NATIVE_TOOLING/node-v24.21.0-linux-x64/bin/node"

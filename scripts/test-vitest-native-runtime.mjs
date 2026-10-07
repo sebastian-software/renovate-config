@@ -5,7 +5,7 @@ import { validateAuthority, readonlyMount, verifyRuntime, aliasDigest } from './
 import { transformRenovate, digest } from './vitest-native/transform.mjs';
 import * as fs from 'node:fs';
 const leaf={path:'owned',type:'file',sha256:'a'.repeat(64)};
-const authority={schemaVersion:1,productionEligible:true,sourceRevision:'a'.repeat(40),transformRevision:'b'.repeat(40),
+const authority={schemaVersion:1,trustScope:'source-fixture',productionEligible:false,sourceRevision:'a'.repeat(40),transformRevision:'b'.repeat(40),
   originalArchiveSha256:'c'.repeat(64),originalBundleSha256:'d'.repeat(64),derivedBundleSha256:'e'.repeat(64),
   profileSha256:'f'.repeat(64),linuxCompatibilitySha256:'1'.repeat(64),dataOnlyLifecycleSha256:'2'.repeat(64),
   imageId:'sha256:'+'3'.repeat(64),imageDigest:'sha256:'+'4'.repeat(64),attestationOrigin:'https://example.invalid/immutable-authority.json',
@@ -14,13 +14,15 @@ const authority={schemaVersion:1,productionEligible:true,sourceRevision:'a'.repe
     {kind:'pnpm',digestKind:'sha256-inventory-tuples-v1',source:'pnpm',destination:'/usr/local/lib/pnpm',sha256:leaf.sha256,originalImageSha256:leaf.sha256}]};
 authority.nativeAliases[1].sha256=aliasDigest(authority.nativeAliases[1],authority.components.toolchain);
 authority.nativeAliases[1].originalImageSha256=authority.nativeAliases[1].sha256;
-validateAuthority(authority);
-for(const kind of ['node','pnpm'])assert.throws(()=>validateAuthority({...authority,nativeAliases:authority.nativeAliases.map(alias=>alias.kind===kind?{...alias,sha256:'0'.repeat(64),originalImageSha256:'0'.repeat(64)}:alias)}));
+validateAuthority(authority,{sourceFixture:true});
+assert.throws(()=>validateAuthority(authority));
+for(const trustScope of [undefined,'anything']) assert.throws(()=>validateAuthority({...authority,productionEligible:true,trustScope}));
+for(const kind of ['node','pnpm'])assert.throws(()=>validateAuthority({...authority,nativeAliases:authority.nativeAliases.map(alias=>alias.kind===kind?{...alias,sha256:'0'.repeat(64),originalImageSha256:'0'.repeat(64)}:alias)},{sourceFixture:true}));
 for(const key of ['transformRevision','profileSha256','attestationOrigin','linuxCompatibilitySha256','dataOnlyLifecycleSha256'])
-  assert.throws(()=>validateAuthority({...authority,[key]:null}));
-assert.throws(()=>validateAuthority({...authority,productionEligible:false}));
-assert.throws(()=>validateAuthority({...authority,nativeAliases:[{...authority.nativeAliases[0],originalImageSha256:'b'.repeat(64)},authority.nativeAliases[1]]}));
-assert.throws(()=>validateAuthority({...authority,components:{...authority.components,helper:[{...leaf,path:'../escape'}]}}));
+  assert.throws(()=>validateAuthority({...authority,[key]:null},{sourceFixture:true}));
+assert.throws(()=>validateAuthority({...authority,productionEligible:true},{sourceFixture:true}));
+assert.throws(()=>validateAuthority({...authority,nativeAliases:[{...authority.nativeAliases[0],originalImageSha256:'b'.repeat(64)},authority.nativeAliases[1]]},{sourceFixture:true}));
+assert.throws(()=>validateAuthority({...authority,components:{...authority.components,helper:[{...leaf,path:'../escape'}]}},{sourceFixture:true}));
 const ro='1 0 0:1 / / rw - overlay overlay rw\n2 1 0:2 / /opt/owned ro - none none ro';
 readonlyMount('/opt/owned',ro);
 assert.throws(()=>readonlyMount('/opt/missing',ro));
