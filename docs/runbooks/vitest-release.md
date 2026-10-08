@@ -27,8 +27,9 @@ bases and receipt hashes keep their original meaning. Q1 source is merged throug
 [renovate-config #43](https://github.com/sebastian-software/renovate-config/pull/43)
 and [Proxmox #182](https://git.dal12.de/fastner/proxmox/pulls/182). These source PRs
 do not select a published release, measure an installed image or qualify a Linux
-worker. Q2a adds the bounded source harness below; Q2b controlled Linux
-qualification, Q2c independent release/image/attestation selection and E live
+worker. Q2a adds the bounded source harness below; Q2b.0 revises only its native
+evidence contract. Q2b.1–Q2b.3 operational observer/facility/qualification, Q2c
+independent release/image/attestation selection and E live
 actions remain separate gates. Do not treat PR heads as squash or release
 identities or pin a future documentation commit into its own contents. A Recensor `v1.1.0` source
 version or published tag does not establish that it contains the required code.
@@ -175,13 +176,14 @@ node scripts/vitest-native-prepare.mjs \
   --provenance-sha256 NATIVE_PREPARATION_PIN --source-root /protected/source
 ```
 
-Native preparation-v1 selects `schemaVersion`, `trustScope`, `sourceRevision`,
+Native preparation with `schemaVersion: 1` and `qualificationContractRevision: 2`
+selects `trustScope`, `sourceRevision`,
 `sourceOrigin`, containing `transform: {revision, files}` and `original` pnpm
 name/version/origin/archive/bundle identities. Selected preparation emits a
 nonnull containing `transformRevision`, complete distinct `pnpmFiles` and
 `derivedFiles`, authenticated instrumentation, `preparationSha256` and a
 read-only `profile.json`. The profile remains `productionEligible: false`.
-Without the three provenance/source flags it remains the legacy false/null
+Without the three provenance/source flags it creates a fresh revision-2 false/null
 candidate. Preparation does not install the loader or start a worker.
 
 Keep the original bootstrap `toolchain.pnpmEntry` unchanged. Reconstruction
@@ -208,6 +210,67 @@ The Q2a source harness below collects bounded source observations, while complet
 controlled Linux qualification remains a Q2b prerequisite. No existing command
 supplies complete all-category worker proof; partial identity/data-only suites
 cannot be combined into it. Native worker qualification is **UNRUN**.
+
+## Use qualification contract revision 2 for new native evidence
+
+Q2b.0 corrects the fixed pnpm 11.17.0 delegation evidence contract in source.
+Native preparation selections, newly frozen profiles, probe/collector records,
+worker inputs/reports, authority selections, retained proofs/raw events and
+issued authorities explicitly carry `qualificationContractRevision: 2` while
+`schemaVersion` remains 1. Loader, issuer, JavaScript runtime and Python host
+consumer reject missing, unknown or mixed revisions on this path. Stock release
+schemas and wrapper container receipts retain their separate contracts.
+
+The authenticated original `switchCliVersion` returns both when the requested
+version already equals the running version and when the resolved version equals
+it. Only another resolved version reaches `cross_spawn`. The profile's
+`delegationSource` records authenticated byte offsets for both returns, the
+spawn seam and handler dispatch; the issuer recomputes these facts from the
+selected original bundle. Static control flow alone proves no runtime absence.
+
+Each install/update/dedupe delegation slot now requires two distinct retained
+observations. The lifecycle case selects the negative record as `evidence` and
+the normal same-version record as `sameVersion`; all 48 slots are preserved:
+
+- The `delegation-same-version` record retains authentic ordered launch,
+  dispatch and completion. Its `delegationAbsence` observation spans the full
+  launch-to-completion lifecycle, binds the source-flow hash and frozen version,
+  and proves zero switch children. Independent `descendants` and `cleanup`
+  records must account for the entire observed lifecycle with no unknown or
+  surviving child. A source fact or an empty child list alone is insufficient.
+- The `delegation-rejection` variant retains launch, genuine
+  `unowned-delegation` rejection, an independently observed `nativeTerminal`,
+  descendant accounting and cleanup in order. It binds the actual native
+  exit/signal and concrete lock bytes without inventing dispatch or completion.
+  Any child that ran needs correlated parent/child PIDs and invocation IDs,
+  unchanged held interpreter identity, observed ineligible CLI identity, actual
+  outcome and independent cleanup. Each `child.terminal` reference must select
+  separate retained `childTerminal` event bytes with matching parent/child PID,
+  invocation, interpreter, CLI, outcome and bounded lifecycle order; a completion
+  flag or outcome in the descendants summary alone is insufficient. Unknown, replaced, incomplete or
+  uncorrelated children fail the case.
+
+`caseVerdict: "expected-negative"` assesses the qualification case separately
+from native `state: "unsupported"` and `receiptEligible: false`. The probe
+invalidates evidence; it does not prevent native execution. After the probe
+rejects delegation, the original `cross_spawn` still continues. This correction
+permits no additional CLI version or implicit download/install.
+
+Freeze a new revision-2 profile before fresh observations. Existing frozen
+profiles, proofs and receipts retain their original bytes and semantics; do not
+repin, convert, relabel or promote them to revision 2. This path explicitly
+rejects legacy evidence. Source fixtures remain `source-fixture`, false-eligible
+and incomplete, with zero operational `PASSED` and no complete proof pair.
+The source collector still reports missing paired observations as unsupported.
+Offline archive/source oracles and documentary consumer roundtrips test this
+contract; they are not negative CLI execution or runtime qualification.
+
+The authentic original-phase observer and operational worker adapter (Q2b.1),
+selected facility/action manifest (Q2b.2), actual Linux qualification (Q2b.3),
+independent immutable release/image/attestation selection (Q2c) and activation
+(E) remain pending. Real namespaces, image identity, mounts and complete
+native/descendant/cleanup measurements remain required. Deployment defaults,
+release selections and the Paratix helper stay inactive.
 
 ## Run the bounded Q2a source harness
 
@@ -238,8 +301,8 @@ and authentic differing native Node 24.21.0 with pnpm 11.17.0. The original phys
 stock CLI remains unchanged; the derived loader authenticates that original and
 transforms its bundle in memory to the frozen derived identity. A complete
 physical derived distribution is separately validated, not substituted for that
-execution route. Missing authentic stock phase evidence and positive native
-delegation remain unsupported.
+execution route. Missing authentic stock phase evidence and the paired
+revision-2 delegation observations remain unsupported.
 
 Wrapper/container/image and requested mount values are source doubles. They
 establish no worker namespace, immutable image or four observed readonly mounts.
@@ -341,8 +404,8 @@ outcomes. These checks do not qualify a Linux worker or select production inputs
 After genuine controlled qualification, the outside owner authenticates and
 selects complete evidence and publication/image/alias measurements. The
 [authority CLI](../../scripts/vitest-native-authority.mjs) validates these bounded
-local inputs and emits the existing authority-v1: exactly `checker`, `helper`,
-`toolchain`, `observation` components and exactly two original-image aliases.
+local inputs and emits authority schema 1 with `qualificationContractRevision: 2`:
+exactly `checker`, `helper`, `toolchain`, `observation` components and exactly two original-image aliases.
 
 The independently pinned selection binds preparation/profile/source/transform,
 stock preparation/selection/final receipt, containing `issuer: {revision, files}`,
@@ -366,7 +429,8 @@ the contained native implementation. Evidence documents use that selected
 | `aliases.json` | Exactly two measured original-image aliases equal to authenticated original toolchain bytes |
 
 Retain independently pinned raw invocation records, ordered launch/dispatch/
-completion event files, concrete lock files and challenge events. Every proof and
+completion event files for normal records, the paired delegation records
+described above, concrete lock files and challenge events. Every proof and
 raw/event binds the unchanged profile hash, source/transform, original archive/
 bundle, derived bundle, trust scope and image. Each raw mount set is exactly four
 unique selected components, all `ro` with the corresponding full inventory pin;
@@ -376,9 +440,9 @@ dispatches measure `runtimeIdentity: "derived"` and the frozen derived bundle.
 The fourteen scenarios are readonly, data-only, concurrency, delegation, TERM,
 INT, KILL, partial, tamper, redirection, replacement and script/hook/preload
 suppression. Retained challenges prove denied changes, zero executable-input
-execution, distinct concurrent receipts/completions, observed child delegation
-and signal/partial ineligibility with no surviving descendants. Summary booleans
-and hash-shaped event references alone cannot establish these observations.
+execution, distinct concurrent receipts/completions, paired same-version absence
+and expected-negative delegation, and signal/partial ineligibility with no
+surviving descendants. Summary booleans and hash-shaped event references alone cannot establish these observations.
 Every selected raw leaf must be referenced; no extra or missing physical leaf is
 accepted. Evidence-root bounds: six proof files plus at most 1,000 raw leaves,
 16 MiB per physical leaf and 64 MiB aggregate; compatibility/lifecycle and

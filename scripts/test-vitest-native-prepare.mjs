@@ -22,6 +22,33 @@ const archive = await fs.realpath(values['pnpm-archive']);
 const pnpmRoot = await fs.realpath(values['pnpm-root']);
 assert.equal(sha256(await fs.readFile(archive)), originalArchiveSha256);
 assert.equal(sha256(await fs.readFile(path.join(pnpmRoot, 'dist/pnpm.mjs'))), originalBundleSha256);
+// Independent authentic-source oracle: these are byte anchors in the selected
+// original archive, not producer flags and not runtime absence observations.
+const archivedBundle = execFileSync('/usr/bin/tar', ['-xOf', archive, 'package/dist/pnpm.mjs'], { maxBuffer: 32_000_000 });
+assert.equal(sha256(archivedBundle), originalBundleSha256);
+assert.deepEqual(archivedBundle, await fs.readFile(path.join(pnpmRoot, 'dist/pnpm.mjs')));
+function independentDelegationFlow(content) {
+  assert.equal(sha256(content), originalBundleSha256, 'Oracle requires untouched authenticated original bytes');
+  const source = content.toString('utf8');
+  const gates = [
+    ['functionOffset', 'async function switchCliVersion(config2, context) {'],
+    ['directReturnOffset', '  if (!persistLockfile && pm2.version === packageManager.version)\n    return;'],
+    ['resolvedReturnOffset', '  if (pmVersion === packageManager.version) {\n    await storeToUse?.ctrl.close();\n    return;\n  }'],
+    ['spawnOffset', '  const { status, signal, error } = import_cross_spawn4.default.sync(pnpmBinPath, process.argv.slice(2), {'],
+    ['functionEndOffset', '\nvar import_cross_spawn4, import_semver66, VersionSwitchFail;'],
+    ['dispatchOffset', '    let result2 = pnpmCmds[cmd ?? "help"]('],
+  ];
+  const offsets = gates.map(([name, anchor]) => {
+    assert.equal(source.split(anchor).length, 2, `Unique authentic ${name} byte anchor required`);
+    return [name, Buffer.byteLength(source.slice(0, source.indexOf(anchor)))];
+  });
+  assert(offsets.every((entry, index) => index === 0 || offsets[index - 1][1] < entry[1]),
+    'Both same-version returns must precede the real differing-version spawn inside switchCliVersion');
+  return { originalBundleSha256, ...Object.fromEntries(offsets) };
+}
+const independentSourceFlow = independentDelegationFlow(archivedBundle);
+assert.throws(() => independentDelegationFlow(Buffer.concat([archivedBundle, Buffer.from('\n')])));
+
 const root = values.output ? path.resolve(values.output) : await fs.mkdtemp(path.join(tmpdir(), 'native-prepare-'));
 if (values.output) await fs.mkdir(root);
 const fixtureRoot = await fs.realpath(root);
@@ -85,7 +112,7 @@ process.stdout.write(JSON.stringify({ case: 'legacy-candidate', state: 'PASSED',
 // Test-owned selection is pinned before calling preparation. Production ownership,
 // qualification receipts and publication authentication are deliberately unavailable.
 const preparation = {
-  schemaVersion: 1, trustScope: 'source-fixture', sourceRevision: revision,
+  schemaVersion: 1, qualificationContractRevision: 2, trustScope: 'source-fixture', sourceRevision: revision,
   sourceOrigin: `https://github.com/sebastian-software/renovate-config/commit/${revision}`,
   transform: { revision, files: implementationFiles },
   original: {
@@ -98,7 +125,7 @@ const preparationBytes = jsonBytes(preparation);
 await fs.writeFile(provenance, preparationBytes, { flag: 'wx', mode: 0o444 });
 const provenanceSha256 = sha256(preparationBytes);
 await fs.writeFile(path.join(fixtureRoot, 'selection.json'), jsonBytes({
-  schemaVersion: 1, trustScope: 'source-fixture', provenanceSha256, sourceRevision: revision, transformRevision: revision,
+  schemaVersion: 1, qualificationContractRevision: 2, trustScope: 'source-fixture', provenanceSha256, sourceRevision: revision, transformRevision: revision,
 }), { flag: 'wx', mode: 0o444 });
 const selectedInputs = { ...inputs, provenance, provenanceSha256, sourceRoot };
 const selected = await prepareNative({ ...selectedInputs, output: path.join(fixtureRoot, 'selected') });
@@ -107,6 +134,9 @@ process.stdout.write(JSON.stringify({ case: 'selected-containing-transform', act
 assert.equal(selected.transformRevision, revision,
   'Authenticated source-fixture preparation must freeze the selected containing transform revision before proof');
 const profile = await readProfile('selected', selected);
+assert.equal(profile.qualificationContractRevision, 2);
+assert.equal(selected.qualificationContractRevision, 2);
+assert.deepEqual(profile.delegationSource, independentSourceFlow);
 assert.equal(profile.transformRevision, revision);
 assert.equal(profile.sourceRevision, revision);
 assert.equal(profile.trustScope, 'source-fixture', 'Test selection must retain its nondeployable scope');
@@ -123,6 +153,15 @@ assert.equal(profile.pnpmFiles.find(file => file.path === 'dist/pnpm.mjs').sha25
 assert.equal(profile.derivedFiles.find(file => file.path === 'dist/pnpm.mjs').sha256, profile.derivedBundleSha256);
 assert.equal(profile.pnpmFiles.length, candidateProfile.pnpmFiles.length);
 
+for (const qualificationContractRevision of [undefined, 1, 999, null, '2', true]) {
+  const incompatible = { ...preparation, qualificationContractRevision };
+  if (qualificationContractRevision === undefined) delete incompatible.qualificationContractRevision;
+  const file = path.join(fixtureRoot, `incompatible-preparation-${String(qualificationContractRevision)}.json`);
+  const content = jsonBytes(incompatible); await fs.writeFile(file, content, { mode: 0o444 });
+  await assert.rejects(prepareNative({ ...selectedInputs, provenance: file, provenanceSha256: sha256(content),
+    output: path.join(fixtureRoot, `incompatible-output-${String(qualificationContractRevision)}`) }), /preparation selection/,
+  'A separately authenticated missing/legacy/unknown marker cannot select the revision2 preparation path');
+}
 await assert.rejects(prepareNative({ ...selectedInputs, provenanceSha256: '0'.repeat(64), output: path.join(fixtureRoot, 'wrong-pin') }),
   'Preparation must reject a selection pin that does not authenticate the supplied bytes');
 const transformedSource = path.join(sourceRoot, 'scripts/vitest-native/transform.mjs');

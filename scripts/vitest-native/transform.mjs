@@ -7,6 +7,29 @@ function once(source, anchor, replacement) {
   if (source.split(anchor).length !== 2) throw new Error('Absent or ambiguous authenticated observation anchor');
   return source.replace(anchor, replacement);
 }
+// Authenticated byte offsets describe the two native returns before the real
+// switch-child seam. They are source facts, never runtime child-absence proof.
+export function delegationSourceFacts(bytes) {
+  if (digest(bytes) !== ORIGINAL_PNPM_BUNDLE) throw new Error('Unsupported original pnpm bundle');
+  const source = bytes.toString('utf8');
+  const anchors = {
+    functionOffset: 'async function switchCliVersion(config2, context) {',
+    directReturnOffset: '  if (!persistLockfile && pm2.version === packageManager.version)\n    return;',
+    resolvedReturnOffset: '  if (pmVersion === packageManager.version) {\n    await storeToUse?.ctrl.close();\n    return;\n  }',
+    spawnOffset: '  const { status, signal, error } = import_cross_spawn4.default.sync(pnpmBinPath, process.argv.slice(2), {',
+    functionEndOffset: '\nvar import_cross_spawn4, import_semver66, VersionSwitchFail;',
+    dispatchOffset: '    let result2 = pnpmCmds[cmd ?? "help"](',
+  };
+  const facts = { originalBundleSha256: ORIGINAL_PNPM_BUNDLE };
+  for (const [key, anchor] of Object.entries(anchors)) {
+    if (source.split(anchor).length !== 2) throw new Error('Absent or ambiguous authenticated delegation anchor');
+    facts[key] = Buffer.byteLength(source.slice(0, source.indexOf(anchor)));
+  }
+  if (!(facts.functionOffset < facts.directReturnOffset && facts.directReturnOffset < facts.resolvedReturnOffset &&
+    facts.resolvedReturnOffset < facts.spawnOffset && facts.spawnOffset < facts.functionEndOffset &&
+    facts.functionEndOffset < facts.dispatchOffset)) throw new Error('Changed authenticated delegation control flow');
+  return facts;
+}
 export function transformPnpm(bytes) {
   if (digest(bytes) !== ORIGINAL_PNPM_BUNDLE) throw new Error('Unsupported original pnpm bundle');
   let source = bytes.toString('utf8');

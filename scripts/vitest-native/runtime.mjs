@@ -48,7 +48,7 @@ export function aliasDigest(alias, toolchain) {
   return digest(Buffer.from(JSON.stringify(tuples),'utf8'));
 }
 export function validateAuthority(authority,{sourceFixture=false}={}) {
-  requireValue(authority.schemaVersion === 1 && (authority.productionEligible === true && authority.trustScope==='release-owner' ||
+  requireValue(authority.schemaVersion === 1 && authority.qualificationContractRevision === 2 && (authority.productionEligible === true && authority.trustScope==='release-owner' ||
       sourceFixture && authority.trustScope==='source-fixture' && authority.productionEligible===false) &&
     revision.test(authority.sourceRevision) && revision.test(authority.transformRevision) &&
     hash.test(authority.originalArchiveSha256) && hash.test(authority.originalBundleSha256) &&
@@ -83,10 +83,10 @@ export function verifyRuntime(authorityFile, authorityPin, launchFile) {
   const compatibility=readPinned('/opt/renovate-native-authority/linux-compatibility.json',authority.linuxCompatibilitySha256,65536);
   const lifecycle=readPinned('/opt/renovate-native-authority/data-only-lifecycle.json',authority.dataOnlyLifecycleSha256,65536);
   const profile=readPinned('/opt/renovate-native/observation/profile.json',authority.profileSha256,16_777_216);
-  requireValue(profile.trustScope==='release-owner'&&profile.productionEligible===false&&
+  requireValue(profile.qualificationContractRevision===2&&profile.trustScope==='release-owner'&&profile.productionEligible===false&&
     profile.provenanceClass==='authenticated-preparation'&&profile.sourceRevision===authority.sourceRevision&&
     profile.transformRevision===authority.transformRevision);
-  requireValue(compatibility.trustScope==='release-owner'&&lifecycle.trustScope==='release-owner'&&compatibility.profileSha256===authority.profileSha256&&lifecycle.profileSha256===authority.profileSha256&&
+  requireValue(compatibility.qualificationContractRevision===2&&lifecycle.qualificationContractRevision===2&&compatibility.trustScope==='release-owner'&&lifecycle.trustScope==='release-owner'&&compatibility.profileSha256===authority.profileSha256&&lifecycle.profileSha256===authority.profileSha256&&
     lifecycle.emptyPnpmfileSha256===EMPTY_SHA256&&compatibility.platform==='linux'&&compatibility.sourceRevision===authority.transformRevision&&
     compatibility.originalArchiveSha256===authority.originalArchiveSha256&&
     compatibility.derivedBundleSha256===authority.derivedBundleSha256&&

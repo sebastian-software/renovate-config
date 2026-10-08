@@ -47,13 +47,13 @@ export function summarizeQualification({ cases, evidenceScope }) {
   const records = slots.map(slot => ({ ...slot, ...(supplied.get(slot.id) ?? {
     state: 'UNRUN', reason: 'Required controlled observation is unavailable', references: [],
   }) }));
-  const summary = { schemaVersion: 1, evidenceScope, completeness: false, productionEligible: false,
+  const summary = { schemaVersion: 1, qualificationContractRevision: 2, evidenceScope, completeness: false, productionEligible: false,
     cases: records, missingSlots: records.filter(record => record.state !== 'PASSED').map(record => record.id) };
   requireValue(Buffer.byteLength(JSON.stringify(summary)) <= limits.summary, 'Summary byte budget exceeded');
   return summary;
 }
 export function qualificationExitCode(summary) {
-  requireValue(summary?.schemaVersion === 1 && summary.completeness === false && summary.productionEligible === false &&
+  requireValue(summary?.schemaVersion === 1 && summary.qualificationContractRevision === 2 && summary.completeness === false && summary.productionEligible === false &&
     ['source-fixture', 'unrun-qualification'].includes(summary.evidenceScope), 'Source completeness or eligibility promotion');
   const checked = summarizeQualification({ cases: summary.cases, evidenceScope: summary.evidenceScope });
   requireValue(JSON.stringify(checked.missingSlots) === JSON.stringify(summary.missingSlots), 'Missing slot summary differs');

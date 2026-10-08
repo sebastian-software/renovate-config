@@ -188,6 +188,8 @@ export async function collectSource(inputFile, inputPin, output) {
       requireValue(/^[a-f0-9]{32}\.json$/.test(filename), 'Unexpected native receipt name');
       const bytes = await fs.readFile(path.join(receipts, filename));
       const receipt = JSON.parse(bytes);
+      requireValue(receipt.qualificationContractRevision === 2 && Array.isArray(receipt.events) &&
+        receipt.events.every(event => event.qualificationContractRevision === 2), 'Legacy or mixed native receipt contract');
       if (receipt.inputHead !== heads.get(directory)) continue;
       const reference = await retain(`${name}-${filename}`, bytes); retained.push(reference);
       nativeReceipts.push(receipt);
@@ -234,7 +236,7 @@ export async function collectSource(inputFile, inputPin, output) {
         slot.scenario === 'delegation' ? [delegationSource] : [];
       let reason = 'Required held worker namespace, measured mounts and independent descendant cleanup are unavailable';
       if (slot.runtimeIdentity === 'original') reason = 'Stock native outcomes/locks retained; authentic original phase/interpreter evidence is unavailable';
-      if (slot.scenario === 'delegation') reason = 'Selected native probe rejects unowned-delegation; no authentic frozen child path or challenge was invoked';
+      if (slot.scenario === 'delegation') reason = 'Same-version absence and rejected differing selection require independent lifecycle/child/cleanup evidence; neither challenge was invoked';
       if (divergent || observedFailure || registryExceeded) reason = 'Observed source native equivalence, suppression or collection failed';
       return { id: slot.id, state: divergent || observedFailure || registryExceeded ? 'FAILED' :
         supportedPartial || slot.scenario === 'delegation' ? 'UNSUPPORTED' : 'UNRUN', reason,
@@ -245,7 +247,7 @@ export async function collectSource(inputFile, inputPin, output) {
     // selected source bytes after collection; drift cannot reuse earlier pins.
     await preflight(inputFile, inputPin, output, { contextReady: true });
     const summary = summarizeQualification({ cases, evidenceScope: 'source-fixture' });
-    const support = jsonBytes({ schemaVersion: 1, evidenceScope: 'source-fixture', binding,
+    const support = jsonBytes({ schemaVersion: 1, qualificationContractRevision: 2, evidenceScope: 'source-fixture', binding,
       supportingInvocations: supporting, registryRequests: requests, registryExceeded,
       retainedBytes, linuxProcessProof: false, productionEligible: false });
     await retain('supporting-source-collection.json', support);
