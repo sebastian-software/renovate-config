@@ -71,3 +71,173 @@ export function validateOriginalObservationReport(report) {
   requireValue(JSON.stringify(report) === JSON.stringify(expected), 'Source report differs from its normalized observations');
   return report;
 }
+
+
+// Closed source-fixture lifecycle diagnostics. These facts describe synchronous
+// controller callback/continuation order, never target-side timestamps or causality.
+export const originalLifecycleLimits = Object.freeze({ events: 96, bytes: 8192,
+  eventFields: 12, eventBytes: 512, stringBytes: 64, elapsedMs: 120_000 });
+const lifecycleMethods = ['Debugger.enable', 'Debugger.setBreakpointByUrl', 'Debugger.getScriptSource',
+  'Debugger.getPossibleBreakpoints', 'Debugger.resume', 'Runtime.runIfWaitingForDebugger'];
+const lifecycleReasons = ['protocol', 'source', 'location', 'disconnect', 'timeout', 'cancelled', 'bounds', 'identity'];
+const lifecycleStatuses = ['available', 'unavailable', 'truncated'];
+const lifecycleStatusReasons = ['invalid-correlation', 'invalid-clock', 'invalid-event', 'recorder-error', 'event-bound', 'byte-bound'];
+const lifecycleFields = {
+  'native-launch': [], 'controller-launch-receipt': [], 'endpoint-observed': [], 'protocol-open': [],
+  'command-issued': ['method', 'commandId'], 'command-acknowledged': ['method', 'commandId', 'accepted'],
+  'protocol-response-error': ['method', 'commandId'],
+  'protocol-close-request': [], 'protocol-socket-close': ['intentional'],
+  'script-authenticated': [], 'breakpoint-resolved': ['point'], 'semantic-pause': ['point'], 'initial-pause': [],
+  'controller-receipt': ['site'], 'observer-failure': ['reason'],
+  'native-shutdown-cue': [], 'native-lifetime-expired': [], 'native-stream-close': [],
+  'native-exit': ['exitCode', 'signal'], 'native-failure': ['site', 'reason'],
+  'native-cancel-request': ['reason'], 'native-stop-request': ['site', 'reason'],
+  'native-signal-request': ['signal'], 'native-owned-signal': ['signal'], 'native-group-empty': [],
+  'native-group-failure': ['site', 'signal', 'reason'],
+};
+function lifecycleCorrelation(value) {
+  exact(value, ['recipe', 'category', 'role', 'launch']);
+  requireValue(['empty-v1', 'offline-miss-v1'].includes(value.recipe) &&
+    ['install', 'update', 'dedupe'].includes(value.category) && ['original', 'derived'].includes(value.role) &&
+    value.launch === ['install', 'update', 'dedupe'].indexOf(value.category) * 2 + (value.role === 'derived' ? 1 : 0),
+  'Unknown lifecycle launch correlation');
+}
+function lifecycleEvent(value, sequenced) {
+  requireValue(value && typeof value === 'object' && !Array.isArray(value), 'Unknown lifecycle event');
+  const fields = value.event === 'protocol-failure' ? ['site', 'reason', 'alreadyFailed',
+    ...('method' in value || 'commandId' in value ? ['method', 'commandId'] : [])] : lifecycleFields[value.event];
+  requireValue(fields, 'Unknown lifecycle event kind');
+  exact(value, ['event', ...fields, ...(sequenced ? ['sequence', 'elapsedMs'] : [])]);
+  requireValue(Object.keys(value).length <= originalLifecycleLimits.eventFields &&
+    Buffer.byteLength(JSON.stringify(value)) <= originalLifecycleLimits.eventBytes &&
+    Object.values(value).every(item => item === null || typeof item === 'boolean' ||
+      typeof item === 'number' && Number.isSafeInteger(item) ||
+      typeof item === 'string' && Buffer.byteLength(item) <= originalLifecycleLimits.stringBytes),
+  'Lifecycle field or byte bound exceeded');
+  if (sequenced) requireValue(Number.isInteger(value.sequence) && value.sequence >= 0 && value.sequence < originalLifecycleLimits.events &&
+    Number.isInteger(value.elapsedMs) && value.elapsedMs >= 0 && value.elapsedMs <= originalLifecycleLimits.elapsedMs,
+  'Invalid lifecycle sequence or elapsed offset');
+  if ('method' in value) requireValue(lifecycleMethods.includes(value.method) &&
+    Number.isInteger(value.commandId) && value.commandId >= 1 && value.commandId <= observerLimits.commands,
+  'Unknown lifecycle command linkage');
+  if ('reason' in value) requireValue(lifecycleReasons.includes(value.reason) ||
+    value.event === 'native-group-failure' && value.reason === null, 'Unknown lifecycle failure reason');
+  if ('point' in value) requireValue(['preCall', 'entry', 'settlement'].includes(value.point), 'Unknown lifecycle source point');
+  if (value.event === 'protocol-failure') requireValue(typeof value.alreadyFailed === 'boolean' &&
+    ['connection', 'command-response', 'notification-wait', 'socket-error', 'socket-close', 'message', 'intentional-close', 'external'].includes(value.site) &&
+    (value.site === 'command-response') === ('method' in value), 'Unknown lifecycle protocol failure site');
+  if (value.event === 'command-acknowledged') requireValue(typeof value.accepted === 'boolean', 'Unknown lifecycle response state');
+  if (value.event === 'protocol-socket-close') requireValue(typeof value.intentional === 'boolean', 'Unknown lifecycle close state');
+  if (value.event === 'controller-receipt') requireValue(['notification', 'shutdown-cue', 'stream-close', 'failure'].includes(value.site),
+    'Unknown lifecycle controller receipt');
+  if (value.event === 'native-failure') requireValue(['endpoint-setup', 'lifetime', 'output-bound', 'cancellation', 'spawn', 'endpoint-exit'].includes(value.site),
+    'Unknown lifecycle native failure site');
+  if (value.event === 'native-stop-request') requireValue(['ownedNativeProcess.stop', 'ownedNativeProcess.cancel', 'ownedNativeProcess.finish',
+    'observeOriginal:unexpected-error', 'observeOriginal:unsupported'].includes(value.site), 'Unknown lifecycle stop site');
+  if (value.event === 'native-group-failure') requireValue(['groupEmpty', 'signalGroup'].includes(value.site), 'Unknown lifecycle group site');
+  if (value.event === 'native-exit') outcome({ exitCode: value.exitCode, signal: value.signal });
+  else if ('signal' in value) requireValue(['SIGTERM', 'SIGKILL'].includes(value.signal) ||
+    value.event === 'native-group-failure' && value.signal === 0, 'Unknown lifecycle owned signal');
+}
+function lifecycleOrigin(event) {
+  return event.event === 'protocol-failure' ? !event.alreadyFailed && event.site !== 'intentional-close' :
+    ['native-failure', 'native-group-failure', 'protocol-response-error', 'observer-failure'].includes(event.event);
+}
+function lifecycleMissing(document) {
+  const has = (event, site) => document.events.some(item => item.event === event && (site === undefined || item.site === site));
+  const expected = [['native-exit', 'native-exit'], ['native-stream-close', 'native-stream-close'], ['group-empty', 'native-group-empty']];
+  if (document.role === 'original') expected.push(['resume-issued', 'command-issued'], ['resume-acknowledged', 'command-acknowledged'],
+    ['shutdown-cue', 'native-shutdown-cue'], ['controller-shutdown-receipt', 'controller-receipt', 'shutdown-cue'],
+    ['protocol-close-request', 'protocol-close-request'], ['protocol-socket-close', 'protocol-socket-close']);
+  return expected.filter(([name, event, site]) => name === 'resume-issued' ? document.lastResumeIssued === null :
+    name === 'resume-acknowledged' ? document.lastResumeAcknowledged === null : !has(event, site)).map(([name]) => name);
+}
+// Guard optional diagnostic callbacks so observation can never replace native errors.
+export function recordOriginalLifecycle(record, event) {
+  try { if (typeof record === 'function') record(event); } catch { /* Native facts remain authoritative. */ }
+}
+export function createOriginalLifecycleDiagnostics(correlation, clock = () => process.hrtime.bigint()) {
+  let started = null; let lastTime = null; let lastElapsed = 0;
+  const document = { schemaVersion: 1, evidenceScope: 'source-fixture', recipe: null, category: null, role: null, launch: null,
+    state: 'available', reason: null, firstFailure: null, lastResumeIssued: null, lastResumeAcknowledged: null,
+    events: [], missingObservations: [] };
+  const stop = (state, reason) => { if (document.state === 'available') { document.state = state; document.reason = reason; } };
+  try { lifecycleCorrelation(correlation); Object.assign(document, correlation); }
+  catch { for (const key of ['recipe', 'category', 'role', 'launch']) document[key] = null;
+    stop('unavailable', 'invalid-correlation'); }
+  try { started = clock(); lastTime = started; if (typeof started !== 'bigint') stop('unavailable', 'invalid-clock'); }
+  catch { stop('unavailable', 'invalid-clock'); }
+  function record(value) {
+    if (document.state !== 'available') return;
+    try {
+      try { lifecycleEvent(value, false); } catch { stop('unavailable', 'invalid-event'); return; }
+      let now;
+      try { now = clock(); } catch { stop('unavailable', 'invalid-clock'); return; }
+      if (typeof now !== 'bigint' || now < lastTime) { stop('unavailable', 'invalid-clock'); return; }
+      const elapsedMs = Number((now - started) / 1_000_000n);
+      if (!Number.isSafeInteger(elapsedMs) || elapsedMs < lastElapsed || elapsedMs > originalLifecycleLimits.elapsedMs) {
+        stop('unavailable', 'invalid-clock'); return;
+      }
+      if (document.events.length >= originalLifecycleLimits.events) { stop('truncated', 'event-bound'); return; }
+      const event = { ...value, sequence: document.events.length, elapsedMs };
+      lifecycleEvent(event, true);
+      // Reserve room for the terminal status/reason and all fixed missing markers.
+      const candidate = { ...document, events: [...document.events, event], missingObservations: lifecycleMissing(document) };
+      if (Buffer.byteLength(JSON.stringify(candidate)) > originalLifecycleLimits.bytes - 512) { stop('truncated', 'byte-bound'); return; }
+      document.events.push(event); lastTime = now; lastElapsed = elapsedMs;
+      if (document.firstFailure === null && lifecycleOrigin(event)) document.firstFailure = event.sequence;
+      if (event.method === 'Debugger.resume' && event.event === 'command-issued') document.lastResumeIssued = event.commandId;
+      if (event.method === 'Debugger.resume' && event.event === 'command-acknowledged') document.lastResumeAcknowledged = event.commandId;
+    } catch { stop('unavailable', 'recorder-error'); }
+  }
+  function snapshot() {
+    // Only bounded, controller-created primitives are retained. Never retain the
+    // supplied event object, protocol payloads, endpoint, frames or native output.
+    try {
+      document.missingObservations = lifecycleMissing(document);
+      return JSON.parse(JSON.stringify(document));
+    } catch {
+      const fallback = { ...document, state: 'unavailable', reason: 'recorder-error', events: [],
+        firstFailure: null, lastResumeIssued: null, lastResumeAcknowledged: null, missingObservations: [] };
+      fallback.missingObservations = lifecycleMissing(fallback);
+      return fallback;
+    }
+  }
+  return { record, snapshot };
+}
+export function validateOriginalLifecycleDiagnostics(document, { requireAvailable = false, correlation = null } = {}) {
+  exact(document, ['schemaVersion', 'evidenceScope', 'recipe', 'category', 'role', 'launch', 'state', 'reason',
+    'firstFailure', 'lastResumeIssued', 'lastResumeAcknowledged', 'events', 'missingObservations']);
+  requireValue(document.schemaVersion === 1 && document.evidenceScope === 'source-fixture' && lifecycleStatuses.includes(document.state) &&
+    (document.state === 'available' ? document.reason === null : document.state === 'truncated' ?
+      ['event-bound', 'byte-bound'].includes(document.reason) : lifecycleStatusReasons.slice(0, 4).includes(document.reason)) &&
+    (!requireAvailable || document.state === 'available'), 'Unavailable, truncated or unknown lifecycle diagnostics');
+  if (document.reason === 'invalid-correlation') requireValue(['recipe', 'category', 'role', 'launch'].every(key => document[key] === null),
+    'Invalid lifecycle correlation was retained');
+  else lifecycleCorrelation({ recipe: document.recipe, category: document.category, role: document.role, launch: document.launch });
+  if (correlation !== null) { lifecycleCorrelation(correlation);
+    requireValue(Object.entries(correlation).every(([key, value]) => document[key] === value), 'Lifecycle diagnostic correlation differs'); }
+  requireValue(Array.isArray(document.events) && document.events.length <= originalLifecycleLimits.events &&
+    Buffer.byteLength(JSON.stringify(document)) <= originalLifecycleLimits.bytes, 'Lifecycle diagnostic bound exceeded');
+  let elapsed = 0; let firstFailure = null; let issued = null; let acknowledged = null;
+  const commands = new Map(); const acknowledgements = new Set();
+  for (const [index, event] of document.events.entries()) {
+    lifecycleEvent(event, true);
+    requireValue(event.sequence === index && event.elapsedMs >= elapsed, 'Replayed or unordered lifecycle event'); elapsed = event.elapsedMs;
+    if (firstFailure === null && lifecycleOrigin(event)) firstFailure = index;
+    if (event.event === 'command-issued') {
+      requireValue(!commands.has(event.commandId), 'Replayed lifecycle command'); commands.set(event.commandId, event.method);
+      if (event.method === 'Debugger.resume') issued = event.commandId;
+    }
+    if (event.event === 'command-acknowledged' || event.event === 'protocol-response-error' ||
+      event.event === 'protocol-failure' && event.site === 'command-response') requireValue(commands.get(event.commandId) === event.method,
+      'Uncorrelated lifecycle response/timeout');
+    if (event.event === 'command-acknowledged') {
+      requireValue(!acknowledgements.has(event.commandId), 'Replayed lifecycle acknowledgement'); acknowledgements.add(event.commandId);
+      if (event.method === 'Debugger.resume') acknowledged = event.commandId;
+    }
+  }
+  requireValue(document.firstFailure === firstFailure && document.lastResumeIssued === issued && document.lastResumeAcknowledged === acknowledged &&
+    JSON.stringify(document.missingObservations) === JSON.stringify(lifecycleMissing(document)), 'Lifecycle diagnostic summary differs');
+  return document;
+}

@@ -7,7 +7,8 @@ downloading, installing, publishing or starting a worker. The Q2a source harness
 additionally starts fixed owned source processes and a rendered test wrapper; it
 starts no live worker. Q2b.1a adds a separate bounded original Inspector fixture
 with owned local processes; Q2b.1b investigates fixed install/update entry points
-in that fixture, also without a live worker. Prepared deployment and
+in that fixture, also without a live worker. Q2b.1c adds bounded controller-owned
+lifecycle diagnostics to the same source fixture. Prepared deployment and
 the Paratix helper remain inactive.
 Actual production release selection, Linux worker qualification, image/alias
 measurements and independent publication attestations remain separate Q2 gates; deployment,
@@ -32,7 +33,10 @@ and [Proxmox #182](https://git.dal12.de/fastner/proxmox/pulls/182). These source
 do not select a published release, measure an installed image or qualify a Linux
 worker. Q2a adds the bounded source harness below; Q2b.0 revises only its native
 evidence contract. Q2b.1a adds historical partial original-observer source feasibility;
-Q2b.1b is the bounded entry inquiry below. Remaining Q2b.1–Q2b.3 operational observer/facility/qualification, Q2c
+Q2b.1b completed the bounded entry inquiry below in merged
+[renovate-config #47](https://github.com/sebastian-software/renovate-config/pull/47).
+Q2b.1c is the current lifecycle-diagnostic source increment. Remaining Q2b.1–Q2b.3
+operational observer/facility/qualification, Q2c
 independent release/image/attestation selection and E live
 actions remain separate gates. Do not treat PR heads as squash or release
 identities or pin a future documentation commit into its own contents. A Recensor `v1.1.0` source
@@ -547,36 +551,47 @@ abort. The [immutable fixture suite](../../scripts/test-vitest-native-original-o
 checks prelaunch input/CLI rejection and both real recipes. Its test-only
 `--source-selection-only` option runs authenticated selection and byte rejection
 without native recipes; it is not an option on the three-flag fixture CLI.
-The following template uses existing authenticated readonly pnpm files and the
-original archive for the selected Node runtime; replace the paths with those selected local inputs:
+For the fixed existing Darwin arm64 source recipe, bind `q37_node` to the
+already authenticated Node 24.18.0 executable, `q37_archives` to the existing
+archive directory and `q37_pnpm` to the complete readonly pnpm root. Reverify the
+selected Node SHA256 `ee6fb0e015284d83a91e8ec5213f43a157f8a392b58555301682892ba928c04a`,
+V8 `13.6.233.17-node.50`, pnpm archive SHA256
+`644eb5079654e87dae59a07e62d7f098162b9ce58f06077328b5ddefca1c8541`
+and `dist/pnpm.mjs` SHA256
+`228451e6383cf4df0700fc19b37aba1a25e6540e62fbca70ca2d76b719a4d883`.
+The approved input receipt supplies the local paths; these variables select
+pre-existing inputs, not resources to provision. Missing or mismatched inputs
+stop the run without acquisition or substitution.
 
 ```sh
-node scripts/test-vitest-native-original-observer-source.mjs
-for observer_case in native-before-endpoint owned-group output-bound lifetime-timeout; do
-  node scripts/test-vitest-native-original-observer-process.mjs --case "$observer_case"
+"$q37_node" scripts/test-vitest-native-original-observer-source.mjs
+for q37_case in native-before-endpoint owned-group output-bound lifetime-timeout group-failure-diagnostic post-term-terminal-sequencing; do
+  "$q37_node" scripts/test-vitest-native-original-observer-process.mjs --case "$q37_case" || exit
 done
-node scripts/test-vitest-native-original-observer-process.mjs \
-  --case early-cancel \
-  --archives /authenticated/test-archives --pnpm-root /authenticated/readonly-pnpm \
-  --node-archive /authenticated/node-v24.18.0-linux-x64.tar.gz
-node scripts/test-vitest-native-original-observer-fixture.mjs --source-selection-only \
-  --archives /authenticated/test-archives --pnpm-root /authenticated/readonly-pnpm \
-  --node-archive /authenticated/node-v24.18.0-linux-x64.tar.gz
-node scripts/test-vitest-native-original-observer-fixture.mjs \
-  --archives /authenticated/test-archives --pnpm-root /authenticated/readonly-pnpm \
-  --node-archive /authenticated/node-v24.18.0-linux-x64.tar.gz
+"$q37_node" scripts/test-vitest-native-original-observer-process.mjs \
+  --case early-cancel --archives "$q37_archives" --pnpm-root "$q37_pnpm"
+"$q37_node" scripts/test-vitest-native-original-observer-fixture.mjs \
+  --archives "$q37_archives" --pnpm-root "$q37_pnpm"
 ```
 
-`--archives` contains `pnpm-11.17.0.tgz`. The Node archive above is the Linux x64
-example; use the selected original Darwin arm64 archive on that platform, or its
-explicit fixed existing executable pin. The tests acquire nothing. Existing
+The five actual-process selectors are `native-before-endpoint`, `owned-group`,
+`output-bound`, `lifetime-timeout` and `early-cancel`. The additional
+`group-failure-diagnostic` and `post-term-terminal-sequencing` selectors inject
+synthetic permission/order failures; they are separate preservation evidence.
+The ordinary full fixture command runs both `empty-v1` and `offline-miss-v1`.
+The optional `--source-selection-only` fixture check does not replace either
+recipe or the process checks. `q37_archives` contains `pnpm-11.17.0.tgz`.
+No Node archive is selected in this fixed Darwin recipe. The separately
+established Linux source CI supplies its authenticated original Node archive
+through `--node-archive`; it is not Linux operational qualification. The tests
+acquire nothing. Existing
 `vitest-native-observation-local` source CI already invokes the source, process
 and full immutable fixture suites using its already selected Node 24.18.0/pnpm 11.17.0 archives and stock root. Its final step
 freezes only the job's disposable stock fixture readonly after existing checks.
 No new acquisition, runner, service or permission is introduced. The merged
 Q2b.1a source PR [#46](https://github.com/sebastian-software/renovate-config/pull/46)
-retains five successful hosted source checks. Those historical checks and local
-Darwin results do not establish final Q2b.1b execution or Linux worker qualification.
+retains five successful hosted source checks. Those Q2b.1a checks and local
+Darwin results alone did not establish Q2b.1b execution or Linux worker qualification.
 Q2b.1b changes no CI invocation or wiring.
 
 The final Q2b.1b ordinary, unwrapped full fixture suite on the repaired
@@ -669,10 +684,14 @@ the two additional synthetic regressions above remain separate evidence.
 Neighboring worker-source, release-trust, native-runtime, 19-case collector and
 native-prepare checks also passed. Darwin ancestry and Linux process proof remain
 unsupported; the optional real Renovate module was not supplied, and the unchanged
-Darwin-unsupported native-identity check was not rerun. Independent review of the
-final retained candidate is **PENDING** at this documentation checkpoint.
-Q2b.1b source acceptance is **not complete**; no delivery or issue-completion
-claim follows from these checks.
+Darwin-unsupported native-identity check was not rerun. Independent exact-source review subsequently completed, and
+[renovate-config #47](https://github.com/sebastian-software/renovate-config/pull/47)
+merged on October 8, 2026 with five successful hosted source checks. Its final
+PR source head is `7377d1293151c4f0292df89319ded6ffdba0554a`, not a squash
+commit, selected release or operational receipt. Q2b.1b is complete as a source
+entry inquiry; install success and authenticated rejected settlement remain
+missing. Historical measurements and unknown-cleanup records above retain their
+original scope. Source completion does not complete issue #37.
 An unexpected regression or unknown cleanup fails the source check. Empty install
 success still requires independent entry and success observations with unforced
 matching terminal and lock facts. Offline exit 1, `finally`, an outer catch or
@@ -690,6 +709,137 @@ data-only execution, independent cleanup and debugger access exclusion remain
 unproved. Operational adapter/facility/Linux qualification (remaining Q2b.1–3),
 Q2c release selection and E activation remain pending. Existing production debug
 and authority gates stay strict, with deployment and release defaults inactive.
+
+## Inspect Q2b.1c lifecycle diagnostics without inferring a cause
+
+Q2b.1c records bounded controller callback and continuation order at the existing
+original-observer protocol/process sites. It preserves the same three selected
+source breakpoints, exact script/frame/caller checks and six Inspector methods.
+It adds no protocol traffic, exception mode, evaluation, property inspection,
+Promise reaction, target hook, dependency or execution authority. Existing
+native timers, Promise races, listener ownership, error identity and cleanup
+rules remain unchanged. Diagnosis does not repair a suspected install cause.
+
+Each original and derived envelope has a separate `lifecycleDiagnostics` object;
+the semantic `report` keeps its existing shape. The diagnostic header identifies
+`recipe`, `category`, `role` and fixed `launch` number (install 0/1, update 2/3,
+dedupe 4/5 for original/derived). It retains `state`, `reason`, `events`,
+`firstFailure`, `lastResumeIssued`, `lastResumeAcknowledged` and
+`missingObservations`. Events share one launch-local sequence and finite
+monotonic elapsed-millisecond offsets. These are controller observation times,
+not target timestamps, a global ordering across launches or cross-process
+causality proof.
+
+The closed vocabulary distinguishes connection, command-response and
+notification-wait origins; endpoint setup and native lifetime failures; fixed
+method/request linkage and matching response acknowledgement; the existing
+stderr shutdown-cue callback; native exit and stream close; controller receipt;
+intentional protocol-close request and actual socket close; cancellation/stop,
+owned signal and confirmed empty group. `firstFailure` points to the earliest
+recorded originating failure and survives later fan-out. Resume issuance and
+acknowledgement remain distinct; an acknowledged error response is marked
+`accepted: false`. An intentional close request is not confirmed debugger detach,
+and the shutdown string is not handler success. A cue can be recorded without
+the observer ever receiving it; an exited leader does not prove closed streams
+or an empty group. Missing observations remain listed without new waits.
+
+| Lifecycle diagnostic bound | Limit |
+| --- | --- |
+| Events per original/derived launch | 96 |
+| Complete diagnostic object, including header | 8,192 UTF-8 bytes |
+| Fields / serialized bytes per event | 12 / 512 |
+| String value | 64 UTF-8 bytes, with narrower closed vocabularies |
+| Local elapsed offset | 0–120,000 ms; native timeouts remain unchanged |
+| Enclosing ordinary summary | 65,536 bytes |
+
+Synchronous recording stops with explicit `unavailable` on invalid input, clock
+or recorder failure, or `truncated` on count/byte overflow. Bounded terminal
+status space is reserved inside the diagnostic byte limit. Neither condition
+replaces a native error, intervention, terminal or cleanup fact. Required source
+checks reject missing, unavailable or truncated diagnostics as successful
+diagnostic completion; an actual cue or socket-close callback that never
+occurred may remain explicitly missing. `available` means the recorder worked,
+not that every event occurred or semantic evidence is supported.
+
+Diagnostics retain only fixed normalized fields. They contain no raw Inspector
+messages, frames, scopes, local values, stderr, endpoint, paths, arguments,
+environment or wall-clock timestamps. They cannot grant semantic support,
+operational completeness or eligibility. Existing outer reports remain schema1,
+`qualificationContractRevision: 2`, source-fixture scoped, `completeness: false`
+and `productionEligible: false`. Worker/proof/authority gates stay strict.
+
+The focused source command has passed the retained 97 baseline negatives plus
+8 lifecycle seam cases and 29 diagnostic negatives. These cases drive the real
+protocol/process helper implementation with owned synthetic sockets, timers and
+children; globals and builtin bindings restore afterward. They distinguish
+connection/request/notification origins, acknowledgement/replay, concurrent
+launch correlation, throwing recorders, cue before/after lifetime timeout and
+exit before stream close. They test recording rules, bounds and nonpromotion;
+they do not observe real pnpm execution or establish an install cause.
+The ordinary fixture and process tests now require available, bounded,
+correctly correlated diagnostics alongside their existing native/lock/error and
+independent owned-group assertions. Synthetic failure cases remain separate
+from the five actual-process gates and both authentic ordinary recipes.
+
+**Q2b.1c native measurement checkpoint: PASSED on 9 October 2026.**
+An independent nonauthor validator ran all 14 commands against the authenticated
+frozen inputs: the focused source check, five actual-process cases, two separate
+synthetic process cases, both ordinary recipes in one command, and five
+neighboring owner checks. All exited 0. The source check retained its 97 baseline
+negatives plus 8 lifecycle seam cases and 29 diagnostic negatives. All 12
+ordinary original/derived envelopes had available, bounded, correctly correlated
+diagnostics. The following sequence numbers belong to each original launch;
+`none` means no first originating failure was recorded.
+
+| Recipe / category | First origin | Last resume issued / acknowledged | Shutdown cue / controller receipt | Missing observations |
+| --- | --- | --- | --- | --- |
+| `empty-v1` install | Notification-wait timeout, sequence 42; no command method | 12 / 12 | 51 / absent | `controller-shutdown-receipt` |
+| `empty-v1` update | none | 13 / 13 | 46 / 47 | none |
+| `empty-v1` dedupe | none | 13 / 13 | 46 / 47 | none |
+| `offline-miss-v1` install | Notification-wait timeout, sequence 42; no command method | 12 / 12 | absent / absent | `shutdown-cue`, `controller-shutdown-receipt` |
+| `offline-miss-v1` update | none | 12 / 12 | 42 / 43 | none |
+| `offline-miss-v1` dedupe | none | 12 / 12 | 42 / 43 | none |
+
+For both installs, the controller received the failure at sequence 43, requested
+protocol close at 45, sent owned SIGTERM at 49 and observed socket close at 50.
+For `empty-v1`, the shutdown cue followed at 51, native exit at 52 and stream
+close at 57; controller shutdown receipt remained missing. For
+`offline-miss-v1`, native exit followed at 51 and stream close at 52, with both
+cue and controller shutdown receipt missing. Neither install recorded a native
+lifetime origin. Both last resume requests had matching acknowledgements. The
+shared notification-wait origin describes these observed observer failures; it
+does not establish a shared underlying install cause.
+
+For the four update/dedupe originals, cue and controller receipt preceded close
+request and socket close, which preceded native exit and stream close. The
+`empty-v1` order was 46, 47, 48, 52, 53, 54; the `offline-miss-v1` order was
+42, 43, 44, 48, 49, 50. Repeated close requests were also retained (sequence 50
+and 46 respectively). Derived launches recorded no protocol commands and
+retained their natural terminal outcomes. These callback/continuation sequences
+do not measure target execution timing or establish causal pnpm behavior.
+
+Semantic/native outcomes and lock comparisons matched the retained #47 matrix
+above. Both original installs remained unsupported with timeout intervention
+and SIGTERM, against derived natural exit 0 for `empty-v1` and exit 1 for
+`offline-miss-v1`. The other four originals retained `empty-v1` supported success
+with exit 0 and `offline-miss-v1` incomplete outcomes with exit 1. Empty-recipe
+lockfiles remained present and byte-equal; offline lockfiles remained absent,
+which supplies no concrete lockfile proof. This comparison asserts no unchanged
+timing, causal install repair or rejected-settlement mechanism.
+
+The independent validator read back all owned groups as `EMPTY`: 10 groups
+across the five actual-process cases, 12 ordinary-launch groups and 3 distinct
+groups across the two separately classified synthetic cases. The earlier
+historical `UNKNOWN` cleanup receipts remain unchanged. Local validation and
+authenticated chronology/native/lock receipts are retained at
+`/private/tmp/apply37-q2b1c-orchestrator/validation-results.json` and
+`/private/tmp/apply37-q2b1c-orchestrator/final-measurements.json` respectively.
+
+The optional real Renovate invocation remains absent; Darwin ancestry and Linux
+proof remain unsupported. This source-only revision-2 checkpoint grants no
+operational completeness or production eligibility. Causal repair and
+error-mechanism selection remain subsequent planning gates; operational adapter,
+facility, qualification, release selection and activation remain unreleased.
 
 ## Attest, issue and verify retained native evidence
 

@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { ownedNativeProcess, processGroupFailureMetadata } from './vitest-native-worker/original-observer-process.mjs';
 import { controllerInventory } from './vitest-native-worker/original-observer-inputs.mjs';
 import { runOriginalObserver } from './vitest-native-worker/original-observer.mjs';
+import { createOriginalLifecycleDiagnostics, validateOriginalLifecycleDiagnostics } from './vitest-native-worker/original-observer-contract.mjs';
 import { UnsupportedObservation } from './vitest-native-worker/original-observer-contract.mjs';
 
 const options = {};
@@ -21,6 +22,16 @@ assert.equal(process.versions.node, '24.18.0');
 const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'q2b1a-process-')));
 const results = { evidenceScope: 'source-fixture', qualificationContractRevision: 2,
   completeness: false, productionEligible: false, selectedCase, root, cleanup: [] };
+const lifecycleLaunches = [];
+async function diagnosedNativeProcess(node, args, cwd, env, signal, options = {}) {
+  const role = options.role ?? 'original'; const category = options.category ?? 'install';
+  const correlation = { recipe: 'empty-v1', category, role,
+    launch: ['install', 'update', 'dedupe'].indexOf(category) * 2 + (role === 'derived' ? 1 : 0) };
+  const lifecycle = createOriginalLifecycleDiagnostics(correlation);
+  const native = await ownedNativeProcess(node, args, cwd, env, signal, { ...options, record: lifecycle.record });
+  lifecycleLaunches.push({ correlation, lifecycle, native });
+  return native;
+}
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 function testGroupFailure(error, pid, caller, site, signal) {
   results.testOwnedProcessGroupFailure ??= { caller, site, signal, ownedPid: pid, targetPid: -pid,
@@ -72,7 +83,7 @@ async function waitFile(filename) {
 try {
   if (selectedCase === 'post-term-terminal-sequencing') {
     results.failureInjectionScope = 'synthetic-post-term-pre-exit-process-kill';
-    const native = await ownedNativeProcess(process.execPath, ['-e', 'setInterval(()=>{},1000)'], root,
+    const native = await diagnosedNativeProcess(process.execPath, ['-e', 'setInterval(()=>{},1000)'], root,
       { PATH: path.dirname(process.execPath), HOME: root }, undefined, { role: 'original', category: 'install' });
     const sequencing = { ownedPid: native.pid, termSent: false, exitObserved: false, calls: [] };
     results.sequencing = sequencing;
@@ -118,7 +129,7 @@ try {
       ['groupEmpty', 0, 'original', 'install', 'ownedNativeProcess.stop'],
       ['signalGroup', 'SIGTERM', 'derived', 'update', 'observeOriginal:unsupported'],
     ]) {
-      const native = await ownedNativeProcess(process.execPath, ['-e', 'setInterval(()=>{},1000)'], root,
+      const native = await diagnosedNativeProcess(process.execPath, ['-e', 'setInterval(()=>{},1000)'], root,
         { PATH: path.dirname(process.execPath), HOME: root }, undefined, { role, category });
       const progress = { ownedPid: native.pid, stage: 'injected-stop' }; results.syntheticProgress.push(progress);
       const exited = directStopExit(native, () => {});
@@ -187,7 +198,7 @@ try {
     // acknowledges its TERM handler, and detaches stdio before leader exit.
     const childCode = `process.on('SIGTERM',()=>{});require('node:fs').writeFileSync(process.argv[1],String(process.pid));setInterval(()=>{},1000)`;
     const leaderCode = `const {spawn}=require('node:child_process');const fs=require('node:fs');spawn(process.execPath,['-e',${JSON.stringify(childCode)},process.argv[1]],{stdio:'ignore',detached:false});const t=setInterval(()=>{if(fs.existsSync(process.argv[1])){clearInterval(t);process.exit(0)}},10)`;
-    const native = await ownedNativeProcess(process.execPath, ['-e', leaderCode, ready], root,
+    const native = await diagnosedNativeProcess(process.execPath, ['-e', leaderCode, ready], root,
       { PATH: path.dirname(process.execPath), HOME: root }, undefined);
     try {
       results.childPid = Number(await waitFile(ready));
@@ -205,7 +216,7 @@ try {
       assert.equal(results.finished.cleanup.ownedGroupSignalled, true);
     } finally { await reap(native.pid); }
   } else if (selectedCase === 'native-before-endpoint') {
-    const native = await ownedNativeProcess(process.execPath, ['-e', 'process.exit(7)'], root,
+    const native = await diagnosedNativeProcess(process.execPath, ['-e', 'process.exit(7)'], root,
       { PATH: path.dirname(process.execPath), HOME: root }, undefined);
     try {
       const failure = await native.endpoint.then(() => null, error => error);
@@ -217,7 +228,7 @@ try {
     } finally { await reap(native.pid); }
   } else if (['lifetime-timeout', 'output-bound'].includes(selectedCase)) {
     const code = selectedCase === 'output-bound' ? 'process.stdout.write(Buffer.alloc(262144,120));setInterval(()=>{},1000)' : 'setInterval(()=>{},1000)';
-    const native = await ownedNativeProcess(process.execPath, ['-e', code], root,
+    const native = await diagnosedNativeProcess(process.execPath, ['-e', code], root,
       { PATH: path.dirname(process.execPath), HOME: root }, undefined);
     try {
       const failure = await native.endpoint.then(() => null, error => error);
@@ -248,6 +259,10 @@ try {
     assert.equal(report.state, 'unsupported');
     for (const item of report.cases) {
       const observation = item.original;
+      for (const [role, envelope] of [['original', observation], ['derived', item.derived]])
+        validateOriginalLifecycleDiagnostics(envelope.lifecycleDiagnostics, { requireAvailable: true,
+          correlation: { recipe: 'empty-v1', category: item.category, role,
+            launch: ['install', 'update', 'dedupe'].indexOf(item.category) * 2 + (role === 'derived' ? 1 : 0) } });
       assert.equal(observation.report.state, 'unsupported');
       assert(observation.report.events.some(event => event.phase === 'observer-failure' && event.reason === 'cancelled'));
       assert(observation.report.missingClaims.includes('handler-entry'));
@@ -264,6 +279,22 @@ try {
       for (const item of report.cases) { await reap(item.original.nativePid); await reap(item.derived.nativePid); }
     }
   }
+  for (const { native } of lifecycleLaunches) await waitOwnExit(native.closed, Date.now() + 3000);
+  results.lifecycleDiagnostics = lifecycleLaunches.map(({ correlation, lifecycle }) => {
+    const diagnostic = lifecycle.snapshot();
+    validateOriginalLifecycleDiagnostics(diagnostic, { requireAvailable: true, correlation });
+    const events = diagnostic.events;
+    assert(events.some(event => event.event === 'native-launch'));
+    const exit = events.findIndex(event => event.event === 'native-exit');
+    const close = events.findIndex(event => event.event === 'native-stream-close');
+    assert(exit >= 0 && close > exit, 'Actual owned process exit and stream close lost their recording order');
+    assert(events.some(event => event.event === 'native-group-empty') ||
+      selectedCase === 'group-failure-diagnostic' && events.some(event => event.event === 'native-group-failure'),
+    'Actual retirement or preserved unknown-cleanup failure must remain explicit');
+    if (selectedCase === 'lifetime-timeout') assert.equal(events[diagnostic.firstFailure].site, 'lifetime');
+    if (selectedCase === 'output-bound') assert.equal(events[diagnostic.firstFailure].site, 'output-bound');
+    return diagnostic;
+  });
   results.state = 'PASSED';
 } catch (error) {
   results.state = 'FAILED'; results.failure = { name: error.name, message: error.message,

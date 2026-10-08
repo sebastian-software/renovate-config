@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { observerLimits as limits, UnsupportedObservation } from './original-observer-contract.mjs';
+import { observerLimits as limits, UnsupportedObservation, recordOriginalLifecycle } from './original-observer-contract.mjs';
 import { requireValue } from '../vitest-release/files.mjs';
 
 // Failure-only context preserves the original thrown object without changing kill behavior.
@@ -30,8 +30,10 @@ function failedProcessIdentity(pid) {
 }
 
 // The caller supplies only controller-built argv/environment, never input JSON.
-export async function ownedNativeProcess(node, args, cwd, env, signal, { role, category } = {}) {
+export async function ownedNativeProcess(node, args, cwd, env, signal, { role, category, record: recorder = null } = {}) {
+  const record = event => recordOriginalLifecycle(recorder, event);
   const child = spawn(node, args, { cwd, env, detached: true, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+  record({ event: 'native-launch' });
   let terminal = null; let intervention = 'none'; let bytes = 0; let stderrTail = '';
   let endpointResolve, endpointReject, waitingResolve, exitResolve;
   let endpointSeen = false; let waitingSeen = false; let cleanupPromise = null; let finishPromise = null;
@@ -43,16 +45,21 @@ export async function ownedNativeProcess(node, args, cwd, env, signal, { role, c
   const waiting = new Promise(resolve => { waitingResolve = resolve; });
   const exited = new Promise(resolve => { exitResolve = resolve; });
   const closed = new Promise(resolve => {
-    child.once('error', error => { endpointReject(error); exitResolve({ error: 'spawn' }); resolve({ error: 'spawn' }); });
+    child.once('error', error => { record({ event: 'native-failure', site: 'spawn', reason: 'disconnect' }); endpointReject(error); exitResolve({ error: 'spawn' }); resolve({ error: 'spawn' }); });
     child.once('exit', (exitCode, nativeSignal) => {
       terminal = { exitCode, signal: nativeSignal };
+      record({ event: 'native-exit', exitCode, signal: nativeSignal });
+      if (args[0] === '--inspect-brk=127.0.0.1:0' && !endpointSeen)
+        record({ event: 'native-failure', site: 'endpoint-exit', reason: 'disconnect' });
       endpointReject(new UnsupportedObservation('disconnect', 'Native exited before Inspector connection'));
       exitResolve({ outcome: terminal });
     });
-    child.once('close', () => { resolve(terminal ? { outcome: terminal } : { error: 'spawn' }); });
+    child.once('close', () => { record({ event: 'native-stream-close' }); resolve(terminal ? { outcome: terminal } : { error: 'spawn' }); });
   });
   function recordGroupFailure(error, caller, site, nativeSignal, reason) {
     if (processGroupFailures.has(error)) return;
+    record({ event: 'native-group-failure', site, signal: nativeSignal,
+      reason: ['protocol', 'source', 'location', 'disconnect', 'timeout', 'cancelled', 'bounds', 'identity'].includes(reason) ? reason : null });
     const pid = Number.isSafeInteger(child.pid) && child.pid > 1 ? child.pid : null;
     const processIdentity = failedProcessIdentity(pid);
     processGroupFailures.set(error, Object.freeze({
@@ -70,18 +77,21 @@ export async function ownedNativeProcess(node, args, cwd, env, signal, { role, c
   }
   function groupEmpty(caller, reason) {
     try { process.kill(-child.pid, 0); return false; }
-    catch (error) { if (error.code === 'ESRCH') return true;
+    catch (error) { if (error.code === 'ESRCH') { record({ event: 'native-group-empty' }); return true; }
       recordGroupFailure(error, caller, 'groupEmpty', 0, reason); throw error; }
   }
   function signalGroup(nativeSignal, reason, caller) {
+    record({ event: 'native-signal-request', signal: nativeSignal });
     try {
       process.kill(-child.pid, nativeSignal); groupSignalled = true;
+      record({ event: 'native-owned-signal', signal: nativeSignal });
       // A group-only retirement after leader exit must not rewrite native outcome.
       if (terminal === null && intervention === 'none') intervention = reason;
     } catch (error) { if (error.code !== 'ESRCH') {
       recordGroupFailure(error, caller, 'signalGroup', nativeSignal, reason); throw error; } }
   }
   function stop(reason, caller = 'ownedNativeProcess.stop') {
+    record({ event: 'native-stop-request', site: caller, reason });
     if (cleanupPromise) return cleanupPromise;
     cleanupPromise = (async () => {
       if (groupEmpty(caller, reason)) return;
@@ -99,28 +109,32 @@ export async function ownedNativeProcess(node, args, cwd, env, signal, { role, c
     })();
     return cleanupPromise;
   }
-  function cancel(reason, message) {
+  function cancel(reason, message, site) {
+    record({ event: 'native-failure', site, reason });
+    record({ event: 'native-cancel-request', reason });
     endpointReject(new UnsupportedObservation(reason, message));
     // Keep asynchronous cleanup failures for finalization rather than discarding them.
     void stop(reason, 'ownedNativeProcess.cancel').catch(error => { cleanupFailure ??= error; });
   }
   function observe(chunk, stderr) {
     bytes += chunk.length; outputHash.update(chunk);
-    if (bytes > limits.outputBytes) { cancel('bounds', 'Native output exceeded observation bound'); return; }
+    if (bytes > limits.outputBytes) { cancel('bounds', 'Native output exceeded observation bound', 'output-bound'); return; }
     if (!stderr) return;
     stderrTail = (stderrTail + chunk.toString('utf8')).slice(-4096);
     const matches = stderrTail.match(/Debugger listening on (ws:\/\/127\.0\.0\.1:\d+\/[a-f0-9-]{36})/);
-    if (matches && !endpointSeen) { endpointSeen = true; clearTimeout(setup); endpointResolve(matches[1]); }
+    if (matches && !endpointSeen) { record({ event: 'endpoint-observed' }); endpointSeen = true; clearTimeout(setup); endpointResolve(matches[1]); }
     if (stderrTail.includes('Waiting for the debugger to disconnect...') && !waitingSeen) {
+      record({ event: 'native-shutdown-cue' });
       waitingSeen = true; waitingResolve({ waitingForDetach: true });
     }
   }
   child.stdout.on('data', chunk => observe(chunk, false)); child.stderr.on('data', chunk => observe(chunk, true));
   const setup = args[0] === '--inspect-brk=127.0.0.1:0' ? setTimeout(() => {
-    if (!endpointSeen) cancel('timeout', 'Native Inspector endpoint setup exceeded bound');
+    if (!endpointSeen) cancel('timeout', 'Native Inspector endpoint setup exceeded bound', 'endpoint-setup');
   }, limits.setupMs) : null;
-  const lifetime = setTimeout(() => cancel('timeout', 'Native lifetime exceeded observation bound'), limits.lifetimeMs);
-  const abort = () => cancel('cancelled', 'Observer cancelled');
+  const lifetime = setTimeout(() => { record({ event: 'native-lifetime-expired' });
+    cancel('timeout', 'Native lifetime exceeded observation bound', 'lifetime'); }, limits.lifetimeMs);
+  const abort = () => cancel('cancelled', 'Observer cancelled', 'cancellation');
   signal?.addEventListener('abort', abort, { once: true });
   if (signal?.aborted) abort();
   exited.then(() => { clearTimeout(setup); clearTimeout(lifetime); signal?.removeEventListener('abort', abort); });
