@@ -145,6 +145,7 @@ jobs:
       - name: Native dispatch, differing actual Node, delegation and whole-lifecycle negatives
         run: |
           node scripts/test-vitest-release-trust.mjs
+          node scripts/test-vitest-native-worker-source.mjs
           node scripts/test-vitest-native-prepare.mjs --pnpm-archive "$NATIVE_TOOLING/pnpm.tgz" --pnpm-root "$NATIVE_TOOLING/stock/package"
           node scripts/test-vitest-release-production.mjs --archives "$NATIVE_TOOLING/q1-archives" --platform linux-x64 --require-linux
           node scripts/test-vitest-native-authority.mjs --archives "$NATIVE_TOOLING/q1-archives" --platform linux-x64 --require-linux

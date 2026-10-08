@@ -49,6 +49,7 @@ try {
         !/^[a-f0-9]{64}$/.test(supplied.containerId)||!/^sha256:[a-f0-9]{64}$/.test(supplied.imageId)||
         !(supplied.imageDigest===null||/^sha256:[a-f0-9]{64}$/.test(supplied.imageDigest)))throw Error('Invalid worker identity');
       profile.context=supplied;profile.contextAuthenticated=true;
+      profile.launchContextSha256=process.env.VITEST_NATIVE_CONTEXT_SHA256;
     }finally{fs.closeSync(fd);}
   }
   const startup=(process.env.NODE_OPTIONS??'').replaceAll(`--import=${fileURLToPath(import.meta.url)}`,'').trim();

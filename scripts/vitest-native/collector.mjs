@@ -84,6 +84,7 @@ function prepareCollection(profile,loader,options) {
   return { options:{...rest,stdio:[stdin??'pipe',stdout??'pipe',stderr??'pipe','pipe'],env:{...options.env,
     ...(profile.launchProfileSha256?{VITEST_NATIVE_PROFILE_SHA256:profile.launchProfileSha256}:{}),
     ...(profile.launchAuthoritySha256?{VITEST_NATIVE_RUNTIME_AUTHORITY_SHA256:profile.launchAuthoritySha256}:{}),
+    ...(profile.launchContextSha256?{VITEST_NATIVE_CONTEXT_SHA256:profile.launchContextSha256}:{}),
     VITEST_NATIVE_CHANNEL:JSON.stringify({invocation,nonce}),NODE_OPTIONS:`${stripped} --import=${loader}`.trim()}},
     dispose(){try{if(parent)fs.closeSync(parent.fd);}catch{}},
     attach(child) {

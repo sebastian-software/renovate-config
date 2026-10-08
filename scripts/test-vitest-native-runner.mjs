@@ -4,8 +4,39 @@ import { dataOnlyEnvironment } from './vitest-native/data-only.mjs';
 import { parseArgs } from 'node:util';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import childProcess from 'node:child_process';
+import { syncBuiltinESMExports } from 'node:module';
+// Only the fixed collection's private IPC child reports actual detached spawns.
+// Native/script/hook/preload children receive their original stdio, never IPC.
+if (process.connected) {
+  const spawn = childProcess.spawn;
+  const nativeGroups = new Set();
+  const send = (event, pid) => {
+    if (process.connected) process.send({ event, pid }, () => {});
+  };
+  const kill = pid => { try { process.kill(-pid, 'SIGKILL'); } catch {} };
+  const cleanup = () => { for (const pid of nativeGroups) kill(pid); };
+  childProcess.spawn = function (...args) {
+    const child = spawn(...args);
+    if (args[2]?.detached === true && Number.isSafeInteger(child.pid) && child.pid > 1) {
+      nativeGroups.add(child.pid); send('spawn', child.pid);
+      child.once('close', () => { kill(child.pid); nativeGroups.delete(child.pid); send('close', child.pid); });
+    }
+    return child;
+  };
+  syncBuiltinESMExports();
+  const abort = () => {
+    cleanup(); process.exitCode = 1;
+    setTimeout(() => process.exit(1), 1_000).unref();
+  };
+  process.once('SIGTERM', abort); process.once('SIGINT', abort);
+  process.once('disconnect', () => { cleanup(); process.exit(1); });
+  process.once('exit', cleanup);
+  process.channel.unref();
+}
 const {values}=parseArgs({options:{root:{type:'string'},renovate:{type:'string'},node:{type:'string'},pnpm:{type:'string'},
-  bin:{type:'string'},'profile-sha256':{type:'string'},dedupe:{type:'boolean'},category:{type:'string'},'profile-root':{type:'string'},unprofiled:{type:'boolean'}}});
+  bin:{type:'string'},'profile-sha256':{type:'string'},'context-sha256':{type:'string'},dedupe:{type:'boolean'},category:{type:'string'},'profile-root':{type:'string'},unprofiled:{type:'boolean'}}});
+if(values['context-sha256']&&!/^[a-f0-9]{64}$/.test(values['context-sha256']))throw Error('Invalid fixed context pin');
 const load=name=>import(pathToFileURL(path.join(values.renovate,'dist',name)).href);
 const {init,levels}=await load('logger/index.js');await init();levels('stdout','warn');
 const {GlobalConfig}=await load('config/global.js');
@@ -14,6 +45,7 @@ GlobalConfig.set({localDir:values.root,cacheDir:path.join(values.root,'cache'),b
   allowScripts:false,executionTimeout:1,exposeAllEnv:false});
 setCustomEnv({PATH:`${values.bin}:${process.env.PATH}`,
   VITEST_NATIVE_PROFILE_SHA256:values['profile-sha256']??'',CI:'true',
+  ...(values['context-sha256']?{VITEST_NATIVE_CONTEXT_SHA256:values['context-sha256']}:{}),
   pnpm_config_userconfig:'/dev/null',pnpm_config_globalconfig:'/dev/null',
   ...(values['profile-root']?dataOnlyEnvironment(values['profile-root']):{}),
   ...(values.unprofiled?{pnpm_config_pnpmfile:'.pnpmfile.mjs',pnpm_config_global_pnpmfile:'.pnpmfile.mjs'}:{})});

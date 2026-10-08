@@ -7,7 +7,7 @@ import { EMPTY_PNPMFILE, EMPTY_SHA256 } from './data-only.mjs';
 import { digest, ORIGINAL_PNPM_ARCHIVE, ORIGINAL_PNPM_BUNDLE, transformPnpm } from './transform.mjs';
 
 const owned=['transform.mjs','identity.mjs','probe.mjs','collector.mjs','loader.mjs','runtime.mjs','data-only.mjs'];
-const seams={
+export const RENOVATE_SEAMS={
   manager:{path:'/dist/modules/manager/npm/post-update/pnpm.js',sha256:'fc5ee0f3be6568b35a6478aed55b71869d74adfac7f955a011fe8618a4a89401'},
   common:{path:'/dist/util/exec/common.js',sha256:'5a863ea709d9b934f780cddcabb6ed10985c69dc6bdc26226f4a2b35d67ea587'},
   branch:{path:'/dist/workers/repository/update/branch/index.js',sha256:'998ac391a3441ebe2e2c6d583875190179c8d1578121d555b219943b7ad1da44'},
@@ -64,7 +64,7 @@ export async function prepareNative({archive,pnpmRoot,output,receiptDirectory,co
       containingTransform:selected.transform}:{}),
     pnpmVersion:'11.17.0',pnpmFiles:consumerFiles(expected),derivedFiles,instrumentationFiles:files,
     dataOnlyProfile:{path:'empty-pnpmfile.mjs',sha256:EMPTY_SHA256,configPrecedence:'pnpm-11.17-env-after-workspace',configDependencies:'absent'},
-    renovateSeams:seams,receiptDirectory,context,contextFile};
+    renovateSeams:RENOVATE_SEAMS,receiptDirectory,context,contextFile};
   const bytes=jsonBytes(profile);
   await fs.writeFile(path.join(output,'profile.json'),bytes,{flag:'wx',mode:0o444});
   await sealDirectories(output);
