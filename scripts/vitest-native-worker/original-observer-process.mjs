@@ -1,10 +1,36 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { observerLimits as limits, UnsupportedObservation } from './original-observer-contract.mjs';
 import { requireValue } from '../vitest-release/files.mjs';
 
+// Failure-only context preserves the original thrown object without changing kill behavior.
+const processGroupFailures = new WeakMap();
+export function processGroupFailureMetadata(error) { return processGroupFailures.get(error) ?? null; }
+
+// Read only the owned PID after a failed group operation; never infer group identity.
+function failedProcessIdentity(pid) {
+  const unavailable = reason => Object.freeze({ state: 'unavailable', reason, pid: null,
+    processGroupId: null, uidMatchesObserver: null, processState: null });
+  if (pid === null) return unavailable('missing-pid');
+  try {
+    const result = spawnSync('/bin/ps', ['-p', String(pid), '-o', 'pid=,pgid=,uid=,stat='],
+      { encoding: 'utf8', shell: false, timeout: 250, maxBuffer: 1024, killSignal: 'SIGKILL' });
+    if (result.error) return unavailable(result.error.code === 'ETIMEDOUT' ? 'timeout' : 'command-error');
+    if (result.status === 1 && !result.stdout?.trim() && !result.stderr?.trim()) return unavailable('absent');
+    if (result.status !== 0) return unavailable('command-error');
+    const fields = result.stdout.trim().split(/\s+/);
+    if (fields.length !== 4 || !fields.slice(0, 3).every(value => /^\d+$/.test(value))) return unavailable('unparseable');
+    const [observedPid, processGroupId, uid] = fields.slice(0, 3).map(Number);
+    const processState = fields[3][0];
+    if (observedPid !== pid || !Number.isSafeInteger(processGroupId) || processGroupId < 1 ||
+      !Number.isSafeInteger(uid) || !['I', 'R', 'S', 'T', 'U', 'Z'].includes(processState)) return unavailable('unparseable');
+    return Object.freeze({ state: 'observed', reason: null, pid: observedPid, processGroupId,
+      uidMatchesObserver: typeof process.getuid === 'function' ? uid === process.getuid() : null, processState });
+  } catch { return unavailable('command-error'); }
+}
+
 // The caller supplies only controller-built argv/environment, never input JSON.
-export async function ownedNativeProcess(node, args, cwd, env, signal) {
+export async function ownedNativeProcess(node, args, cwd, env, signal, { role, category } = {}) {
   const child = spawn(node, args, { cwd, env, detached: true, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
   let terminal = null; let intervention = 'none'; let bytes = 0; let stderrTail = '';
   let endpointResolve, endpointReject, waitingResolve, exitResolve;
@@ -25,27 +51,50 @@ export async function ownedNativeProcess(node, args, cwd, env, signal) {
     });
     child.once('close', () => { resolve(terminal ? { outcome: terminal } : { error: 'spawn' }); });
   });
-  function groupEmpty() {
-    try { process.kill(-child.pid, 0); return false; }
-    catch (error) { if (error.code === 'ESRCH') return true; throw error; }
+  function recordGroupFailure(error, caller, site, nativeSignal, reason) {
+    if (processGroupFailures.has(error)) return;
+    const pid = Number.isSafeInteger(child.pid) && child.pid > 1 ? child.pid : null;
+    const processIdentity = failedProcessIdentity(pid);
+    processGroupFailures.set(error, Object.freeze({
+      caller: ['ownedNativeProcess.stop', 'ownedNativeProcess.cancel', 'ownedNativeProcess.finish',
+        'observeOriginal:unexpected-error', 'observeOriginal:unsupported'].includes(caller) ? caller : null,
+      site, signal: nativeSignal,
+      role: ['original', 'derived'].includes(role) ? role : null,
+      category: ['install', 'update', 'dedupe'].includes(category) ? category : null,
+      errorCode: typeof error.code === 'string' && /^[A-Z0-9_]{1,32}$/.test(error.code) ? error.code : null,
+      ownedPid: pid, targetPid: pid === null ? null : -pid,
+      actualProcessGroupId: processIdentity.processGroupId, processIdentity, spawnDetached: true,
+      terminal: terminal ? { exitCode: terminal.exitCode, signal: terminal.signal } : null,
+      intervention, endpointSeen, waitingSeen, groupSignalled,
+      reason: ['protocol', 'source', 'location', 'disconnect', 'timeout', 'cancelled', 'bounds', 'identity'].includes(reason) ? reason : null }));
   }
-  function signalGroup(nativeSignal, reason) {
+  function groupEmpty(caller, reason) {
+    try { process.kill(-child.pid, 0); return false; }
+    catch (error) { if (error.code === 'ESRCH') return true;
+      recordGroupFailure(error, caller, 'groupEmpty', 0, reason); throw error; }
+  }
+  function signalGroup(nativeSignal, reason, caller) {
     try {
       process.kill(-child.pid, nativeSignal); groupSignalled = true;
       // A group-only retirement after leader exit must not rewrite native outcome.
       if (terminal === null && intervention === 'none') intervention = reason;
-    } catch (error) { if (error.code !== 'ESRCH') throw error; }
+    } catch (error) { if (error.code !== 'ESRCH') {
+      recordGroupFailure(error, caller, 'signalGroup', nativeSignal, reason); throw error; } }
   }
-  function stop(reason) {
+  function stop(reason, caller = 'ownedNativeProcess.stop') {
     if (cleanupPromise) return cleanupPromise;
     cleanupPromise = (async () => {
-      if (groupEmpty()) return;
+      if (groupEmpty(caller, reason)) return;
       const started = Date.now(); let escalated = false;
-      signalGroup('SIGTERM', reason);
-      while (!groupEmpty()) {
-        if (!escalated && Date.now() - started >= 500) { escalated = true; signalGroup('SIGKILL', reason); }
+      signalGroup('SIGTERM', reason, caller);
+      // Reap the owned leader before probing group retirement; descendants may still hold its pipes.
+      let leaderSettled = terminal !== null;
+      const leaderExit = exited.then(() => { leaderSettled = true; });
+      while (!leaderSettled || !groupEmpty(caller, reason)) {
+        if (!escalated && Date.now() - started >= 500) { escalated = true; signalGroup('SIGKILL', reason, caller); }
         if (Date.now() - started >= limits.cleanupMs) throw new Error('Owned native process-group cleanup unconfirmed');
-        await new Promise(resolve => setTimeout(resolve, 20));
+        const poll = new Promise(resolve => setTimeout(resolve, 20));
+        await (leaderSettled ? poll : Promise.race([leaderExit, poll]));
       }
     })();
     return cleanupPromise;
@@ -53,7 +102,7 @@ export async function ownedNativeProcess(node, args, cwd, env, signal) {
   function cancel(reason, message) {
     endpointReject(new UnsupportedObservation(reason, message));
     // Keep asynchronous cleanup failures for finalization rather than discarding them.
-    void stop(reason).catch(error => { cleanupFailure ??= error; });
+    void stop(reason, 'ownedNativeProcess.cancel').catch(error => { cleanupFailure ??= error; });
   }
   function observe(chunk, stderr) {
     bytes += chunk.length; outputHash.update(chunk);
@@ -84,10 +133,10 @@ export async function ownedNativeProcess(node, args, cwd, env, signal) {
       finishPromise ??= (async () => {
         await exited;
         // The leader can exit while a same-group child still owns inherited pipes.
-        await stop('cancelled');
+        await stop('cancelled', 'ownedNativeProcess.finish');
         const result = await closed;
         if (cleanupFailure) throw cleanupFailure;
-        requireValue(groupEmpty(), 'Owned native process group survived finalization');
+        requireValue(groupEmpty('ownedNativeProcess.finish', 'cancelled'), 'Owned native process group survived finalization');
         return { ...result, observerIntervention: intervention, outputBytes: bytes, outputSha256: outputHash.digest('hex'),
           cleanup: { ownedProcessExited: terminal !== null, ownedProcessGroupEmpty: true,
             ownedGroupSignalled: groupSignalled, independentAllDescendantsObserved: false }, debuggerDetachRequired: waitingSeen };

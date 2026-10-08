@@ -9,14 +9,19 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { controllerInventory, preflightOriginalObserver } from './vitest-native-worker/original-observer-inputs.mjs';
 import { runOriginalObserver } from './vitest-native-worker/original-observer.mjs';
+import { processGroupFailureMetadata } from './vitest-native-worker/original-observer-process.mjs';
 import { originalLocations } from './vitest-native-worker/original-observer-source.mjs';
 import { parseOriginalObserverArgs } from './test-vitest-native-original-observer.mjs';
 const exec = promisify(execFile);
-const options = {};
-for (let i = 2; i < process.argv.length; i += 2) {
+const options = {}; let sourceSelectionOnly = false;
+for (let i = 2; i < process.argv.length;) {
+  if (process.argv[i] === '--source-selection-only') {
+    assert(!sourceSelectionOnly, 'Duplicate source-selection-only argument');
+    sourceSelectionOnly = true; i++; continue;
+  }
   const key = process.argv[i]; const value = process.argv[i + 1];
   assert(['--archives', '--pnpm-root', '--node-archive'].includes(key) && value && !options[key], 'Unknown or duplicate test argument');
-  options[key] = value;
+  options[key] = value; i += 2;
 }
 assert(options['--archives'] && options['--pnpm-root'], 'Existing --archives and --pnpm-root required');
 assert.equal(process.versions.node, '24.18.0');
@@ -34,7 +39,7 @@ const input = { schemaVersion: 1, qualificationContractRevision: 2, evidenceScop
   node: { path: node, sha256: nodePin, version: process.versions.node, v8: process.versions.v8,
     archive: options['--node-archive'] ?? null }, pnpm: { archive: pnpmArchive, root: pnpmRoot }, controllerFiles, fixtureRecipe: 'empty-v1' };
 const results = { evidenceScope: 'source-fixture', qualificationContractRevision: 2, completeness: false,
-  productionEligible: false, root, preflight: [], cli: [], recipes: [], cleanup: [] };
+  productionEligible: false, root, sourceSelection: [], sourceAuthentication: [], preflight: [], cli: [], recipes: [], cleanup: [] };
 let counter = 0;
 async function writeInput(document, mode = 0o444) {
   const bytes = Buffer.from(JSON.stringify(document) + '\n'); const filename = path.join(root, `input-${counter++}.json`);
@@ -63,8 +68,71 @@ async function cleanup(report) {
     assert(retired, 'Test finally could not retire its own process group');
   }
 }
+// This exercises the actual authenticated source selector. It is not an Inspector measurement.
+function assertSourceSelection(bytes) {
+  const source = bytes.toString('utf8');
+  const position = offset => {
+    assert(offset >= 0, 'Expected source anchor missing');
+    const before = source.slice(0, offset);
+    return { lineNumber: before.split('\n').length - 1, columnNumber: offset - before.lastIndexOf('\n') - 1 };
+  };
+  const expected = [
+    ['install', 'handler5', 'async function handler5(opts3, _params, commands2) {',
+      '\nasync function dryRunInstall(', '  const include = {', '{', '  await installDeps(installDepsOptions, []);'],
+    ['update', 'handler13', 'async function handler13(opts3, params = [], commands2) {',
+      '\nasync function interactiveUpdate(', '  return update(params, opts3, rebuildHandler);', 'update', null],
+    ['dedupe', 'handler6', 'async function handler6(opts3, _params, commands2) {',
+      '\n}\nvar commandNames6, recursiveByDefault2;', '  const include = {', '{', null],
+  ];
+  for (const [category, handlerName, signature, endAnchor, anchor, token, awaitAnchor] of expected) {
+    assert.equal(source.split(signature).length, 2, `${category}: handler signature must be unique`);
+    const start = source.indexOf(signature); const end = source.indexOf(endAnchor, start);
+    assert(end > start, `${category}: handler body end missing`);
+    const body = source.slice(start, end);
+    assert.equal(body.split(anchor).length, 2, `${category}: own body anchor must be unique`);
+    const offset = start + body.indexOf(anchor) + anchor.indexOf(token);
+    const selected = originalLocations(bytes, category);
+    assert.deepEqual(selected.entry, position(offset), `${category}: selected entry is not the fixed own-body ${token} token`);
+    assert.equal(selected.handlerName, handlerName);
+    assert.deepEqual(selected.functionLocation, position(start + 'async '.length));
+    assert.equal(selected.scriptSha256, pinsBefore.bundle);
+    if (awaitAnchor) {
+      const firstAwait = body.indexOf('await ');
+      assert(firstAwait >= 0 && body.indexOf(awaitAnchor) < firstAwait && offset < start + firstAwait,
+        `${category}: entry must precede its first await`);
+    }
+    if (category === 'update') assert(!body.slice(0, offset - start).includes('await '),
+      'update: fixed normal-path return call must precede any await');
+    results.sourceSelection.push({ category, handlerName, entry: selected.entry, anchor,
+      evidenceScope: 'authenticated-source-selection', inspectorFeasibilityMeasured: false });
+  }
+  assert.throws(() => originalLocations(bytes, 'unknown'), /category/i);
+  // Mutated inputs reach byte authentication, not the private anchor parser. These cases must
+  // never be reported as missing/duplicate/cross-handler parser coverage or runtime feasibility.
+  const install = 'async function handler5(opts3, _params, commands2) {';
+  const start = source.indexOf(install); const ownAnchor = source.indexOf('  const include = {', start);
+  const updateCall = '  return update(params, opts3, rebuildHandler);';
+  for (const [name, altered] of [
+    ['missing-install-anchor-bytes', source.slice(0, ownAnchor) + source.slice(ownAnchor).replace('const include = {', 'const changed = {')],
+    ['duplicate-install-anchor-bytes', source.slice(0, ownAnchor) + '  const include = { };\n' + source.slice(ownAnchor)],
+    ['cross-handler-update-anchor-bytes', source.replace(updateCall, '  return interactiveUpdate(params, opts3, rebuildHandler);')],
+    ['wrong-original-script-bytes', source + '\n// unknown original source\n'],
+  ]) {
+    assert.notEqual(hash(Buffer.from(altered)), pinsBefore.bundle, `${name}: mutation did not alter authenticated bytes`);
+    for (const category of ['install', 'update', 'dedupe'])
+      assert.throws(() => originalLocations(Buffer.from(altered), category), /script bytes/i, `${name}: accepted altered source`);
+    results.sourceAuthentication.push(name);
+  }
+}
 const abort = new AbortController(); const deadline = setTimeout(() => abort.abort(), 180_000);
 try {
+  const authenticatedInput = await writeInput(input);
+  const authenticated = await preflightOriginalObserver(authenticatedInput.filename, authenticatedInput.pin,
+    path.join(root, 'authenticated-unused'));
+  try { assertSourceSelection(authenticated.originalBytes); await authenticated.unchanged(); }
+  finally { await authenticated.close(); }
+  assert(await absent(path.join(root, 'authenticated-unused')), 'Source selection created a native output');
+  if (!sourceSelectionOnly) {
   for (const [name, change] of [
     ['missing-revision', x => { delete x.qualificationContractRevision; }],
     ['unknown-revision', x => { x.qualificationContractRevision = 3; }],
@@ -137,6 +205,12 @@ try {
         assert.equal(original.nativeFacts.cleanup.independentAllDescendantsObserved, false);
         if (observed.state === 'supported') {
           assert.deepEqual(observed.observedPhases, ['launch', 'pre-call-pause', 'handler-entry', 'handler-settlement', 'native-terminal']);
+          const selectedLocation = originalLocations(await fs.readFile(bundle), item.category);
+          assert.deepEqual(observed.events.find(event => event.phase === 'handler-entry').location,
+            { scriptSha256: selectedLocation.scriptSha256, ...selectedLocation.entry, functionName: selectedLocation.handlerName },
+            'Supported entry differs from the exact authenticated handler location');
+          assert.deepEqual(original.nativeFacts.outcome, { exitCode: 0, signal: null },
+            'Supported successful settlement did not retain natural native exit0');
           assert.equal(original.nativeFacts.observerIntervention, 'none');
           assert.equal(observed.events.find(event => event.phase === 'handler-settlement').settlement, 'resolved');
           assert(item.equivalent, 'Supported source fixture differs from its actual derived comparison');
@@ -149,19 +223,38 @@ try {
         if (fixtureRecipe === 'offline-miss-v1' && original.nativeFacts.outcome?.exitCode !== null && original.nativeFacts.outcome.exitCode !== 0)
           assert(!observed.observedPhases.includes('handler-settlement'), 'Native error exit was substituted for observed successful settlement');
       }
+      if (fixtureRecipe === 'empty-v1') {
+        const dedupe = report.cases.find(item => item.category === 'dedupe');
+        assert.equal(dedupe.original.report.state, 'supported', 'Established dedupe entry/success evidence regressed');
+        assert.deepEqual(dedupe.original.nativeFacts.outcome, { exitCode: 0, signal: null });
+        assert(dedupe.equivalent, 'Established dedupe original/derived equivalence regressed');
+      }
+      if (fixtureRecipe === 'offline-miss-v1') {
+        const dedupe = report.cases.find(item => item.category === 'dedupe');
+        assert.equal(dedupe.original.report.state, 'incomplete', 'Established offline dedupe entry regressed');
+        assert.deepEqual(dedupe.original.report.observedPhases, ['launch', 'pre-call-pause', 'handler-entry', 'native-terminal']);
+        assert.deepEqual(dedupe.original.report.missingClaims, ['handler-settlement']);
+        assert.deepEqual(dedupe.original.nativeFacts.outcome, { exitCode: 1, signal: null });
+        assert.equal(dedupe.original.nativeFacts.observerIntervention, 'none');
+        assert(dedupe.equivalent, 'Established offline dedupe original/derived equivalence regressed');
+      }
       if (fixtureRecipe === 'offline-miss-v1') assert(report.cases.some(item => item.derived.nativeFacts.outcome?.exitCode > 0),
         'Offline miss fixture did not exercise an actual native failure');
     } finally { await cleanup(report); }
+  }
   }
   assert.deepEqual(await controllerInventory(), controllerFiles, 'Tests changed authenticated controller source');
   assert.deepEqual({ node: hash(await fs.readFile(node)), archive: hash(await fs.readFile(pnpmArchive)), bundle: hash(await fs.readFile(bundle)) },
     pinsBefore, 'Original assets changed during the fixture suite');
   results.state = 'PASSED';
-} catch (error) { results.state = 'FAILED'; results.failure = { name: error.name, message: error.message }; process.exitCode = 1; }
+} catch (error) { results.state = 'FAILED'; results.failure = { name: error.name, message: error.message,
+  errorCode: typeof error.code === 'string' && /^[A-Z0-9_]{1,32}$/.test(error.code) ? error.code : null,
+  processGroup: processGroupFailureMetadata(error) }; process.exitCode = 1; }
 finally {
   clearTimeout(deadline);
   await fs.writeFile(path.join(root, 'test-result.json'), JSON.stringify(results, null, 2) + '\n', { flag: 'wx', mode: 0o444 });
   console.log(JSON.stringify({ state: results.state, evidenceScope: 'source-fixture', completeness: false, productionEligible: false,
-    root, preflightCases: results.preflight.length, actualCliCases: results.cli.length, actualRecipes: results.recipes.length,
+    root, sourceSelectionCases: results.sourceSelection.length, sourceAuthenticationCases: results.sourceAuthentication.length,
+    inspectorFeasibilityMeasured: results.recipes.length > 0, preflightCases: results.preflight.length, actualCliCases: results.cli.length, actualRecipes: results.recipes.length,
     failure: results.failure ?? null }));
 }

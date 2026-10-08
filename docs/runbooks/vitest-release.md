@@ -6,7 +6,8 @@ Stock preparation and authority tools read bounded local inputs without
 downloading, installing, publishing or starting a worker. The Q2a source harness
 additionally starts fixed owned source processes and a rendered test wrapper; it
 starts no live worker. Q2b.1a adds a separate bounded original Inspector fixture
-with owned local processes, also without a live worker. Prepared deployment and
+with owned local processes; Q2b.1b investigates fixed install/update entry points
+in that fixture, also without a live worker. Prepared deployment and
 the Paratix helper remain inactive.
 Actual production release selection, Linux worker qualification, image/alias
 measurements and independent publication attestations remain separate Q2 gates; deployment,
@@ -30,8 +31,8 @@ bases and receipt hashes keep their original meaning. Q1 source is merged throug
 and [Proxmox #182](https://git.dal12.de/fastner/proxmox/pulls/182). These source PRs
 do not select a published release, measure an installed image or qualify a Linux
 worker. Q2a adds the bounded source harness below; Q2b.0 revises only its native
-evidence contract. Q2b.1a adds partial original-observer source feasibility below;
-remaining Q2b.1–Q2b.3 operational observer/facility/qualification, Q2c
+evidence contract. Q2b.1a adds historical partial original-observer source feasibility;
+Q2b.1b is the bounded entry inquiry below. Remaining Q2b.1–Q2b.3 operational observer/facility/qualification, Q2c
 independent release/image/attestation selection and E live
 actions remain separate gates. Do not treat PR heads as squash or release
 identities or pin a future documentation commit into its own contents. A Recensor `v1.1.0` source
@@ -403,7 +404,7 @@ original public TERM and derived public INT. Genuine incomplete/unsupported nati
 receipts remained ineligible; sent signals did not replace unknown recorded
 outcomes. These checks do not qualify a Linux worker or select production inputs.
 
-## Inspect the bounded Q2b.1a original-source fixture
+## Inspect the bounded Q2b.1b original-source entry inquiry
 
 The [separate fixture CLI](../../scripts/test-vitest-native-original-observer.mjs)
 measures feasibility with existing authenticated Node 24.18.0/V8 and pnpm 11.17.0.
@@ -437,9 +438,10 @@ configuration, debugger methods, expressions, credentials or endpoints.
 Preflight authenticates the complete original pnpm archive/extraction, selected
 Node bytes and version/V8, original bundle and controller closure. Protected
 inputs and the new output cannot overlap. The controller additionally hashes the
-actual debugger script source and requires each source-selected token to resolve
-independently to exactly its line and column. Unknown source, protocol or location
-is unsupported; there is no nearest-breakpoint fallback. Held identities and
+actual debugger script source and requires each source-selected token to be
+independently reported executable by `Debugger.getPossibleBreakpoints`, resolved
+to exactly its authenticated script, line and column, and actually hit. Unknown
+source, protocol or location is unsupported; there is no nearest-breakpoint fallback. Held identities and
 source inventories are rechecked. This authenticates source-fixture bytes, not a
 kernel measurement of the child executable or an immutable worker image.
 
@@ -452,10 +454,29 @@ Only bounded normalized locations/events, identities, counts, output hashes and
 native facts are retained; raw frames, locals, environment and transcripts are
 not written to reports.
 
+Q2b.1b selects one fixed entry candidate per category from the authenticated
+original bundle. The selector requires a unique handler body and unique own-body
+anchor, and rejects an entry after an `await` or `yield`:
+
+| Category | Handler | Fixed entry token | Path limit |
+| --- | --- | --- | --- |
+| install | `handler5` | `{` in its own `const include = {` | After the global guard, before its first await |
+| update | `handler13` | `update` in `return update(params, opts3, rebuildHandler);` | Normal non-global, noninteractive path, before suspension |
+| dedupe | `handler6` | `{` in its own `const include = {` | Retained existing entry anchor before its first await |
+
+These body points show that execution reached the named path; they do not prove
+the first instruction, unexecuted branch coverage or a nested operation's outcome.
+An unsupported fixed point stops that observation without candidate search,
+nearest-location relocation or success fallback.
+
 A pre-call pause proves only that execution reached the call site. Handler entry
-requires the actual selected handler frame at its authenticated location and
-caller linkage. Successful handler settlement uses a separate authenticated
-post-await success continuation. Neither native exit nor matching lock bytes
+requires the exact executable and resolved location, its actual breakpoint hit
+and the current named handler frame in the authenticated original script. A
+separate caller frame must belong to that same script at the original dispatch
+pre-call line; the existing caller rule does not require its continuation column
+to equal the pre-call token column. Entry must follow the invocation's pre-call
+pause; duplicate, replayed, late and uncorrelated phases are rejected. Successful
+handler settlement uses a separate authenticated post-await success continuation. Neither native exit nor matching lock bytes
 substitutes for entry or settlement. Rejected settlement lacks an authenticated
 error observation and remains a missing claim. Controlled debugger detach at
 native shutdown is retained separately; observation failure cancels only the
@@ -493,8 +514,8 @@ exit 0 can represent an honest unsupported result. Invalid input or unexpected
 execution failure produces bounded stderr and exit 1. A partial output is retained
 for inspection; retry only into a fresh output after resolving the cause.
 
-The October 8, 2026 Darwin arm64 empty-fixture smoke authenticated the actual
-script source in all three original processes. Dedupe retained distinct launch,
+Historical Q2b.1a measurement (October 8, 2026): the Darwin arm64 empty-fixture
+smoke authenticated the actual script source in all three original processes. Dedupe retained distinct launch,
 pre-call, handler entry, successful await continuation and native exit 0. It
 required controlled debugger detach at shutdown; no signal intervention occurred,
 and the derived exit and concrete lockfile hash matched. Install/update could
@@ -504,22 +525,30 @@ settlement claims and an explicit observer-caused SIGTERM; their derived process
 exited 0. These cancelled originals are not natural completion or compatibility
 success. All six owned process groups were empty on local readback.
 
-The actual `offline-miss-v1` fixture additionally exercises native errors.
-Dedupe retains handler entry and natural exit 1 matching its derived comparison,
-but successful settlement remains missing: its report is `incomplete`. This is
-no authenticated handler-error/settlement observation. Install/update retain the
-same exact-token unsupported result and observer SIGTERM, separately from derived
-exit 1. Both fixed recipes keep source-only ineligibility; all twelve owned
+The historical Q2b.1a `offline-miss-v1` fixture additionally exercised native
+errors. Dedupe retained handler entry and natural exit 1 matching its derived
+comparison, but successful settlement was missing: its report was `incomplete`.
+This was no authenticated handler-error/settlement observation. Install/update
+retained the same exact-token unsupported result and observer SIGTERM, separately
+from derived exit 1. Both fixed recipes kept source-only ineligibility; all twelve owned
 process groups were empty after the actual recipe tests.
 
 The [documentary source test](../../scripts/test-vitest-native-original-observer-source.mjs)
-checks event/location/order/replay/missing/promotion contracts without claiming
-Inspector feasibility. The [process regressions](../../scripts/test-vitest-native-original-observer-process.mjs)
+separates 40 documentary event/order/missing/promotion negatives, 25 synthetic
+source-parser negatives and 32 synthetic executable/resolution/frame/caller
+correlation negatives. The parser and correlation cases call pure internal seams
+shared with the controller; they create no Inspector target and measure no
+runtime feasibility. The immutable fixture also checks three authentic source
+selections and four altered-byte variants. Altered bytes fail authentication
+before parsing; they are not parser-negative coverage.
+The [process regressions](../../scripts/test-vitest-native-original-observer-process.mjs)
 check actual endpoint loss, own-group retirement, bounds and controller early
 abort. The [immutable fixture suite](../../scripts/test-vitest-native-original-observer-fixture.mjs)
-checks prelaunch input/CLI rejection and both real recipes. The following template
-uses existing authenticated readonly pnpm files and the original archive for the
-selected Node runtime; replace the paths with those selected local inputs:
+checks prelaunch input/CLI rejection and both real recipes. Its test-only
+`--source-selection-only` option runs authenticated selection and byte rejection
+without native recipes; it is not an option on the three-flag fixture CLI.
+The following template uses existing authenticated readonly pnpm files and the
+original archive for the selected Node runtime; replace the paths with those selected local inputs:
 
 ```sh
 node scripts/test-vitest-native-original-observer-source.mjs
@@ -530,6 +559,9 @@ node scripts/test-vitest-native-original-observer-process.mjs \
   --case early-cancel \
   --archives /authenticated/test-archives --pnpm-root /authenticated/readonly-pnpm \
   --node-archive /authenticated/node-v24.18.0-linux-x64.tar.gz
+node scripts/test-vitest-native-original-observer-fixture.mjs --source-selection-only \
+  --archives /authenticated/test-archives --pnpm-root /authenticated/readonly-pnpm \
+  --node-archive /authenticated/node-v24.18.0-linux-x64.tar.gz
 node scripts/test-vitest-native-original-observer-fixture.mjs \
   --archives /authenticated/test-archives --pnpm-root /authenticated/readonly-pnpm \
   --node-archive /authenticated/node-v24.18.0-linux-x64.tar.gz
@@ -538,14 +570,117 @@ node scripts/test-vitest-native-original-observer-fixture.mjs \
 `--archives` contains `pnpm-11.17.0.tgz`. The Node archive above is the Linux x64
 example; use the selected original Darwin arm64 archive on that platform, or its
 explicit fixed existing executable pin. The tests acquire nothing. Existing
-`vitest-native-observation-local` source CI now wires these commands using its
-already selected Node 24.18.0/pnpm 11.17.0 archives and stock root. Its final step
+`vitest-native-observation-local` source CI already invokes the source, process
+and full immutable fixture suites using its already selected Node 24.18.0/pnpm 11.17.0 archives and stock root. Its final step
 freezes only the job's disposable stock fixture readonly after existing checks.
-No new acquisition, runner, service or permission is introduced. Local Darwin
-results and this wiring do not establish a hosted Linux source CI pass or Linux
-worker qualification; that execution has not been observed here.
+No new acquisition, runner, service or permission is introduced. The merged
+Q2b.1a source PR [#46](https://github.com/sebastian-software/renovate-config/pull/46)
+retains five successful hosted source checks. Those historical checks and local
+Darwin results do not establish final Q2b.1b execution or Linux worker qualification.
+Q2b.1b changes no CI invocation or wiring.
 
-The aggregate source result therefore remains `unsupported`. Every report keeps
+The final Q2b.1b ordinary, unwrapped full fixture suite on the repaired
+process helper passed on October 8, 2026 with exit 0. It exercised both real recipes, three authenticated source
+selections, four altered-byte authentication cases, 25 preflight cases and five
+actual CLI rejection cases; no execution failure was returned. This is a source
+fixture assertion pass. Both recipe summaries remain `unsupported`, incomplete
+and ineligible; matching native outcomes or locks alone cannot supply missing
+settlement claims.
+
+The table records the final repaired-candidate ordinary run, not a prior
+checkpoint or instrumented diagnosis.
+Every original authenticated its actual debugger script and retained the fixed
+pre-call and handler-entry observations. Derived processes retained native facts
+without debugger observation; original entry/success claims cannot be transferred
+to them. Native outcomes are shown as original / derived. “None” refers to signal
+intervention; controlled debugger detach remains a separate timing intervention.
+
+| Recipe | Category | Original state | Original entry / success | Native outcomes | Observer signal intervention | Original / derived locks | Owned original / derived groups |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `empty-v1` | install | `unsupported` | observed / missing | SIGTERM / exit 0 | timeout → SIGTERM | present, equal SHA256 | empty / empty |
+| `empty-v1` | update | `supported` | observed / resolved | exit 0 / exit 0 | none | present, equal SHA256 | empty / empty |
+| `empty-v1` | dedupe | `supported` | observed / resolved | exit 0 / exit 0 | none | present, equal SHA256 | empty / empty |
+| `offline-miss-v1` | install | `unsupported` | observed / missing | SIGTERM / exit 1 | timeout → SIGTERM | absent / absent | empty / empty |
+| `offline-miss-v1` | update | `incomplete` | observed / missing | exit 1 / exit 1 | none | absent / absent | empty / empty |
+| `offline-miss-v1` | dedupe | `incomplete` | observed / missing | exit 1 / exit 1 | none | absent / absent | empty / empty |
+
+All three empty-recipe lock pairs retained SHA256
+`17c814b167307942d3609c7b9d916ceddb85839573ab39baa114e30edb132a1a`.
+Empty update/dedupe and offline update/dedupe required controlled debugger detach
+at native shutdown. Install reached its selected entry in both recipes but timed
+out before settlement and was cancelled by the observer; its original terminal
+is not natural completion or compatibility success. Offline update/dedupe
+retained natural exit 1 matching their derived comparison, without authenticated
+rejected handler settlement. Missing offline locks do not constitute concrete
+lockfile equivalence proof. All twelve owned leaders exited and their groups were
+confirmed empty by helper finalization and separate fixture readback. This is
+owned local group cleanup, not independent observation of all descendants.
+
+The earlier Q2b.1b attempt was **ABORTED on October 8, 2026** after two ordinary
+full-suite failures with `kill EPERM` and exit 1. Both retained `actualRecipes: 0`
+and no returned semantic case or PID/group receipts. Their underlying OS cause
+and cleanup remain **UNKNOWN**. An initial resumed ordinary checkpoint later
+passed both recipes with twelve confirmed empty owned groups; it did not
+establish final acceptance. The separate earlier instrumented diagnosis remains
+**DIAGNOSIS ONLY**, excluded from ordinary semantic proof and from cleanup claims
+for unrecorded groups.
+
+A subsequent independent ordinary run and a bounded discriminatory ordinary run
+again failed with EPERM during offline install after completing the empty recipe.
+Each retained six confirmed empty groups for its completed recipe, but cleanup
+of its failed original remains **UNKNOWN**. The discriminator observed the owned
+PID and actual PGID both as 96848, matching observer UID and process state `Z`,
+after TERM and before Node reported the native terminal. Its failing operation
+was the post-TERM negative-group signal-0 probe, not TERM or KILL. This establishes
+the premature probe ordering in that measured run; it does not establish a
+broader kernel defect or sandbox cause. State `Z` alone is neither a retained
+native terminal nor group-empty confirmation. Earlier failed PID 80611 and the
+discriminator PID 96848 keep their unknown cleanup; later absence or a successful
+run cannot retrospectively establish their group retirement.
+
+The minimal helper repair gates post-TERM retirement probes on the existing
+owned-leader exit observation, then continues the actual group-empty check.
+It waits for exit rather than pipe closure because descendants may retain pipes.
+The initial group probe, negative-group TERM/KILL targets, 500 ms escalation,
+three-second cleanup bound and 20 ms polling remain unchanged. After leader exit,
+plain timed polling avoids a resolved-promise busy loop. ESRCH alone means an
+empty group; other group errors retain the original thrown object and fail.
+A dedicated `post-term-terminal-sequencing` regression failed before this repair
+and passed after it, preserving the actual SIGTERM terminal and post-exit ESRCH
+readback. Its synthetic pre-exit EPERM guard tests ordering; it is separate from
+the normal-run failure observation and the five actual process gates.
+
+Failure-only diagnostics retain sanitized process-group context without changing
+kill arguments or turning EPERM into an unsupported observation. Only a failed
+group operation triggers a fixed owned-PID `ps` identity probe, bounded to 250 ms
+and 1,024 bytes. Its diagnostic subprocess alone uses SIGKILL on timeout. Reports
+retain a UID-match boolean rather than raw UID, a bounded process state and an
+actually observed PGID or explicit unavailable/null fields. No raw process log
+or ordinary native-path identity polling is added. The separate synthetic
+`group-failure-diagnostic` regression passed after the sequencing repair,
+checking unchanged error identity and real owned-group cleanup; it does not
+replace a normal OS failure measurement.
+
+Final fixed-candidate checks passed all 97 documentary source negatives
+(40 report/state, 25 selector and 32 correlation cases) and all five actual
+process gates with exit 0: `native-before-endpoint`, `owned-group`, `output-bound`,
+`lifetime-timeout` and `early-cancel`. Their ten owned groups were confirmed empty;
+the two additional synthetic regressions above remain separate evidence.
+Neighboring worker-source, release-trust, native-runtime, 19-case collector and
+native-prepare checks also passed. Darwin ancestry and Linux process proof remain
+unsupported; the optional real Renovate module was not supplied, and the unchanged
+Darwin-unsupported native-identity check was not rerun. Independent review of the
+final retained candidate is **PENDING** at this documentation checkpoint.
+Q2b.1b source acceptance is **not complete**; no delivery or issue-completion
+claim follows from these checks.
+An unexpected regression or unknown cleanup fails the source check. Empty install
+success still requires independent entry and success observations with unforced
+matching terminal and lock facts. Offline exit 1, `finally`, an outer catch or
+printed errors cannot authenticate rejected handler settlement. That claim
+remains missing pending a separate reviewed mechanism; Q2b.1b adds no exception
+pauses, async stacks, protocol methods or privileges.
+
+The historical Q2b.1a aggregate source result was `unsupported`. Every report keeps
 `qualificationContractRevision: 2`, source-fixture scope, `completeness: false`
 and `productionEligible: false`; promotion is rejected. Unit-test success is not
 an operational `PASSED`, complete proof pair or authority. Debugger pauses and
