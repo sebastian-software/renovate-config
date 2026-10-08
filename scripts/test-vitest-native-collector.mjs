@@ -10,19 +10,19 @@ import fsNative from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import { nativeExeca, recordGeneratedHead } from './vitest-native/collector.mjs';
 const root=await fs.realpath(await fs.mkdtemp(path.join(tmpdir(),'native-collector-')));
-const base={transformRevision:null,provenanceClass:'controlled-source-test',context:{worker:'test',wrapperInvocation:'test',containerId:null,imageId:null,imageDigest:null}};
-const producer=`const fs=require('node:fs');const channel=JSON.parse(process.env.VITEST_NATIVE_CHANNEL);const send=e=>fs.writeSync(3,JSON.stringify({schemaVersion:1,...channel,pid:process.pid,...e})+'\\n');const interpreter={path:process.execPath,sha256:'a'.repeat(64),version:process.versions.node};send({state:'bootstrap',interpreter,pnpm:{path:'/owned/pnpm/bin/pnpm.mjs',sha256:'b'.repeat(64),version:'11.17.0',originalBundleSha256:'c'.repeat(64),derivedBundleSha256:'d'.repeat(64),transformRevision:null}});send({state:'dispatch',category:'install',interpreter});`;
+const base={qualificationContractRevision:2,transformRevision:null,provenanceClass:'controlled-source-test',context:{worker:'test',wrapperInvocation:'test',containerId:null,imageId:null,imageDigest:null}};
+const producer=`const fs=require('node:fs');const channel=JSON.parse(process.env.VITEST_NATIVE_CHANNEL);const send=e=>fs.writeSync(3,JSON.stringify({schemaVersion:1,qualificationContractRevision:2,...channel,pid:process.pid,...e})+'\\n');const interpreter={path:process.execPath,sha256:'a'.repeat(64),version:process.versions.node};send({state:'bootstrap',interpreter,pnpm:{path:'/owned/pnpm/bin/pnpm.mjs',sha256:'b'.repeat(64),version:'11.17.0',originalBundleSha256:'c'.repeat(64),derivedBundleSha256:'d'.repeat(64),transformRevision:null}});send({state:'dispatch',category:'install',interpreter});`;
 // The test adapter preserves a real process/FD channel but substitutes an owned
 // empty preload. Native integration is tested separately with real Renovate/pnpm.
 const empty=path.join(root,'empty.mjs');await fs.writeFile(empty,'export {};\n');
-async function run(name,tail,{alter,holdFailure=false,options={},profile=base}={}) {
+async function run(name,tail,{alter,holdFailure=false,options={},profile=base,producerSource=producer}={}) {
   const directory=path.join(root,name);await fs.mkdir(directory);
   const opts={cwd:process.cwd(),env:{...process.env,VITEST_NATIVE_TAG:JSON.stringify({repository:'fixture/native',branch:'test'}),NODE_OPTIONS:''},stdin:'pipe',stdout:'pipe',stderr:'pipe',...options};
   let received;const execute=(cmd,args,actual)=>{received=actual;return spawn(cmd,args,actual);};
   const actualProfile={...profile,receiptDirectory:directory};
   const originalOpen=fsNative.openSync;
   if(holdFailure){fsNative.openSync=function(filename,...args){if(filename==='/proc/self/exe')throw Error('Controlled held-interpreter failure');return originalOpen.call(this,filename,...args);};syncBuiltinESMExports();}
-  let child;try{child=nativeExeca(actualProfile,empty,execute,process.execPath,['-e',producer+tail],opts);}
+  let child;try{child=nativeExeca(actualProfile,empty,execute,process.execPath,['-e',producerSource+tail],opts);}
   finally{if(holdFailure){fsNative.openSync=originalOpen;syncBuiltinESMExports();}}
   let stderr='';child.stdout?.resume();child.stderr?.on('data',part=>{stderr+=part;});
   if(alter)try{await alter(directory,child);}catch(error){const ended=once(child,'close');child.kill('SIGKILL');await ended;throw error;}
@@ -33,6 +33,28 @@ async function run(name,tail,{alter,holdFailure=false,options={},profile=base}={
 const complete=await run('complete',"send({state:'process-exit',dispatched:true,exitCode:0,interpreterUnchanged:true});");
 assert.equal(complete.code,0,complete.stderr);assert.equal(complete.receipts[0].state,process.platform==='linux'?'completed':'unsupported');
 assert.equal(complete.receipts[0].completed,process.platform==='linux');
+assert.equal(complete.receipts[0].qualificationContractRevision,2);
+for(const marker of [undefined,1,999]) {
+  const actual={...base,qualificationContractRevision:marker};
+  const declined=await run(`incompatible-profile-${String(marker)}`,"process.exitCode=7;",{profile:actual,producerSource:''});
+  assert.equal(declined.code,7);
+  assert.equal(declined.receipts.length,0,'Incompatible profile must preserve native outcome without manufacturing a new receipt');
+}
+for(const [name,tail,code,signal] of [
+  ['delegation-rejected',"send({state:'unsupported',reason:'unowned-delegation'});process.exitCode=7;",7,null],
+  ['delegation-signal',"send({state:'unsupported',reason:'unowned-delegation'});process.kill(process.pid,'SIGTERM');",null,'SIGTERM'],
+  ['observer-budget',"fs.writeSync(3,'x'.repeat(65537));process.exitCode=9;",9,null],
+  ['mixed-event-revision',"fs.writeSync(3,JSON.stringify({schemaVersion:1,qualificationContractRevision:1,...channel,pid:process.pid,state:'unsupported',reason:'unowned-delegation'})+'\\n');process.exitCode=11;",11,null],
+]) {
+  const bootstrapOnly=producer.slice(0,producer.indexOf("send({state:'dispatch'"));
+  const native=await run(name,tail,{producerSource:name.startsWith('delegation-')?bootstrapOnly:producer});
+  assert.equal(native.code,code);assert.equal(native.signal,signal);
+  assert.equal(native.receipts[0].nativeExit,code);assert.equal(native.receipts[0].nativeSignal,signal);
+  assert.equal(native.receipts[0].completed,false);assert.equal(native.receipts[0].productionEligible,false);
+  assert.equal(native.receipts[0].state,'unsupported');
+  assert.equal(native.receipts[0].events.filter(event=>event.state==='process-exit').length,0);
+  if(name.startsWith('delegation-'))assert.equal(native.receipts[0].events.filter(event=>event.state==='dispatch').length,0);
+}
 const generated='e'.repeat(40),config={repository:'fixture/native',branchName:'test'};
 await recordGeneratedHead(complete.profile,config,{sourceBranch:'wrong',sha:generated},{getBranchCommit:async()=>generated});
 let mapped=JSON.parse(await fs.readFile(path.join(complete.directory,complete.receipts[0].invocation+'.json'),'utf8'));
@@ -68,4 +90,4 @@ const unavailable=await run('held-interpreter-failure',"send({state:'process-exi
 assert.equal(unavailable.code,7);assert.equal(unavailable.receipts[0].parentInterpreter,null);assert.equal(unavailable.receipts[0].completed,false);assert.equal(unavailable.receipts[0].state,'unsupported');
 await recordGeneratedHead(unavailable.profile,config,{sourceBranch:'test',sha:generated},{getBranchCommit:async()=>generated});
 const unavailableMapped=JSON.parse(await fs.readFile(path.join(unavailable.directory,unavailable.receipts[0].invocation+'.json'),'utf8'));assert.equal(unavailableMapped.generatedPrHead,null);
-process.stdout.write(JSON.stringify({state:'PASSED',scope:'controlled-collector-real-processes',cases:12,heldInterpreterFaultDiscriminated:process.platform==='linux',darwinNeverCompletes:process.platform!=='linux',linuxPnpmProof:false,output:root})+'\n');
+process.stdout.write(JSON.stringify({state:'PASSED',scope:'controlled-collector-real-processes',cases:19,heldInterpreterFaultDiscriminated:process.platform==='linux',darwinNeverCompletes:process.platform!=='linux',linuxPnpmProof:false,output:root})+'\n');

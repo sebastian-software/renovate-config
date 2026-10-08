@@ -46,6 +46,7 @@ try {
     `Missing fixed native-worker inventory entry: ${inventoryResult.stderr}`);
   const inventory = JSON.parse(inventoryResult.stdout);
   assert.equal(inventory.schemaVersion, 1);
+  assert.equal(inventory.qualificationContractRevision, 2);
   assert.equal(inventory.evidenceScope, 'source-inventory');
   assert.equal(inventory.completeness, false);
   assert.equal(inventory.productionEligible, false);
@@ -83,6 +84,7 @@ try {
   assert.equal(typeof summarizeQualification, 'function');
   assert.equal(typeof qualificationExitCode, 'function');
   const missing = summarizeQualification({ cases: [], evidenceScope: 'source-fixture' });
+  assert.equal(missing.qualificationContractRevision, 2);
   assert.equal(missing.completeness, false);
   assert.equal(missing.productionEligible, false);
   assert.equal(missing.cases.length, 48);
@@ -122,6 +124,17 @@ try {
   assert.throws(() => summarizeQualification({ cases: [{ ...original, state: 'SUCCESS' }], evidenceScope: 'source-fixture' }), /state/i);
   assert.throws(() => summarizeQualification({ cases: [], evidenceScope: 'production' }), /scope/i);
   assert.throws(() => qualificationExitCode({ ...partial, completeness: true, productionEligible: true }), /complete|eligible|promotion|scope/i);
+  for (const qualificationContractRevision of [undefined, 1, 999, null, '2', true])
+    assert.throws(() => qualificationExitCode({ ...partial, qualificationContractRevision }), /revision|scope|complete|eligible|promotion/i);
+  for (const nativeOutcome of [{ exitCode: 7, signal: null }, { exitCode: null, signal: 'SIGKILL' }]) {
+    const revised = summarizeQualification({ cases: [{ ...delegation, nativeOutcome }], evidenceScope: 'source-fixture' });
+    assert.equal(revised.cases.length, 48);
+    assert.equal(revised.cases.filter(record => record.state === 'PASSED').length, 0);
+    assert.deepEqual(revised.cases.find(record => record.id === delegation.id).nativeOutcome, nativeOutcome);
+    assert.equal(revised.completeness, false);
+    assert.equal(revised.productionEligible, false);
+    assert.notEqual(qualificationExitCode(revised), 0);
+  }
   for (const nativeOutcome of [{ exitCode: 7, signal: null }, { exitCode: null, signal: 'SIGKILL' },
     { exitCode: 130, signal: 'SIGINT' }]) {
     const observed = summarizeQualification({ cases: [{ ...original, state: 'FAILED', nativeOutcome }], evidenceScope: 'source-fixture' });

@@ -12,13 +12,14 @@ export function createProbe(profile,url,derivedSha256) {
   function emit(event) {
     if(failure)return;
     try {
-      const bytes=Buffer.from(JSON.stringify({schemaVersion:1,invocation:channel.invocation,nonce:channel.nonce,pid:process.pid,...event})+'\n');
+      const bytes=Buffer.from(JSON.stringify({schemaVersion:1,qualificationContractRevision:2,invocation:channel.invocation,nonce:channel.nonce,pid:process.pid,...event})+'\n');
       if(bytes.length>8192)throw Error('Bounded observation exceeded');
       fs.writeSync(3,bytes);
     }catch{failure=true;}
   }
   function reject(reason){if(!unsupported){unsupported=true;emit({state:'unsupported',reason});}}
   try {
+    if(profile.qualificationContractRevision!==2)throw Error('Unsupported qualification contract');
     if(!/^[a-f0-9]{32}$/.test(channel.invocation)||!/^[a-f0-9]{64}$/.test(channel.nonce))throw Error('Uncorrelated invocation');
     if(process.execArgv.some(argument=>!/^--max-old-space-size=\d{1,6}$/.test(argument)))throw Error('Unowned interpreter preload');
     if(profile.dataOnlyProfile)emptyHook=holdEmptyHook(profile.dataOnlyRoot,profile.dataOnlyProfile);

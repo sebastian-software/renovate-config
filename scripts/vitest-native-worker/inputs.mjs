@@ -6,7 +6,7 @@ import { archiveMembers } from '../vitest-release/archive.mjs';
 import { packageRelease } from '../vitest-release/package.mjs';
 import { authenticateImplementation, readPinnedJson, consumerFiles, inventory, budgets,
   requireValue, realDirectory, hashFile, verifyReadOnly, sha256, jsonBytes } from '../vitest-release/files.mjs';
-import { ORIGINAL_PNPM_ARCHIVE, ORIGINAL_PNPM_BUNDLE, transformPnpm } from '../vitest-native/transform.mjs';
+import { ORIGINAL_PNPM_ARCHIVE, ORIGINAL_PNPM_BUNDLE, delegationSourceFacts, transformPnpm } from '../vitest-native/transform.mjs';
 import { limits } from './contract.mjs';
 import { EMPTY_SHA256 } from '../vitest-native/data-only.mjs';
 import { RENOVATE_SEAMS } from '../vitest-native/prepare.mjs';
@@ -100,9 +100,9 @@ export async function preflight(inputFile, inputPin, output, { contextReady = fa
     else if (value && typeof value === 'object') for (const item of Object.values(value)) paths(item);
   };
   paths(input);
-  exact(input, ['schemaVersion', 'evidenceScope', 'tuple', 'source', 'stock', 'preparation', 'profile', 'contextPlan',
+  exact(input, ['schemaVersion', 'qualificationContractRevision', 'evidenceScope', 'tuple', 'source', 'stock', 'preparation', 'profile', 'contextPlan',
     'originalRoot', 'derivedRoot', 'nativeNode', 'components', 'renovate', 'workspace', 'registry', 'wrapper']);
-  requireValue(input.schemaVersion === 1 && input.evidenceScope === 'source-fixture', 'Only nondeployable source fixture inputs are supported');
+  requireValue(input.schemaVersion === 1 && input.qualificationContractRevision === 2 && input.evidenceScope === 'source-fixture', 'Only nondeployable source fixture inputs are supported');
   exact(input.tuple, ['renovate', 'node', 'pnpm']);
   same(input.tuple, { renovate: '43.288.0', node: '24.18.0', pnpm: '11.17.0' }, 'Wrong fixed native tuple');
   exact(input.source, ['root', 'binding']);
@@ -136,13 +136,13 @@ export async function preflight(inputFile, inputPin, output, { contextReady = fa
   exact(input.preparation, ['path', 'sha256']); exact(input.profile, ['path', 'sha256']);
   const preparation = (await readonlyFile(input.preparation.path, input.preparation.sha256)).document;
   const profile = (await readonlyFile(input.profile.path, input.profile.sha256)).document;
-  requireValue(profile.schemaVersion === 1 && profile.provenanceClass === 'authenticated-preparation' &&
+  requireValue(preparation.qualificationContractRevision === 2 && profile.qualificationContractRevision === 2 && profile.schemaVersion === 1 && profile.provenanceClass === 'authenticated-preparation' &&
     profile.productionEligible === false && profile.trustScope === 'source-fixture' &&
     profile.preparationSha256 === input.preparation.sha256 && profile.originalArchiveSha256 === ORIGINAL_PNPM_ARCHIVE &&
     profile.originalBundleSha256 === ORIGINAL_PNPM_BUNDLE && profile.pnpmVersion === '11.17.0' &&
     profile.sourceRevision === preparation.sourceRevision && profile.transformRevision === preparation.transform?.revision,
     'Unselected/drifting native preparation/profile');
-  exact(profile, ['schemaVersion', 'provenanceClass', 'productionEligible', 'originalArchiveSha256',
+  exact(profile, ['schemaVersion', 'qualificationContractRevision', 'delegationSource', 'provenanceClass', 'productionEligible', 'originalArchiveSha256',
     'originalBundleSha256', 'derivedBundleSha256', 'transformRevision', 'transformFiles', 'sourceRevision',
     'trustScope', 'preparationSha256', 'containingTransform', 'pnpmVersion', 'pnpmFiles', 'derivedFiles',
     'instrumentationFiles', 'dataOnlyProfile', 'renovateSeams', 'receiptDirectory', 'context', 'contextFile']);
@@ -174,6 +174,7 @@ export async function preflight(inputFile, inputPin, output, { contextReady = fa
   same(consumerFiles(await inventory(input.originalRoot, budgets.toolchain)), profile.pnpmFiles, 'Complete original distribution mismatch');
   same(consumerFiles(await inventory(input.derivedRoot, budgets.toolchain)), profile.derivedFiles, 'Complete derived distribution mismatch');
   const original = await fs.readFile(path.join(input.originalRoot, 'dist/pnpm.mjs'));
+  same(profile.delegationSource, delegationSourceFacts(original), 'Wrong authenticated delegation control flow');
   const derived = await fs.readFile(path.join(input.derivedRoot, 'dist/pnpm.mjs'));
   requireValue(sha256(original) === ORIGINAL_PNPM_BUNDLE && sha256(derived) === profile.derivedBundleSha256 &&
     sha256(transformPnpm(original)) === profile.derivedBundleSha256, 'Changed original/derived transform bytes');
@@ -201,8 +202,8 @@ export async function preflight(inputFile, inputPin, output, { contextReady = fa
     ? { ...file, sha256: profile.derivedBundleSha256 } : file), 'Complete derived distribution differs from selected original');
   exact(input.contextPlan, ['path', 'sha256']);
   const plan = (await readonlyFile(input.contextPlan.path, input.contextPlan.sha256, 4_096)).document;
-  exact(plan, ['schemaVersion', 'evidenceScope', 'contextFile', 'worker']);
-  requireValue(plan.schemaVersion === 1 && plan.evidenceScope === 'source-fixture' && plan.worker === 'github-org' &&
+  exact(plan, ['schemaVersion', 'qualificationContractRevision', 'evidenceScope', 'contextFile', 'worker']);
+  requireValue(plan.schemaVersion === 1 && plan.qualificationContractRevision === 2 && plan.evidenceScope === 'source-fixture' && plan.worker === 'github-org' &&
     plan.contextFile === path.join(output, 'context/context.json') && profile.contextFile === plan.contextFile &&
     profile.receiptDirectory === path.join(output, 'native-receipts'), 'Wrong fixed post-CID context/output plan');
   await selectedInventory(input.renovate, budgets.toolchain);
@@ -287,13 +288,13 @@ export async function preflight(inputFile, inputPin, output, { contextReady = fa
     const launchFile = path.join(output, 'context/launch.json');
     const launchIdentity = await hashFile(launchFile, 4_096);
     const launch = (await readonlyFile(launchFile, launchIdentity.sha256, 4_096)).document;
-    exact(launch, ['schemaVersion', 'evidenceScope', 'contextSha256']);
-    requireValue(launch.schemaVersion === 1 && launch.evidenceScope === 'source-fixture', 'No source context handoff');
+    exact(launch, ['schemaVersion', 'qualificationContractRevision', 'evidenceScope', 'contextSha256']);
+    requireValue(launch.schemaVersion === 1 && launch.qualificationContractRevision === 2 && launch.evidenceScope === 'source-fixture', 'No source context handoff');
     context = (await readonlyFile(plan.contextFile, process.env.VITEST_NATIVE_CONTEXT_SHA256, 4_096)).document;
     requireValue(process.env.VITEST_NATIVE_CONTEXT_SHA256 === launch.contextSha256, 'Context pin missing before loader/collection');
   }
   return { input, profile, observation, plan, parentNode, nativeNode, renovateRoot, context, executingRoot,
-    inputFile, inputPin, output, pythonExe, componentInventories, binding: { sourceRevision: profile.sourceRevision,
+    inputFile, inputPin, output, pythonExe, componentInventories, binding: { qualificationContractRevision: 2, sourceRevision: profile.sourceRevision,
       transformRevision: profile.transformRevision, profileSha256: input.profile.sha256,
       originalArchiveSha256: profile.originalArchiveSha256, originalBundleSha256: profile.originalBundleSha256,
       derivedBundleSha256: profile.derivedBundleSha256 } };

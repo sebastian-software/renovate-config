@@ -18,7 +18,7 @@ const {validateAuthority,verifyRuntime,aliasDigest}=await import(pathToFileURL(p
 const scenarios=['readonly','data-only','concurrency','delegation','term','int','kill','partial','tamper','redirection','replacement','script-suppression','hook-suppression','preload-suppression'];
 const categories=['install','update','dedupe'],components=['checker','helper','toolchain','observation'];
 const emptyHash=hash(Buffer.from('export {};\n'));
-const preparation={schemaVersion:1,trustScope:'source-fixture',sourceRevision:revision,
+const preparation={schemaVersion:1,qualificationContractRevision:2,trustScope:'source-fixture',sourceRevision:revision,
   sourceOrigin:`https://github.com/sebastian-software/renovate-config/commit/${revision}`,
   transform:{revision,files:nativeNames.map(name=>implementation[name])},
   original:{name:'pnpm',version:'11.17.0',origin:'https://registry.npmjs.org/pnpm/-/pnpm-11.17.0.tgz',
@@ -41,11 +41,11 @@ const componentRoots={checker:path.join(fixture.options.output,'checker'),helper
   toolchain:path.join(fixture.options.output,'toolchain'),observation};
 const inventories={};for(const component of components) inventories[component]=consumer(await leaves(componentRoots[component]));
 const componentPins=Object.fromEntries(components.map(component=>[component,hash(bytes(inventories[component]))]));
-const selection={schemaVersion:1,trustScope:'source-fixture',sourceRevision:revision,transformRevision:revision,imageId,imageDigest,
+const selection={schemaVersion:1,qualificationContractRevision:2,trustScope:'source-fixture',sourceRevision:revision,transformRevision:revision,imageId,imageDigest,
   preparationSha256:preparationPin,profileSha256:hash(frozenProfile),componentInventorySha256:componentPins,
   rawEvidence:{},stock:{provenanceSha256:fixture.provenancePin,selectionSha256:fixture.finalSelectionPin,releaseSha256:hash(fixture.receiptBytes)},
   issuer:{revision,files:issuerNames.map(name=>implementation[name])}};
-const common={schemaVersion:1,trustScope:'source-fixture',sourceRevision:revision,profileSha256:selection.profileSha256,
+const common={schemaVersion:1,qualificationContractRevision:2,trustScope:'source-fixture',sourceRevision:revision,profileSha256:selection.profileSha256,
   originalArchiveSha256:profile.originalArchiveSha256,originalBundleSha256:profile.originalBundleSha256,
   derivedBundleSha256:profile.derivedBundleSha256,imageId,imageDigest};
 const evidenceRoot=path.join(root,'evidence');await fs.mkdir(evidenceRoot);await fs.mkdir(path.join(evidenceRoot,'raw'));
@@ -63,25 +63,53 @@ function challengeObserved(scenario,raw) {
   if(['readonly','tamper','redirection','replacement'].includes(scenario)) return {operation:scenario==='replacement'?'replace':scenario==='redirection'?'redirect':'write',errorCode:'EROFS',beforeSha256:componentPins.observation,afterSha256:componentPins.observation,targetInventorySha256:componentPins.observation};
   if(['data-only','script-suppression','hook-suppression','preload-suppression'].includes(scenario)) return {operation:scenario==='hook-suppression'?'hook':scenario==='preload-suppression'?'preload':'script',attemptedSha256:hash(Buffer.from('documentary executable attempt')),executions:0,guardSha256:emptyHash};
   if(scenario==='concurrency') return {invocationIds:[raw.invocationId,`${raw.invocationId}-other`],receiptPaths:[`receipts/${raw.invocationId}.json`,`receipts/${raw.invocationId}-other.json`],completedInvocationIds:[raw.invocationId,`${raw.invocationId}-other`]};
-  if(scenario==='delegation') return {parentInvocationId:raw.invocationId,childInvocationId:`${raw.invocationId}-child`,childInterpreterSha256:interpreter.sha256,effectiveCliSha256:profile.derivedBundleSha256,unobservedChildren:0};
   if(['term','int','kill'].includes(scenario)) return {signal:raw.outcome.signal,descendantsRemaining:0,receiptEligible:false};
   assert.equal(scenario,'partial');return {terminalState:'partial',receiptEligible:false,descendantsRemaining:0,completedNativeCommands:0};
 }
 async function rawRecord(category,identity,scenario=null) {
   const id=`${category}-${scenario??identity}`,bundleSha256=identity==='original'?profile.originalBundleSha256:profile.derivedBundleSha256;
   const lock=await retained(`raw/${id}.lock`,Buffer.from(`lockfileVersion: '9.0'\n# documentary source fixture ${category}\n`));
-  const outcome=['term','int','kill'].includes(scenario)?({term:{exitCode:143,signal:'SIGTERM'},int:{exitCode:130,signal:'SIGINT'},kill:{exitCode:137,signal:'SIGKILL'}}[scenario]):{exitCode:0,signal:null};
+  const negative=scenario==='delegation',sameVersion=scenario==='delegation-same-version',paired=negative||sameVersion;
+  const outcome=negative?({install:{exitCode:7,signal:null},update:{exitCode:130,signal:'SIGINT'},dedupe:{exitCode:0,signal:null}}[category]):
+    ['term','int','kill'].includes(scenario)?({term:{exitCode:143,signal:'SIGTERM'},int:{exitCode:130,signal:'SIGINT'},kill:{exitCode:137,signal:'SIGKILL'}}[scenario]):{exitCode:0,signal:null};
   const raw={...common,platform:'linux',category,scenario,runtimeIdentity:identity,bundleSha256,invocationId:id,
-    interpreter,parentInterpreter,mounts,suppression,lock,lockSha256:lock.sha256,outcome};
-  for(const [phase,sequence,observed] of [
-    ['launch',1,{parentInterpreterSha256:parentInterpreter.sha256,mountInventorySha256:hash(bytes(mounts))}],
-    ['dispatch',2,{interpreterSha256:interpreter.sha256,bundleSha256,dataOnlyGuardSha256:emptyHash}],
-    ['completion',3,{...outcome,lockSha256:lock.sha256,descendantsRemaining:0}],
-  ]) {
-    const reference=await retained(`raw/${id}-${phase}.json`,{...common,invocationId:id,phase,sequence,observed});
+    interpreter,parentInterpreter,mounts,suppression,lock,lockSha256:lock.sha256,outcome,...paired?{nativePid:2000+Object.keys(records).length*2}:{}};
+  async function phase(phase,sequence,observed) {
+    const reference=await retained(`raw/${id}-${phase}.json`,{...common,invocationId:id,...paired?{scenario}:{},phase,sequence,observed});
     raw[phase]={invocationId:id,sequence,recordSha256:reference.sha256,record:reference};
   }
-  if(scenario) {
+  await phase('launch',1,{parentInterpreterSha256:parentInterpreter.sha256,mountInventorySha256:hash(bytes(mounts)),
+    ...paired?{nativePid:raw.nativePid,interpreterSha256:interpreter.sha256,bundleSha256}:{}});
+  if(negative) {
+    Object.assign(raw,{evidenceVariant:'delegation-rejection',state:'unsupported',receiptEligible:false,caseVerdict:'expected-negative',
+      challenge:{kind:'delegation',result:'expected-negative',inputSha256:hash(Buffer.from(`documentary-${id}-input`)),
+        attemptedCliSha256:hash(Buffer.from('documentary unowned CLI bytes; never executed'))}});
+    await phase('rejection',2,{nativePid:raw.nativePid,state:'unsupported',reason:'unowned-delegation',interpreterSha256:interpreter.sha256,bundleSha256});
+    await phase('nativeTerminal',5,{nativePid:raw.nativePid,independentlyObserved:true,interpreterSha256:interpreter.sha256,bundleSha256,...outcome,lockSha256:lock.sha256});
+  } else {
+    await phase('dispatch',2,{interpreterSha256:interpreter.sha256,bundleSha256,dataOnlyGuardSha256:emptyHash,...paired?{nativePid:raw.nativePid}:{}});
+    await phase('completion',3,{...outcome,lockSha256:lock.sha256,descendantsRemaining:0,...paired?{nativePid:raw.nativePid}:{}});
+  }
+  if(paired) {
+    const children=negative?[{invocationId:`${id}-child`,parentInvocationId:id,pid:raw.nativePid+1,parentPid:raw.nativePid,
+      interpreter:structuredClone(interpreter),cliSha256:raw.challenge.attemptedCliSha256,cliEligible:false,
+      outcome:structuredClone(outcome),identityUnchanged:true,completed:true}]:[];
+    if(negative)for(const child of children) {
+      const sequence=4;
+      const reference=await retained(`raw/${id}-child-terminal.json`,{...common,invocationId:child.invocationId,scenario,
+        phase:'childTerminal',sequence,observed:{independentlyObserved:true,childInvocationId:child.invocationId,
+          parentInvocationId:id,pid:child.pid,parentPid:raw.nativePid,launchSequence:3,
+          interpreter:structuredClone(child.interpreter),cliSha256:child.cliSha256,cliEligible:false,
+          outcome:structuredClone(child.outcome),completed:true,identityUnchanged:true}});
+      child.terminal={invocationId:child.invocationId,sequence,recordSha256:reference.sha256,record:reference};
+    }
+    if(sameVersion)await phase('delegationAbsence',4,{nativePid:raw.nativePid,requestedVersion:'11.17.0',resolvedVersion:'11.17.0',switchCliChildren:0,
+      observationStartSequence:1,observationEndSequence:3,sourceFlowSha256:hash(bytes(profile.delegationSource))});
+    await phase('descendants',sameVersion?5:6,{nativePid:raw.nativePid,independentlyObserved:true,observationStartSequence:1,
+      observationEndSequence:sameVersion?3:5,unobservedChildren:0,children});
+    await phase('cleanup',sameVersion?6:7,{nativePid:raw.nativePid,independentlyObserved:true,descendantsRemaining:0,
+      completedInvocationIds:children.map(child=>child.invocationId)});
+  } else if(scenario) {
     const events=[];for(const sequence of [4,5]) events.push({...await retained(`raw/${id}-challenge-${sequence}.json`,{
       ...common,invocationId:id,scenario,sequence,observed:challengeObserved(scenario,raw)}),sequence});
     raw.challenge={kind:scenario,inputSha256:hash(Buffer.from(`documentary-${id}-input`)),observedSha256:hash(bytes(challengeObserved(scenario,raw))),result:'contained',events};
@@ -89,7 +117,8 @@ async function rawRecord(category,identity,scenario=null) {
   const ref=await retained(`raw/${id}.json`,raw);records[id]=raw;return ref;
 }
 const commands=[];for(const category of categories) commands.push({category,original:await rawRecord(category,'original'),derived:await rawRecord(category,'derived')});
-const cases=[];for(const category of categories) for(const scenario of scenarios) cases.push({category,scenario,evidence:await rawRecord(category,'derived',scenario)});
+const cases=[];for(const category of categories) for(const scenario of scenarios) cases.push({category,scenario,evidence:await rawRecord(category,'derived',scenario),
+  ...scenario==='delegation'?{sameVersion:await rawRecord(category,'derived','delegation-same-version')}: {}});
 const nativeAliases=[{kind:'node',digestKind:'sha256-file',source:'node/bin/node',destination:'/usr/local/bin/node'},
   {kind:'pnpm',digestKind:'sha256-inventory-tuples-v1',source:'pnpm',destination:'/usr/local/lib/pnpm'}].map(alias=>{
     const sha256=aliasDigest(alias,inventories.toolchain);return {...alias,sha256,originalImageSha256:sha256};});
@@ -114,6 +143,9 @@ const options={selection:selectedPath,selectionSha256:hash(selectedBytes),proven
   artifactRoot:fixture.artifactRoot,componentRoots,output:path.join(root,'authority.json')};
 const issued=await issueAuthority(options,settings);assert.equal(issued.productionEligible,false);
 const authorityBytes=await fs.readFile(options.output),authority=JSON.parse(authorityBytes);
+assert.equal(authority.qualificationContractRevision,2);assert.equal(profile.qualificationContractRevision,2);
+assert.equal(cases.length,42);assert.equal(commands.length,3);
+for(const category of categories){const negative=records[`${category}-delegation`];assert.equal(negative.state,'unsupported');assert.equal(negative.receiptEligible,false);assert(!('dispatch' in negative));assert(!('completion' in negative));}
 assert.equal(authority.trustScope,'source-fixture');assert.equal(authority.productionEligible,false);
 assert.deepEqual(Object.keys(authority.components).sort(),components.toSorted());assert.equal(authority.nativeAliases.length,2);
 validateAuthority(authority,settings);
@@ -121,7 +153,7 @@ await verifyIssuedAuthority({...options,authority:options.output,authoritySha256
 assert.deepEqual((await reconstructAuthority(options,settings)).bytes,authorityBytes);
 assert.deepEqual(await fs.readFile(profilePath),frozenProfile,'Issuance cannot patch qualified profile bytes');
 assert.equal((await fs.stat(profilePath)).mode&0o222,0);
-const passed=['complete source fixture issue/reconstruct/separate verify immutable authority','profile frozen before proofs unchanged after issue','all 3 compatibility categories + 42 lifecycle cases with every retained selected phase/challenge/lock','exact 4 original/observation components and 2 original-image aliases'];
+const passed=['complete source fixture issue/reconstruct/separate verify immutable authority','profile frozen before proofs unchanged after issue','all 3 compatibility categories + 42 lifecycle cases including paired source-only delegation rejection/absence/accounting/cleanup','exact 4 original/observation components and 2 original-image aliases'];
 await assert.rejects(issueAuthority({...options,output:path.join(root,'live-authority.json')}));passed.push('normal issuer rejects fixture trust');
 const normalCli=spawnSync(process.execPath,[path.join(sourceRoot,'scripts/vitest-native-authority.mjs'),'issue',
   '--selection',options.selection,'--selection-sha256',options.selectionSha256,'--output',path.join(root,'cli-authority.json')],{encoding:'utf8'});
@@ -137,6 +169,12 @@ await rejects('missing outside authority selection pin',{selectionSha256:undefin
 async function repinnedSelection(label,mutate,pattern) {
   const changed=structuredClone(selection);mutate(changed);const file=path.join(root,'changed-selection.json');await fs.writeFile(file,bytes(changed));
   await rejects(label,{selection:file,selectionSha256:hash(bytes(changed))},pattern);
+}
+for(const marker of [undefined,1,999,null,'2',true]) {
+  await repinnedSelection(`incompatible selected qualification revision ${String(marker)}`,value=>{
+    if(marker===undefined)delete value.qualificationContractRevision;else value.qualificationContractRevision=marker;
+  },/authority selection/);
+  assert.throws(()=>validateAuthority({...authority,qualificationContractRevision:marker},settings),/authority/);
 }
 await repinnedSelection('wrong independently selected preparation pin',s=>s.preparationSha256='0'.repeat(64),/pin mismatch/);
 await repinnedSelection('wrong independently selected frozen profile pin',s=>s.profileSha256='0'.repeat(64),/pin mismatch/);
@@ -162,6 +200,10 @@ await evidenceMutation('original image alias mismatch','aliases.json',p=>p.nativ
 await evidenceMutation('unexpected third alias','aliases.json',p=>p.nativeAliases.push({...p.nativeAliases[0]}),/Exactly two/);
 await evidenceMutation('proof changed frozen profile binding','linux-compatibility.json',p=>p.profileSha256='0'.repeat(64),/unchanged profile/);
 await evidenceMutation('compatibility summary without concrete records','linux-compatibility.json',p=>p.commands=p.commands.map(c=>({category:c.category,original:{path:'raw/absent',sha256:'0'.repeat(64)},derived:c.derived})),/outside|independent/);
+for(const filename of ['linux-compatibility.json','data-only-lifecycle.json','inventories.json','image.json','aliases.json','publication.json'])
+  for(const marker of [undefined,1,999])await evidenceMutation(`mixed ${filename} qualification revision ${String(marker)}`,filename,value=>{
+    if(marker===undefined)delete value.qualificationContractRevision;else value.qualificationContractRevision=marker;
+  },/profile|source|attestation|binding/);
 // Physical closure attacks do not alter the outside anchor.
 const physical=path.join(evidenceRoot,'raw/install-original-launch.json'),physicalBytes=await fs.readFile(physical);
 try{await fs.rename(physical,physical+'.saved');await rejects('missing selected physical leaf',{},/physical evidence closure/);}finally{await fs.rename(physical+'.saved',physical);}
@@ -176,14 +218,26 @@ async function semanticRawMutation(label,id,mutateRaw,mutateEvent,pattern,eventS
   const changedSelection=structuredClone(selection),raw=structuredClone(records[id]),changedProofs=structuredClone(proofs);
   const saved=new Map();
   async function set(name,document) {saved.set(name,documents.get(name));const content=bytes(document);await replace(path.join(evidenceRoot,name),content);return hash(content);}
-  if(mutateEvent) {
-    const challengeEvent=eventSelector==='challenge-all'||eventSelector==='challenge-or-dispatch'&&Boolean(raw.challenge);
+  if(mutateEvent && eventSelector==='child-terminal') {
+    const descendantReference=raw.descendants.record,descendants=JSON.parse(documents.get(descendantReference.path));
+    const terminalReference=descendants.observed.children[0].terminal;
+    const event=JSON.parse(documents.get(terminalReference.record.path));
+    mutateEvent(event,raw,terminalReference);
+    const terminalPin=await set(terminalReference.record.path,event);
+    terminalReference.record.sha256=terminalPin;terminalReference.recordSha256=terminalPin;
+    changedSelection.rawEvidence[terminalReference.record.path]=terminalPin;
+    const descendantPin=await set(descendantReference.path,descendants);
+    descendantReference.sha256=descendantPin;raw.descendants.recordSha256=descendantPin;
+    changedSelection.rawEvidence[descendantReference.path]=descendantPin;
+  } else if(mutateEvent) {
+    const challengeEvent=eventSelector==='challenge-all'||eventSelector==='challenge-or-dispatch'&&Boolean(raw.challenge?.events);
+    const phase=eventSelector==='challenge-or-dispatch'?'dispatch':eventSelector;
     const references=eventSelector==='challenge-all'?raw.challenge.events:
-      [challengeEvent?raw.challenge.events[0]:raw.dispatch.record];
+      [challengeEvent?raw.challenge.events[0]:raw[phase].record];
     for(const ref of references) {
       const event=JSON.parse(documents.get(ref.path));mutateEvent(event,raw);
       const pin=await set(ref.path,event);changedSelection.rawEvidence[ref.path]=pin;ref.sha256=pin;
-      if(!challengeEvent)raw.dispatch.recordSha256=pin;
+      if(!challengeEvent)raw[phase].recordSha256=pin;
       if(eventSelector==='challenge-all')raw.challenge.observedSha256=hash(bytes(event.observed));
     }
   }
@@ -196,7 +250,7 @@ async function semanticRawMutation(label,id,mutateRaw,mutateEvent,pattern,eventS
   }
   const rawName=`raw/${id}.json`,rawPin=await set(rawName,raw);changedSelection.rawEvidence[rawName]=rawPin;
   for(const cmd of changedProofs['linux-compatibility.json'].commands) for(const identity of ['original','derived'])if(cmd[identity].path===rawName)cmd[identity].sha256=rawPin;
-  for(const item of changedProofs['data-only-lifecycle.json'].cases)if(item.evidence.path===rawName)item.evidence.sha256=rawPin;
+  for(const item of changedProofs['data-only-lifecycle.json'].cases)for(const key of ['evidence','sameVersion'])if(item[key]?.path===rawName)item[key].sha256=rawPin;
   for(const name of ['linux-compatibility.json','data-only-lifecycle.json'])changedSelection[proofKeys[name]]=await set(name,changedProofs[name]);
   Object.assign(changedProofs['publication.json'],{compatibilitySha256:changedSelection.compatibilitySha256,lifecycleSha256:changedSelection.lifecycleSha256,rawEvidenceSha256:hash(bytes(changedSelection.rawEvidence))});
   changedSelection.publicationSha256=await set('publication.json',changedProofs['publication.json']);
@@ -232,12 +286,11 @@ for(const category of categories) {
     },/Whole-lifecycle evidence does not measure the frozen derived runtime/,'dispatch');
 }
 
-for(const scenario of scenarios) {
+for(const scenario of scenarios.filter(scenario=>scenario!=='delegation')) {
   await semanticRawMutation(`incomplete measured ${scenario} challenge`,`install-${scenario}`,null,e=>{
     if(['readonly','tamper','redirection','replacement'].includes(scenario))e.observed.afterSha256='0'.repeat(64);
     else if(['data-only','script-suppression','hook-suppression','preload-suppression'].includes(scenario))e.observed.executions=1;
     else if(scenario==='concurrency')e.observed.completedInvocationIds.pop();
-    else if(scenario==='delegation')e.observed.unobservedChildren=1;
     else if(scenario==='partial')e.observed.receiptEligible=true;
     else e.observed.descendantsRemaining=1;
   },/containment|suppression|completion|interpreter|cleanup|Partial/);
@@ -252,6 +305,86 @@ for(const category of categories) for(const [scenario,wrongOperation] of [
   await semanticRawMutation(`${category} ${scenario} substituted measured operation`,`${category}-${scenario}`,
     null,event=>event.observed.operation=wrongOperation,/scenario.*operation|operation.*scenario/i,'challenge-all');
 }
+// Every negative below rebinds retained event/raw/lifecycle/publication/selection
+// bytes. The separate invalid selection therefore reaches the semantic guard.
+for(const category of categories) {
+  const id=`${category}-delegation`,sameId=`${category}-delegation-same-version`;
+  for(const [label,change,selector] of [
+    ['forged rejection reason',e=>e.observed.reason='already-completed','rejection'],
+    ['forged terminal exit',e=>e.observed.exitCode=(e.observed.exitCode+1)%256,'nativeTerminal'],
+    ['forged terminal signal',e=>e.observed.signal=e.observed.signal===null?'SIGTERM':null,'nativeTerminal'],
+    ['forged terminal lock',e=>e.observed.lockSha256='0'.repeat(64),'nativeTerminal'],
+    ['unobserved native terminal',e=>e.observed.independentlyObserved=false,'nativeTerminal'],
+    ['uncorrelated rejection PID',e=>e.observed.nativePid++,'rejection'],
+    ['derived-as-original rejection event',e=>e.observed.bundleSha256=profile.originalBundleSha256,'rejection'],
+    ['relabelled retained scenario',e=>e.scenario='readonly','rejection'],
+    ['unobserved descendants',e=>e.observed.unobservedChildren=1,'descendants'],
+    ['observation gap',e=>e.observed.observationStartSequence=2,'descendants'],
+    ['unconfirmed cleanup',e=>e.observed.independentlyObserved=false,'cleanup'],
+    ['remaining descendant',e=>e.observed.descendantsRemaining=1,'cleanup'],
+  ])await semanticRawMutation(`${category} ${label}`,id,null,change,/rejection|terminal|correlation|accounting|cleanup|phase/i,selector);
+  for(const [label,change] of [
+    ['forged switch-child absence',e=>e.observed.switchCliChildren=1],
+    ['wrong resolved CLI version',e=>e.observed.resolvedVersion='11.20.0'],
+    ['truncated absence span',e=>e.observed.observationEndSequence=2],
+    ['wrong authenticated source flow',e=>e.observed.sourceFlowSha256='0'.repeat(64)],
+  ])await semanticRawMutation(`${category} ${label}`,sameId,null,change,/absence|source|phase/i,'delegationAbsence');
+  await semanticRawMutation(`${category} fabricated dispatch after rejection`,id,r=>r.dispatch=structuredClone(r.launch),null,/invent|qualify|normal phases/i);
+  await semanticRawMutation(`${category} promoted negative receipt`,id,r=>r.receiptEligible=true,null,/qualify|rejection/i);
+  await semanticRawMutation(`${category} relabeled original negative`,id,r=>r.runtimeIdentity='original',null,/frozen derived runtime/);
+  await semanticRawMutation(`${category} wrong supported attempted CLI`,id,r=>r.challenge.attemptedCliSha256=profile.derivedBundleSha256,null,/rejection|qualify/);
+  await semanticRawMutation(`${category} missing independent cleanup`,id,r=>delete r.cleanup,null,/phase/i);
+}
+for(const [label,change] of [
+  ['unowned child parent',child=>child.parentInvocationId='other-parent'],
+  ['uncorrelated child native PID',child=>child.parentPid++],
+  ['replaced child identity',child=>child.identityUnchanged=false],
+  ['incomplete child',child=>child.completed=false],
+  ['wrong child CLI',child=>child.cliSha256='0'.repeat(64)],
+  ['promoted unowned child CLI',child=>child.cliEligible=true],
+  ['wrong held child interpreter hash',child=>child.interpreter.sha256='0'.repeat(64)],
+  ['wrong held child interpreter path',child=>child.interpreter.path='/unowned/node'],
+  ['wrong held child interpreter version',child=>child.interpreter.version='24.99.0'],
+  ['forged child terminal outcome',child=>child.outcome.exitCode=999],
+  ['self-parent child',child=>child.pid=records['install-delegation'].nativePid],
+])await semanticRawMutation(label,'install-delegation',null,e=>change(e.observed.children[0]),/child|interpreter/i,'descendants');
+await semanticRawMutation('valid changed child terminal outcome rejected','install-delegation',null,
+  event=>event.observed.children[0].outcome.exitCode=17,/child|terminal|outcome/i,'descendants');
+await semanticRawMutation('missing independently retained child terminal reference','install-delegation',null,
+  event=>delete event.observed.children[0].terminal,/child|terminal/i,'descendants');
+for(const [label,mutate] of [
+  ['independent child leaf disagrees on valid outcome',event=>event.observed.outcome.exitCode=17],
+  ['child terminal PID differs',event=>event.observed.pid++],
+  ['child terminal parent invocation differs',event=>event.observed.parentInvocationId='unowned-parent'],
+  ['child terminal CLI differs',event=>event.observed.cliSha256='0'.repeat(64)],
+  ['child terminal held interpreter differs',event=>event.observed.interpreter.sha256='0'.repeat(64)],
+  ['child launch predates rejection',event=>event.observed.launchSequence=2],
+  ['child terminal after parent terminal',(event,raw,reference)=>{event.sequence=6;reference.sequence=6;}],
+  ['mixed child terminal revision',event=>event.qualificationContractRevision=1],
+  ['child terminal not independently observed',event=>event.observed.independentlyObserved=false],
+  ['child terminal identity replaced',event=>event.observed.identityUnchanged=false],
+  ['child terminal incomplete',event=>event.observed.completed=false],
+])await semanticRawMutation(label,'install-delegation',null,mutate,/child|terminal|interpreter|profile\/source\/image/i,'child-terminal');
+const selectedChildTerminal=path.join(evidenceRoot,'raw/install-delegation-child-terminal.json');
+try {
+  await fs.rename(selectedChildTerminal,selectedChildTerminal+'.saved');
+  await rejects('missing selected independent child terminal leaf',{},/physical evidence closure/);
+}finally{await fs.rename(selectedChildTerminal+'.saved',selectedChildTerminal);}
+await semanticRawMutation('unknown duplicate child','install-delegation',null,e=>e.observed.children.push(structuredClone(e.observed.children[0])),/Duplicate/,'descendants');
+await semanticRawMutation('omitted completed child cleanup','install-delegation',null,e=>e.observed.completedInvocationIds=[],/cleanup/i,'cleanup');
+for(const marker of [undefined,1,999]) {
+  await semanticRawMutation(`mixed raw revision ${String(marker)}`,'install-delegation',r=>{
+    if(marker===undefined)delete r.qualificationContractRevision;else r.qualificationContractRevision=marker;
+  },null,/profile\/source\/image/);
+  await semanticRawMutation(`mixed retained phase revision ${String(marker)}`,'install-delegation',null,e=>{
+    if(marker===undefined)delete e.qualificationContractRevision;else e.qualificationContractRevision=marker;
+  },/profile\/source\/image/,'rejection');
+}
+await semanticRawMutation('wrong source revision with fresh retained pins','install-delegation',r=>r.sourceRevision='0'.repeat(40),null,/profile\/source\/image/);
+await semanticRawMutation('wrong frozen profile with fresh retained pins','install-delegation',r=>r.profileSha256='0'.repeat(64),null,/profile\/source\/image/);
+await semanticRawMutation('wrong native CLI with fresh retained launch','install-delegation',null,(event,raw)=>{raw.bundleSha256='0'.repeat(64);event.observed.bundleSha256=raw.bundleSha256;},/rejection|terminal|runtime/i,'launch');
+await semanticRawMutation('missing same-version observation','install-delegation-same-version',r=>delete r.delegationAbsence,null,/phase/i);
+await semanticRawMutation('same-version absence with unobserved children','install-delegation-same-version',null,e=>e.observed.unobservedChildren=1,/accounting/i,'descendants');
 // Actual Python consumer verifies the same immutable authority/components/proofs.
 // Only UID/ancestor metadata is virtualized; all descriptors/inodes/bytes/modes
 // and directory containment are real and every normal API rejects fixture scope.

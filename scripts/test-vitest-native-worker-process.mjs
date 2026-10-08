@@ -50,7 +50,7 @@ for (const [identity, interruption] of [['original', 'collection-kill'], ['deriv
   input.components.observation = { root: observation, inventoryFile,
     inventorySha256: await writeJson(inventoryFile, consumer(await leaves(observation))) };
   input.contextPlan = { path: path.join(root, 'context-plan.json'), sha256: await writeJson(path.join(root, 'context-plan.json'),
-    { schemaVersion: 1, evidenceScope: 'source-fixture', contextFile: path.join(output, 'context/context.json'), worker: 'github-org' }) };
+    { schemaVersion: 1, qualificationContractRevision: 2, evidenceScope: 'source-fixture', contextFile: path.join(output, 'context/context.json'), worker: 'github-org' }) };
   const inputFile = path.join(root, 'input.json'); const inputPin = await writeJson(inputFile, input);
   const profileBefore = await fs.readFile(input.profile.path);
   const child = spawn(process.execPath, [path.join(input.source.root, 'scripts/test-vitest-native-worker.mjs'),

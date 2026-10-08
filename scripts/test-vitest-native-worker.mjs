@@ -154,7 +154,7 @@ export async function runQualification(values) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const values = parseWorkerArgs(process.argv.slice(2));
-    if (values.inventory) process.stdout.write(JSON.stringify({ schemaVersion: 1, evidenceScope: 'source-inventory',
+    if (values.inventory) process.stdout.write(JSON.stringify({ schemaVersion: 1, qualificationContractRevision: 2, evidenceScope: 'source-inventory',
       completeness: false, productionEligible: false, slots }) + '\n');
     else {
       const result = await runQualification(values); process.exitCode = result.exitCode;

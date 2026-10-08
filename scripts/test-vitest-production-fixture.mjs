@@ -165,3 +165,23 @@ export async function createStockFixture(values) {
   return {root,sourceRoot,revision,implementation,nativeNames,issuerNames,extracted,artifactRoot,preparation,provenancePin,
     selectionDocument,finalSelectionPin,options:selectedOptions,module,receipt,receiptBytes};
 }
+
+export async function verifyDelegationSource(archive, originalRoot) {
+  const archiveBytes=await fs.readFile(archive);
+  assert.equal(hash(archiveBytes),'644eb5079654e87dae59a07e62d7f098162b9ce58f06077328b5ddefca1c8541');
+  const bundle=execFileSync('/usr/bin/tar',['-xOf',archive,'package/dist/pnpm.mjs'],{maxBuffer:32_000_000});
+  const originalBundleSha256='228451e6383cf4df0700fc19b37aba1a25e6540e62fbca70ca2d76b719a4d883';
+  assert.equal(hash(bundle),originalBundleSha256);
+  if(originalRoot)assert.deepEqual(bundle,await fs.readFile(path.join(originalRoot,'dist/pnpm.mjs')));
+  const source=bundle.toString('utf8'),anchors=[
+    ['functionOffset','async function switchCliVersion(config2, context) {'],
+    ['directReturnOffset','  if (!persistLockfile && pm2.version === packageManager.version)\n    return;'],
+    ['resolvedReturnOffset','  if (pmVersion === packageManager.version) {\n    await storeToUse?.ctrl.close();\n    return;\n  }'],
+    ['spawnOffset','  const { status, signal, error } = import_cross_spawn4.default.sync(pnpmBinPath, process.argv.slice(2), {'],
+    ['functionEndOffset','\nvar import_cross_spawn4, import_semver66, VersionSwitchFail;'],
+    ['dispatchOffset','    let result2 = pnpmCmds[cmd ?? "help"]('],
+  ];
+  const offsets=anchors.map(([key,anchor])=>{assert.equal(source.split(anchor).length,2);return [key,Buffer.byteLength(source.slice(0,source.indexOf(anchor)))];});
+  assert(offsets.every((entry,index)=>index===0||offsets[index-1][1]<entry[1]),'Both original same-version returns must precede authentic switch-child spawn');
+  return {originalBundleSha256,...Object.fromEntries(offsets)};
+}

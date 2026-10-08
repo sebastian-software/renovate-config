@@ -30,7 +30,7 @@ await seal(archiveRoot);
 const fixture = await createStockFixture({ archives: archiveRoot, workerFixture: true });
 const { root, sourceRoot, revision, implementation } = fixture;
 const output = path.join(root, 'collection');
-const preparation = { schemaVersion: 1, trustScope: 'source-fixture', sourceRevision: revision,
+const preparation = { schemaVersion: 1, qualificationContractRevision: 2, trustScope: 'source-fixture', sourceRevision: revision,
   sourceOrigin: `https://github.com/sebastian-software/renovate-config/commit/${revision}`,
   transform: { revision, files: fixture.nativeNames.map(name => implementation[name]) },
   original: { name: 'pnpm', version: '11.17.0', origin: 'https://registry.npmjs.org/pnpm/-/pnpm-11.17.0.tgz',
@@ -95,8 +95,8 @@ const components = {};
 for (const name of ['checker', 'helper', 'toolchain', 'observation']) components[name] = await selectedInventory(name,
   name === 'observation' ? observation : path.join(fixture.options.output, name));
 const planPath = path.join(root, 'context-plan.json');
-const planPin = await writeJson(planPath, { schemaVersion: 1, evidenceScope: 'source-fixture', contextFile: path.join(output, 'context/context.json'), worker: 'github-org' });
-const input = { schemaVersion: 1, evidenceScope: 'source-fixture', tuple: { renovate: '43.288.0', node: '24.18.0', pnpm: '11.17.0' },
+const planPin = await writeJson(planPath, { schemaVersion: 1, qualificationContractRevision: 2, evidenceScope: 'source-fixture', contextFile: path.join(output, 'context/context.json'), worker: 'github-org' });
+const input = { schemaVersion: 1, qualificationContractRevision: 2, evidenceScope: 'source-fixture', tuple: { renovate: '43.288.0', node: '24.18.0', pnpm: '11.17.0' },
   source: { root: sourceRoot, binding: { revision, files: harnessNames.map(name => implementation[name]) } },
   stock: { root: fixture.options.output, provenanceFile: fixture.options.provenance, provenanceSha256: fixture.provenancePin,
     selectionFile: fixture.options.selection, selectionSha256: fixture.finalSelectionPin, artifactRoot: archiveRoot },
@@ -118,6 +118,11 @@ async function rejected(label, change, pattern) {
   await assert.rejects(preflight(file, pin, output), pattern, label);
   await assert.rejects(fs.stat(output), { code: 'ENOENT' }); results.push(label);
 }
+for (const marker of [undefined, 1, 999, null, '2', true])
+  await rejected(`incompatible input qualification revision ${String(marker)}`, value => {
+    if (marker === undefined) delete value.qualificationContractRevision;
+    else value.qualificationContractRevision = marker;
+  }, /shape|fixture|revision/);
 await rejected('wrong tuple before commands', value => { value.tuple.node = '24.21.0'; }, /tuple/);
 await rejected('unknown command selector', value => { value.command = '/usr/bin/true'; }, /shape/);
 await rejected('unsafe wrapper path before render', value => { value.wrapper.root += "';touch unsafe"; }, /path/);
@@ -133,6 +138,19 @@ async function profileAttack(label, mutate, pattern) {
     value.components.observation = await selectedInventory(`attack-observation-${results.length}`, attacked);
   }, pattern);
 }
+for (const marker of [undefined, 1, 999, null, '2', true])
+  await profileAttack(`mixed profile qualification revision ${String(marker)}`, doc => {
+    if (marker === undefined) delete doc.qualificationContractRevision;
+    else doc.qualificationContractRevision = marker;
+  }, /profile|preparation/);
+for (const marker of [undefined, 1, 999])
+  await rejected(`mixed context plan qualification revision ${String(marker)}`, async value => {
+    const document = JSON.parse(await fs.readFile(planPath));
+    if (marker === undefined) delete document.qualificationContractRevision;
+    else document.qualificationContractRevision = marker;
+    const file = path.join(root, `negative-context-plan-${String(marker)}.json`);
+    value.contextPlan = { path: file, sha256: await writeJson(file, document) };
+  }, /shape|context.*plan/i);
 await profileAttack('production eligibility promotion rejected', doc => { doc.productionEligible = true; }, /profile|preparation/);
 await profileAttack('omitted loader closure rejected', doc => { doc.instrumentationFiles = doc.instrumentationFiles.filter(leaf => leaf.path !== 'loader.mjs'); }, /instrumentation/);
 await profileAttack('self-pinned seam declaration rejected', doc => { doc.renovateSeams.manager.sha256 = '0'.repeat(64); }, /seam/);
@@ -169,6 +187,26 @@ const run = spawnSync(process.execPath, [driver, '--input', inputFile, '--input-
 assert.ifError(run.error); assert.equal(run.signal, null); assert.equal(run.status, 1, `Incomplete source qualification must exit nonzero: ${run.stderr}`);
 await writeJson(path.join(root, 'driver-result.json'), { exitCode: run.status, signal: run.signal, stdout: run.stdout, stderr: run.stderr });
 const summary = JSON.parse(await fs.readFile(path.join(output, 'qualification-summary.json')));
+assert.equal(summary.qualificationContractRevision, 2);
+const launchPath=path.join(output,'context/launch.json'),launchBytes=await fs.readFile(launchPath);
+const launchDocument=JSON.parse(launchBytes);
+assert.equal(launchDocument.qualificationContractRevision,2);
+const previousContextPin=process.env.VITEST_NATIVE_CONTEXT_SHA256;
+process.env.VITEST_NATIVE_CONTEXT_SHA256=launchDocument.contextSha256;
+try {
+  await preflight(inputFile,inputPin,output,{contextReady:true});
+  for(const marker of [undefined,1,999]) {
+    const changed={...launchDocument,qualificationContractRevision:marker};
+    if(marker===undefined)delete changed.qualificationContractRevision;
+    await fs.chmod(launchPath,0o644);await fs.writeFile(launchPath,bytes(changed));await fs.chmod(launchPath,0o444);
+    await assert.rejects(preflight(inputFile,inputPin,output,{contextReady:true}),/shape|context handoff/i);
+    await fs.chmod(launchPath,0o644);await fs.writeFile(launchPath,launchBytes);await fs.chmod(launchPath,0o444);
+  }
+} finally {
+  await fs.chmod(launchPath,0o644);await fs.writeFile(launchPath,launchBytes);await fs.chmod(launchPath,0o444);
+  if(previousContextPin===undefined)delete process.env.VITEST_NATIVE_CONTEXT_SHA256;else process.env.VITEST_NATIVE_CONTEXT_SHA256=previousContextPin;
+}
+results.push('missing/legacy/unknown context plan and post-CID launch revisions rejected without source promotion');
 assert.equal(summary.completeness, false); assert.equal(summary.productionEligible, false); assert.equal(summary.cases.length, 48);
 assert.equal(summary.missingSlots.length, 48); assert(!summary.cases.some(record => record.state === 'PASSED'));
 assert.equal(summary.actualWorkerNamespaceObserved, false); assert.equal(summary.actualImageObserved, false);
@@ -188,7 +226,13 @@ for (const invocation of support.supportingInvocations) {
     if (reference.path.endsWith('.lock')) assert(content.includes(Buffer.from("lockfileVersion: '9.0'")));
     if (/^raw\/.+-[a-f0-9]{32}\.json$/.test(reference.path)) receipts.push(JSON.parse(content));
   }
-  if (invocation.runtimeIdentity === 'derived') assert.equal(receipts.length, 1, `Missing authentic native receipt for ${invocation.name}`);
+  if (invocation.runtimeIdentity === 'derived') {
+    assert.equal(receipts.length, 1, `Missing authentic native receipt for ${invocation.name}`);
+    assert.equal(receipts[0].qualificationContractRevision,2);
+    assert(receipts[0].events.every(event=>event.qualificationContractRevision===2));
+    assert.equal(receipts[0].nativeExit,invocation.managerOutcome.exitCode);
+    assert.equal(receipts[0].nativeSignal,invocation.managerOutcome.signal);
+  }
   else assert.equal(receipts.length, 0, 'Stock original acquired invented instrumented phases');
   if (invocation.name.startsWith('concurrency-')) receiptSets.push(receipts.map(record => record.invocation));
 }

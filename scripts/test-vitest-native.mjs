@@ -14,6 +14,7 @@ import { prepareNative } from './vitest-native/prepare.mjs';
 import { transformPnpm, ORIGINAL_PNPM_BUNDLE } from './vitest-native/transform.mjs';
 import { mapGeneratedHead } from './vitest-native/collector.mjs';
 import { sealDirectories } from './vitest-release/files.mjs';
+import { verifyDelegationSource } from './test-vitest-production-fixture.mjs';
 
 const {values}=parseArgs({options:{'pnpm-archive':{type:'string'},'pnpm-root':{type:'string'},
   'renovate-root':{type:'string'},'child-node':{type:'string'},output:{type:'string'}}});
@@ -21,6 +22,7 @@ for(const key of ['pnpm-archive','pnpm-root','renovate-root','child-node'])asser
 const root=values.output??await fs.mkdtemp(path.join(tmpdir(),'vitest-native-'));
 if(values.output)await fs.mkdir(root);
 const repository=path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const delegationSource=await verifyDelegationSource(values['pnpm-archive'],values['pnpm-root']);
 const original=await fs.readFile(path.join(values['pnpm-root'],'dist/pnpm.mjs'));
 assert.equal(createHash('sha256').update(original).digest('hex'),ORIGINAL_PNPM_BUNDLE);
 assert.throws(()=>transformPnpm(Buffer.concat([original,Buffer.from('\n')])),/Unsupported original/);
@@ -43,7 +45,7 @@ const preparation=await prepareNative({archive:values['pnpm-archive'],pnpmRoot:s
 await fs.writeFile(path.join(root,'preparation.json'),JSON.stringify(preparation,null,2)+'\n');
 if(process.platform!=='linux') {
   process.stdout.write(JSON.stringify({state:'UNSUPPORTED_LOCAL_PLATFORM',sourceTransformAndAuthenticPreparation:true,
-    linuxProcessProof:false,output:root})+'\n');
+    linuxProcessProof:false,delegationSourceFlowAuthenticated:true,delegationQualification:'UNRUN',output:root})+'\n');
   process.exit(0);
 }
 const execute=promisify(execFile);
@@ -137,20 +139,16 @@ assert.notEqual(partialResult.code,0);
 const partialNames=(await fs.readdir(receipts)).filter(name=>name.endsWith('.json')&&!partialBefore.has(name));assert.equal(partialNames.length,1);
 const partialReceipt=JSON.parse(await fs.readFile(path.join(receipts,partialNames[0]),'utf8'));
 assert.equal(partialReceipt.state,'incomplete');assert.equal(partialReceipt.nativeSignal,'SIGKILL');assert.equal(partialReceipt.completed,false);
-const delegationBase=await workspace('delegation-baseline'),delegationObserved=await workspace('delegation-observed');
-for(const directory of [delegationBase,delegationObserved]){const manifest=JSON.parse(await fs.readFile(path.join(directory,'package.json'),'utf8'));manifest.packageManager='pnpm@11.20.0';await fs.writeFile(path.join(directory,'package.json'),JSON.stringify(manifest));}
-const delegatedBefore=new Set(await fs.readdir(receipts));
-const delegatedBaseline=await run(delegationBase,false,{timeout:120000}),delegatedObserved=await run(delegationObserved,true,{timeout:120000});
-assert.equal(delegatedBaseline.code,0,delegatedBaseline.stderr);assert.equal(delegatedObserved.code,0,delegatedObserved.stderr);
-assert.equal(await fs.readFile(path.join(delegationBase,'pnpm-lock.yaml'),'utf8'),await fs.readFile(path.join(delegationObserved,'pnpm-lock.yaml'),'utf8'));
-const delegatedNames=(await fs.readdir(receipts)).filter(name=>name.endsWith('.json')&&!delegatedBefore.has(name));assert.equal(delegatedNames.length,1);
-const delegatedReceipt=JSON.parse(await fs.readFile(path.join(receipts,delegatedNames[0]),'utf8'));
-assert.equal(delegatedReceipt.completed,false);assert.equal(delegatedReceipt.state,'unsupported');assert(delegatedReceipt.events.some(event=>event.reason==='unowned-delegation'));assert.equal(delegatedReceipt.events.filter(event=>event.state==='dispatch').length,0);
+// Differing-version selection is checked by documentary expected-negative
+// authority/collector fixtures. This native source check never downloads or
+// executes another pnpm version and does not claim delegation qualification.
+const preparedProfile=JSON.parse(await fs.readFile(path.join(root,'instrumentation/profile.json'),'utf8'));
+assert.deepEqual(preparedProfile.delegationSource,delegationSource);
 
 const context=await fs.readFile(path.join(root,'instrumentation/profile.json'),'utf8');
 assert(!context.includes('NODE_OPTIONS'));
 await fs.writeFile(path.join(root,'summary.json'),JSON.stringify({state:'PASSED',platform:'linux',
   actualParentNode:process.versions.node,actualChildNode:dispatch.interpreter,originalDerivedLockAndOutcomeEquivalent:true,
   supportedInstallLifecycleEvidence:true,completeInstallUpdateDedupeCoverage:false,concurrentDistinctInvocations:true,unsafeDedupeUnsupported:true,
-  partialRunNotSuccessful:true,productionEligible:false,nativeDelegationNotBootstrapSuccess:true,remaining:'Linux process evidence must run at the reviewed containing candidate revision; dedupe executable hooks remain unsupported' },null,2)+'\n');
+  partialRunNotSuccessful:true,productionEligible:false,delegationSourceFlowAuthenticated:true,delegationNativeOutcomeObserved:false,delegationQualification:'UNRUN',remaining:'Linux process evidence must run at the reviewed containing candidate revision; dedupe executable hooks remain unsupported' },null,2)+'\n');
 process.stdout.write(JSON.stringify({state:'PASSED',linuxProcessProof:true,output:root,productionEligible:false})+'\n');

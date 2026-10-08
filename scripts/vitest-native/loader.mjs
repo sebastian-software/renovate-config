@@ -14,7 +14,7 @@ try {
   const filename=path.join(root,'profile.json'),bytes=fs.readFileSync(filename);
   if(bytes.length>2097152||digest(bytes)!==process.env.VITEST_NATIVE_PROFILE_SHA256||fs.realpathSync(filename)!==filename)throw Error('Unowned observation profile');
   profile=JSON.parse(bytes);
-  if(profile.schemaVersion!==1||profile.pnpmVersion!=='11.17.0'||profile.originalBundleSha256!==ORIGINAL_PNPM_BUNDLE||
+  if(profile.schemaVersion!==1||profile.qualificationContractRevision!==2||profile.pnpmVersion!=='11.17.0'||profile.originalBundleSha256!==ORIGINAL_PNPM_BUNDLE||
     !Array.isArray(profile.pnpmFiles)||profile.pnpmFiles.length>10000)throw Error('Unsupported observation profile');
   for(const file of profile.instrumentationFiles) {
     if(!/^[a-z-]+\.mjs$/.test(file.path))throw Error('Invalid observation closure');
@@ -30,7 +30,7 @@ try {
     const runtime=verifyRuntime('/opt/renovate-native-authority/authority.json',
       process.env.VITEST_NATIVE_RUNTIME_AUTHORITY_SHA256,'/opt/renovate-native-context/launch.json');
     const authority=runtime.authority;
-    if(authority.profileSha256!==process.env.VITEST_NATIVE_PROFILE_SHA256||
+    if(authority.qualificationContractRevision!==profile.qualificationContractRevision||authority.profileSha256!==process.env.VITEST_NATIVE_PROFILE_SHA256||
       authority.originalArchiveSha256!==profile.originalArchiveSha256||
       authority.originalBundleSha256!==profile.originalBundleSha256||
       authority.derivedBundleSha256!==profile.derivedBundleSha256||

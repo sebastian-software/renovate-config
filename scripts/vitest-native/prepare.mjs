@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { archiveMembers } from '../vitest-release/archive.mjs';
 import { authenticateImplementation, readPinnedJson, requireValue, budgets, compareInventory, consumerFiles, inventory, jsonBytes, realDirectory, sealDirectories, sha256 } from '../vitest-release/files.mjs';
 import { EMPTY_PNPMFILE, EMPTY_SHA256 } from './data-only.mjs';
-import { digest, ORIGINAL_PNPM_ARCHIVE, ORIGINAL_PNPM_BUNDLE, transformPnpm } from './transform.mjs';
+import { digest, ORIGINAL_PNPM_ARCHIVE, ORIGINAL_PNPM_BUNDLE, delegationSourceFacts, transformPnpm } from './transform.mjs';
 
 const owned=['transform.mjs','identity.mjs','probe.mjs','collector.mjs','loader.mjs','runtime.mjs','data-only.mjs'];
 export const RENOVATE_SEAMS={
@@ -20,7 +20,7 @@ export async function prepareNative({archive,pnpmRoot,output,receiptDirectory,co
   let selected=null;
   if (provenance || provenanceSha256 || sourceRoot) {
     selected=(await readPinnedJson(provenance,provenanceSha256)).document;
-    requireValue(selected.schemaVersion===1 && ['release-owner','source-fixture'].includes(selected.trustScope) &&
+    requireValue(selected.schemaVersion===1 && selected.qualificationContractRevision===2 && ['release-owner','source-fixture'].includes(selected.trustScope) &&
       /^[a-f0-9]{40}$/.test(selected.sourceRevision) &&
       selected.sourceOrigin===`https://github.com/sebastian-software/renovate-config/commit/${selected.sourceRevision}` &&
       /^[a-f0-9]{40}$/.test(selected.transform?.revision), 'Unsupported native preparation selection');
@@ -57,7 +57,7 @@ export async function prepareNative({archive,pnpmRoot,output,receiptDirectory,co
   files.push({path:'empty-pnpmfile.mjs',sha256:EMPTY_SHA256});
   await fs.writeFile(path.join(output,'derived-pnpm.mjs'),derived,{flag:'wx',mode:0o444});
   const derivedFiles=consumerFiles(expected).map(file=>file.path==='dist/pnpm.mjs'?{...file,sha256:digest(derived)}:file);
-  const profile={schemaVersion:1,provenanceClass:selected?'authenticated-preparation':'unpublished-candidate',productionEligible:false,
+  const profile={schemaVersion:1,qualificationContractRevision:2,delegationSource:delegationSourceFacts(original),provenanceClass:selected?'authenticated-preparation':'unpublished-candidate',productionEligible:false,
     originalArchiveSha256:ORIGINAL_PNPM_ARCHIVE,originalBundleSha256:ORIGINAL_PNPM_BUNDLE,
     derivedBundleSha256:digest(derived),transformRevision:selected?.transform.revision??null,transformFiles:files,
     ...(selected?{sourceRevision:selected.sourceRevision,trustScope:selected.trustScope,preparationSha256:provenanceSha256,
@@ -68,7 +68,7 @@ export async function prepareNative({archive,pnpmRoot,output,receiptDirectory,co
   const bytes=jsonBytes(profile);
   await fs.writeFile(path.join(output,'profile.json'),bytes,{flag:'wx',mode:0o444});
   await sealDirectories(output);
-  return {profileSha256:sha256(bytes),originalArchiveSha256:ORIGINAL_PNPM_ARCHIVE,originalBundleSha256:ORIGINAL_PNPM_BUNDLE,
+  return {qualificationContractRevision:2,profileSha256:sha256(bytes),originalArchiveSha256:ORIGINAL_PNPM_ARCHIVE,originalBundleSha256:ORIGINAL_PNPM_BUNDLE,
     derivedBundleSha256:digest(derived),originalLeaves:expected.length,derivedLeaves:derivedFiles.length,
     transformRevision:selected?.transform.revision??null,productionEligible:false};
 }
