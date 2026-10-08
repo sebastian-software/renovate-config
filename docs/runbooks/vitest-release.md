@@ -2,10 +2,12 @@
 
 Use this runbook for the stock release and native observation contracts behind
 [issue #37](https://github.com/sebastian-software/renovate-config/issues/37).
-The builtin-only tools read bounded local inputs; they do not download, install,
-publish or run a worker. Current source preparation and fixtures remain inactive.
+Stock preparation and authority tools read bounded local inputs without
+downloading, installing, publishing or starting a worker. The Q2a source harness
+additionally starts fixed owned source processes and a rendered test wrapper; it
+starts no live worker. Prepared deployment and the Paratix helper remain inactive.
 Actual production release selection, Linux worker qualification, image/alias
-measurements and independent publication attestations are pending Q2; deployment,
+measurements and independent publication attestations remain separate Q2 gates; deployment,
 protection and Paratix activation require the separately approved E manifest.
 
 ## Keep source identities and observations separate
@@ -21,10 +23,14 @@ These containing merged preparation commits were reacquired on October 7, 2026:
 
 They identify merged preparation source, not measurements of those bytes or
 selected published runtime releases. Historical candidate source revisions,
-bases and receipt hashes keep their original meaning. The Q1 source changes
-following these bases still need their ordinary source PR delivery; their final
-commits and PR URLs are pending and must be recorded separately. Do not pin a
-future documentation commit into its own contents. A Recensor `v1.1.0` source
+bases and receipt hashes keep their original meaning. Q1 source is merged through
+[renovate-config #43](https://github.com/sebastian-software/renovate-config/pull/43)
+and [Proxmox #182](https://git.dal12.de/fastner/proxmox/pulls/182). These source PRs
+do not select a published release, measure an installed image or qualify a Linux
+worker. Q2a adds the bounded source harness below; Q2b controlled Linux
+qualification, Q2c independent release/image/attestation selection and E live
+actions remain separate gates. Do not treat PR heads as squash or release
+identities or pin a future documentation commit into its own contents. A Recensor `v1.1.0` source
 version or published tag does not establish that it contains the required code.
 
 ## Select trust inputs outside PR execution
@@ -47,7 +53,8 @@ their hashes cannot replace the retained outside selection pin.
 
 Retain all four complete original gzip/tar archives with independent official
 checksums or registry integrity records: the supported stock Node/pnpm tuple,
-`yaml@2.9.1` and `semver@7.8.5`. `--help` lists exact tuples and platforms. Each
+`yaml@2.9.1` and `semver@7.8.5`. Stock `scripts/vitest-release.mjs --help`
+lists exact tuples and platforms. Each
 checker/helper contains the complete yaml and semver packages at its existing
 `createRequire` anchors; the toolchain contains complete original Node and pnpm,
 including `bin/pnpm.mjs`. Symlinks must resolve inside their component. Generated
@@ -197,9 +204,137 @@ executable scripts/hooks/configuration/preloads and unsafe stdio stay unsupporte
 
 Complete whole-worker proof needs a separately reviewed, bounded Linux harness
 under the existing owner, authentic differing interpreters and unchanged profile.
-That Q2 prerequisite is not implemented or run by Q1. No existing command supplies
-complete all-category worker proof; partial identity/data-only suites cannot be
-combined into it. Native worker qualification is **UNRUN**.
+The Q2a source harness below collects bounded source observations, while complete
+controlled Linux qualification remains a Q2b prerequisite. No existing command
+supplies complete all-category worker proof; partial identity/data-only suites
+cannot be combined into it. Native worker qualification is **UNRUN**.
+
+## Run the bounded Q2a source harness
+
+Use the [fixed driver](../../scripts/test-vitest-native-worker.mjs) for source
+collection with already authenticated local inputs. It accepts `--inventory`
+alone, or `--input`, `--input-sha256` and `--output` together. Input/output paths
+must be absolute, bounded safe paths; output must be new and distinct from
+protected inputs. Select the lowercase 64-hex SHA256 independently before
+observation. Optional `--source-fixture` changes no validation, launcher or scope;
+the selected input itself must be `source-fixture`. There is no `--help`, arbitrary
+command, environment, endpoint, version switch or production fallback.
+
+The collection command below is a template: replace paths and `INPUT_PIN` with
+the selected readonly input and its outside pin. Inventory and the portable
+source oracle require no collection inputs:
+
+```sh
+node scripts/test-vitest-native-worker.mjs --inventory
+node scripts/test-vitest-native-worker.mjs \
+  --input /protected/source-fixture-input.json --input-sha256 INPUT_PIN \
+  --output /protected/new-source-observation
+node scripts/test-vitest-native-worker-source.mjs
+```
+
+Inventory exits 0 without launching collection. The fixed collection invokes the
+actual selected Renovate 43.288.0 manager → util/exec → execa, parent Node 24.18.0
+and authentic differing native Node 24.21.0 with pnpm 11.17.0. The original physical
+stock CLI remains unchanged; the derived loader authenticates that original and
+transforms its bundle in memory to the frozen derived identity. A complete
+physical derived distribution is separately validated, not substituted for that
+execution route. Missing authentic stock phase evidence and positive native
+delegation remain unsupported.
+
+Wrapper/container/image and requested mount values are source doubles. They
+establish no worker namespace, immutable image or four observed readonly mounts.
+Context is sealed after source CID capture and pinned before first loader import;
+that order alone does not prove a Linux worker. The callback reuses existing
+rendered wrappers but executes native collection only in full/github-org. Targeted
+is rendered; genuine targeted wrapper execution belongs to the separate existing
+55-case full/targeted suite. Production `native_precreate`, issuer, host/runtime
+verifier and deployment renders retain strict release-owner authority and contain
+no source callback.
+
+The report retains exactly six baseline and 42 derived lifecycle slots, always
+`completeness: false` and `productionEligible: false`, with no operational `PASSED`
+and no complete compatibility/lifecycle proof pair. Missing, failed, unsupported
+or unrun slots make qualification exit 1. The output retains a bounded
+`qualification-summary.json` and supporting raw/lock/receipt references; native
+outcomes remain separate from manager or observer failure. CLI stdout reports
+source scope and missing slots, while rejection uses bounded stderr and exit 1.
+A source test can exit 0 by checking that expected incomplete result; that success
+supplies no qualification or release authority. Overbudget, drift, observation or
+report-write failure remains non-success rather than truncated successful output.
+
+Inputs and complete containing source, four component and module inventories are
+pinned and readonly before and after collection. Fresh matching preparation and
+profile are frozen before any observation; measured bytes are never repinned.
+Original archives and both complete runtime distributions require independent
+outside selection and stock provenance, not a self-selected hash or `--version`
+claim. Protected and output roots cannot overlap. The auxiliary Python capsule
+contains frozen Jinja2/PyYAML/MarkupSafe modules and required metadata, isolated
+`-B -I` startup, no ambient site or startup hooks and one pinned existing base
+alias. The opt-in collection test currently supports Darwin arm64 with the fixed
+existing Python 3.14.8 base; nearby versions and general `@` paths are rejected.
+Its external base/stdlib is not a new authenticated Linux distribution or worker
+image proof. Missing prerequisites fail; no auxiliary install or interpreter
+fallback occurs.
+
+| Source harness limit | Bound |
+| --- | --- |
+| Default input JSON / summary | 2 MiB / 64 KiB |
+| Retained raw evidence | 1,000 files, 1 MiB per leaf, 64 MiB total |
+| Controlled workspace | 32 files, 1 MiB total |
+| Source-control observations | 4 KiB per record, 32 KiB total, 64 registrations |
+| Context plan / context / launch JSON | 4 KiB each |
+
+Typed authenticated stock provenance uses its existing 16 MiB limit; larger
+stock/observation/Python component inventories retain their component-specific
+count/byte limits. The default input bound is not universal. Authentication is
+count/byte bounded, not a whole-OS wall-clock guarantee. The public 900-second
+execution timer starts after preflight; individual manager execution is bounded
+to 45 seconds, wrapper/callback to 890/840 seconds. Manager retirement preserves
+up to two seconds of TERM grace before hard KILL, followed by a two-second group
+disappearance/reap check. This cleanup covers owned observed source groups, not
+operational Linux descendant containment or an uncatchable public-owner KILL/OS
+failure.
+
+The opt-in [collection test](../../scripts/test-vitest-native-worker-collection.mjs)
+requires five fixed prerequisites: complete selected archives (Node 24.18.0,
+pnpm 11.17.0, yaml 2.9.1 and semver 7.8.5), the independently pinned original Node
+24.21.0 Darwin arm64 archive, existing complete Renovate 43.288.0 modules and the
+matching Proxmox wrapper source. Run it with existing authenticated Node 24.18.0
+on Darwin arm64; replace paths and `NATIVE_ARCHIVE_PIN` below. It creates a fresh
+frozen source/wrapper capsule and reports its root. The
+[process regression](../../scripts/test-vitest-native-worker-process.mjs) accepts
+only `--fixture` for that generated capsule, checks its driver against current
+owned source bytes and creates fresh preparation/profile/output per observation:
+
+```sh
+node scripts/test-vitest-native-worker-collection.mjs \
+  --archives /authenticated/test-archives \
+  --native-archive /authenticated/node-v24.21.0-darwin-arm64.tar.gz \
+  --native-archive-sha256 NATIVE_ARCHIVE_PIN \
+  --renovate-modules /authenticated/renovate43/node_modules \
+  --wrapper-root /authenticated/proxmox-source
+node scripts/test-vitest-native-worker-process.mjs \
+  --fixture /authenticated/generated-source-fixture
+```
+
+The collection test bounds its driver subprocess to 910 seconds. The process test
+bounds each spawned driver to 180 seconds and samples genuinely owned STOPped
+native groups within 2.3 seconds after manager resume, before postflight. Final
+report/cleanup waits are separately bounded to 20/5 seconds; setup/preparation
+retains authenticated byte/count bounds outside execution timers. Native groups
+remain stopped until owner KILL or finally cleanup, excluding natural network or
+deadline exit as a cleanup explanation. This is local source evidence only.
+Source CI adds the portable source oracle above; these Darwin collection/process
+tests are separate opt-in checks.
+
+The October 8, 2026 source checks retained twelve genuine manager invocations,
+seven derived native receipts and 46 raw leaves, disjoint concurrent invocation
+IDs and unchanged profile bytes. Wrapper exit was 0 and qualification exit 1:
+all 48 slots remained missing (19 `UNSUPPORTED`, 29 `UNRUN`, zero `PASSED`). Four
+causal owned-process cases passed: original/derived enclosing collection KILL,
+original public TERM and derived public INT. Genuine incomplete/unsupported native
+receipts remained ineligible; sent signals did not replace unknown recorded
+outcomes. These checks do not qualify a Linux worker or select production inputs.
 
 ## Attest, issue and verify retained native evidence
 
@@ -310,11 +445,14 @@ build/finalize/separate verify must exercise actual held-directory procfs
 traversal; the release-trust suite separately discriminates pathname replacement
 against a held FD. Darwin unsupported execution cannot count as a Linux pass.
 
-Local source-author smoke completed the documentary native fixture after
-bundle, mount and lifecycle-binding corrections. Independent final acceptance
-against final documentation/source bytes is pending; Linux source CI has not been
-observed for this Q1 change. Neither green source fixtures nor a Linux source CI
-pass would certify the separately required full native worker qualification.
+The earlier Q1 source-author smoke and pending acceptance/Linux-CI notes describe
+a historical preparation checkpoint. Q1 source is now merged through the PRs
+linked above. The current Q2a local checks also passed the existing 117-case
+documentary authority fixture, including actual consumer rejection of incomplete
+delegation; no new version-switch or native child was introduced. A merged source
+PR or local fixture pass does not supply hosted Q2a CI or Linux worker evidence.
+Neither green source fixtures nor a Linux source CI pass would certify the
+separately required full native worker qualification.
 All real release/image/proof selections and E actions remain pending.
 
 ## Recover without changing qualified inputs

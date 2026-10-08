@@ -79,7 +79,11 @@ export async function createStockFixture(values) {
     ...(await fs.readdir(path.join(repository,'scripts/vitest-native'))).filter(name=>name.endsWith('.mjs')).map(name=>`scripts/vitest-native/${name}`),
     'scripts/vitest-release/archive.mjs','scripts/vitest-release/files.mjs'].sort();
   const issuerNames = [...new Set([...nativeNames,...stockNames,'scripts/vitest-native-authority.mjs'])].sort();
-  const allNames = [...new Set([...sourceNames,...issuerNames])].sort();
+  // Fixed Q2a test-owned closure; never an arbitrary module/command selector.
+  const workerNames = values.workerFixture ? ['scripts/test-vitest-native-worker.mjs',
+    'scripts/test-vitest-native-runner.mjs', 'scripts/vitest-native-worker/contract.mjs',
+    'scripts/vitest-native-worker/inputs.mjs', 'scripts/vitest-native-worker/collection.mjs'] : [];
+  const allNames = [...new Set([...sourceNames,...issuerNames,...workerNames])].sort();
   const implementation = {};
   for (const name of allNames) {
     const original = path.join(repository,name), content = await fs.readFile(original), stat = await fs.stat(original);
