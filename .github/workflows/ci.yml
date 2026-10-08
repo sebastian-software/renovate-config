@@ -161,3 +161,20 @@ jobs:
             --pnpm-root "$NATIVE_TOOLING/stock/package" \
             --renovate-root "$NATIVE_TOOLING/node_modules/renovate" \
             --child-node "$NATIVE_TOOLING/node-v24.21.0-linux-x64/bin/node"
+      - name: Bounded original Inspector source feasibility (not qualification)
+        run: |
+          # Freeze only this job's authenticated disposable stock fixture.
+          chmod -R a-w "$NATIVE_TOOLING/stock/package"
+          node scripts/test-vitest-native-original-observer-source.mjs
+          for observer_case in native-before-endpoint owned-group output-bound lifetime-timeout; do
+            node scripts/test-vitest-native-original-observer-process.mjs --case "$observer_case"
+          done
+          node scripts/test-vitest-native-original-observer-process.mjs \
+            --case early-cancel \
+            --archives "$NATIVE_TOOLING/q1-archives" \
+            --pnpm-root "$NATIVE_TOOLING/stock/package" \
+            --node-archive "$NATIVE_TOOLING/q1-archives/node-v24.18.0-linux-x64.tar.gz"
+          node scripts/test-vitest-native-original-observer-fixture.mjs \
+            --archives "$NATIVE_TOOLING/q1-archives" \
+            --pnpm-root "$NATIVE_TOOLING/stock/package" \
+            --node-archive "$NATIVE_TOOLING/q1-archives/node-v24.18.0-linux-x64.tar.gz"
