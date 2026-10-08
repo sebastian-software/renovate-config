@@ -12,17 +12,41 @@ import { sha256, jsonBytes, requireValue, ReleaseError } from '../vitest-release
 const categories = ['install', 'update', 'dedupe'];
 const matches = (actual, expected, scriptId) => actual && actual.scriptId === scriptId &&
   actual.lineNumber === expected.lineNumber && actual.columnNumber === expected.columnNumber;
+function measured(condition, message) {
+  if (!condition) throw new UnsupportedObservation(/source|script/i.test(message) ? 'source' :
+    /location|breakpoint|frame/i.test(message) ? 'location' : 'protocol', message);
+}
+// Pure internal seams share the actual controller's exact-location rejection rules.
+export function validateOriginalPossibleLocation(possible, point, scriptId) {
+  measured(possible.locations?.length === 1 && matches(possible.locations[0], point, scriptId),
+    'Exact source token is not an independently resolved breakpoint');
+}
+export function validateOriginalResolvedLocation(params, points, scriptId, ids, resolved) {
+  const name = ids.get(params.breakpointId);
+  measured(name && scriptId !== null && !resolved.has(name) && matches(params.location, points[name], scriptId),
+    'Unknown/replayed/nearest original breakpoint');
+  return name;
+}
+export function validateOriginalPauseFrame(params, points, scriptId, ids, resolved) {
+  measured(Array.isArray(params.callFrames) && params.callFrames.length > 0 && params.callFrames.length <= 64,
+    'Unknown or unbounded debugger pause');
+  const frame = params.callFrames[0]; const hits = params.hitBreakpoints ?? [];
+  measured(hits.length === 1 && scriptId !== null && resolved.size === 3, 'Uncorrelated original pause');
+  const name = ids.get(hits[0]);
+  measured(name && matches(frame?.location, points[name], scriptId) && typeof frame.functionName === 'string' &&
+    /^[A-Za-z0-9_$]{0,64}$/.test(frame.functionName), 'Current original frame differs from selected location');
+  if (name === 'entry') measured(frame.functionName === points.handlerName && params.callFrames.slice(1).some(caller =>
+    caller?.location?.scriptId === scriptId && caller.location.lineNumber === points.preCall.lineNumber),
+  'Selected handler frame lacks authentic caller linkage');
+  return { name, frame };
+}
 async function observeOriginal(selected, category, workspace, env, signal) {
   const points = selected.locations[category]; const events = []; let protocol = null;
   let scriptId = null; let initialPause = false; let pauses = 0; let detached = false; let failureDiagnostic = null;
-  const measured = (condition, message) => {
-    if (!condition) throw new UnsupportedObservation(/source|script/i.test(message) ? 'source' :
-      /location|breakpoint|frame/i.test(message) ? 'location' : 'protocol', message);
-  };
   const ids = new Map(); const resolved = new Set();
   const native = await ownedNativeProcess(selected.input.node.path,
     ['--inspect-brk=127.0.0.1:0', path.join(selected.input.pnpm.root, 'bin/pnpm.mjs'), category,
-      '--offline', '--ignore-scripts', '--reporter=silent'], workspace, env, signal);
+      '--offline', '--ignore-scripts', '--reporter=silent'], workspace, env, signal, { role: 'original', category });
   const add = event => { requireValue(events.length < limits.events, 'Observer normalized events exceeded'); events.push({ ...event, sequence: events.length }); };
   add({ phase: 'launch' });
   try {
@@ -52,28 +76,19 @@ async function observeOriginal(selected, category, workspace, env, signal) {
         scriptId = params.scriptId;
         for (const point of [points.preCall, points.entry, points.settlement]) {
           const possible = await protocol.possible(scriptId, point);
-          measured(possible.locations?.length === 1 && matches(possible.locations[0], point, scriptId),
-            'Exact source token is not an independently resolved breakpoint');
+          validateOriginalPossibleLocation(possible, point, scriptId);
         }
         continue;
       }
       if (method === 'Debugger.breakpointResolved') {
-        const name = ids.get(params.breakpointId);
-        measured(name && scriptId !== null && !resolved.has(name) && matches(params.location, points[name], scriptId),
-          'Unknown/replayed/nearest original breakpoint');
+        const name = validateOriginalResolvedLocation(params, points, scriptId, ids, resolved);
         resolved.add(name); continue;
       }
       measured(method === 'Debugger.paused' && ++pauses <= limits.pauses && Array.isArray(params.callFrames) &&
         params.callFrames.length > 0 && params.callFrames.length <= 64, 'Unknown or unbounded debugger pause');
       const frame = params.callFrames[0]; const hits = params.hitBreakpoints ?? [];
       if (!hits.length && !initialPause && scriptId === null) { initialPause = true; await protocol.resume(); continue; }
-      measured(hits.length === 1 && scriptId !== null && resolved.size === 3, 'Uncorrelated original pause');
-      const name = ids.get(hits[0]);
-      measured(name && matches(frame.location, points[name], scriptId) && typeof frame.functionName === 'string' &&
-        /^[A-Za-z0-9_$]{0,64}$/.test(frame.functionName), 'Current original frame differs from selected location');
-      if (name === 'entry') measured(frame.functionName === points.handlerName && params.callFrames.some(caller =>
-        caller.location?.scriptId === scriptId && caller.location.lineNumber === points.preCall.lineNumber),
-      'Selected handler frame lacks authentic caller linkage');
+      const { name } = validateOriginalPauseFrame(params, points, scriptId, ids, resolved);
       const phase = { preCall: 'pre-call-pause', entry: 'handler-entry', settlement: 'handler-settlement' }[name];
       measured(!events.some(event => event.phase === phase), 'Replayed original semantic phase');
       const location = { scriptSha256: points.scriptSha256, lineNumber: frame.location.lineNumber,
@@ -83,12 +98,12 @@ async function observeOriginal(selected, category, workspace, env, signal) {
     }
   } catch (error) {
     if (!(error instanceof UnsupportedObservation)) {
-      protocol?.close(); await native.stop('protocol'); await native.finish(); throw error;
+      protocol?.close(); await native.stop('protocol', 'observeOriginal:unexpected-error'); await native.finish(); throw error;
     }
     const reason = signal?.aborted ? 'cancelled' : error.reason;
     failureDiagnostic = error.message;
     // Losing observation cancels this owned fixture. Never call that native completion.
-    protocol?.close(); await native.stop(reason);
+    protocol?.close(); await native.stop(reason, 'observeOriginal:unsupported');
     add({ phase: 'observer-failure', reason, intervention: native.intervention === 'none' ? 'none' : 'signal-owned-process' });
   } finally { protocol?.close(); }
   const facts = await native.finish();
@@ -138,7 +153,7 @@ export async function runOriginalObserver(inputFile, inputPin, output, { signal 
       const derived = await ownedNativeProcess(selected.input.node.path,
         [path.join(selected.input.pnpm.root, 'bin/pnpm.mjs'), category, '--offline', '--ignore-scripts', '--reporter=silent'],
         derivedWorkspace, { ...env, NODE_OPTIONS: `--import=${path.join(observation, 'loader.mjs')}`,
-          VITEST_NATIVE_PROFILE_SHA256: prepared.profileSha256 }, signal);
+          VITEST_NATIVE_PROFILE_SHA256: prepared.profileSha256 }, signal, { role: 'derived', category });
       const derivedFacts = await derived.finish();
       const originalLock = await lockIdentity(originalWorkspace); const derivedLock = await lockIdentity(derivedWorkspace);
       const equivalent = JSON.stringify(original.nativeFacts.outcome) === JSON.stringify(derivedFacts.outcome) &&
