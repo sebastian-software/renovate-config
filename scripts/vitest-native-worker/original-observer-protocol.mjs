@@ -1,11 +1,13 @@
 // Finite read/control client. No caller-selected protocol methods or parameters.
-import { observerLimits as limits, UnsupportedObservation } from './original-observer-contract.mjs';
+import { observerLimits as limits, UnsupportedObservation, recordOriginalLifecycle } from './original-observer-contract.mjs';
 import { requireValue, ReleaseError } from '../vitest-release/files.mjs';
 
 export class ObserverProtocol {
   #socket; #next = 0; #pending = new Map(); #queue = []; #waiters = [];
   #messages = 0; #bytes = 0; #failure = null; #intentionalClose = false;
-  constructor(endpoint, scriptUrl) {
+  #record;
+  constructor(endpoint, scriptUrl, record = null) {
+    this.#record = event => recordOriginalLifecycle(record, event);
     const parsed = new URL(endpoint);
     requireValue(parsed.protocol === 'ws:' && parsed.hostname === '127.0.0.1' && /^\d+$/.test(parsed.port) &&
       Number(parsed.port) > 0 && !parsed.username && !parsed.password && !parsed.search && !parsed.hash &&
@@ -13,11 +15,14 @@ export class ObserverProtocol {
     this.scriptUrl = scriptUrl;
     this.#socket = new WebSocket(endpoint);
     this.opened = new Promise((resolve, reject) => {
-      const timer = setTimeout(() => { this.fail('timeout'); reject(new UnsupportedObservation('timeout', 'Observer connection timeout')); }, limits.operationMs);
-      this.#socket.addEventListener('open', () => { clearTimeout(timer); resolve(); }, { once: true });
-      this.#socket.addEventListener('error', () => { clearTimeout(timer); this.fail('disconnect'); reject(new UnsupportedObservation('disconnect', 'Observer connection failed')); }, { once: true });
+      const timer = setTimeout(() => { this.fail('timeout', { site: 'connection' }); reject(new UnsupportedObservation('timeout', 'Observer connection timeout')); }, limits.operationMs);
+      this.#socket.addEventListener('open', () => { clearTimeout(timer); this.#record({ event: 'protocol-open' }); resolve(); }, { once: true });
+      this.#socket.addEventListener('error', () => { clearTimeout(timer); this.fail('disconnect', { site: 'socket-error' }); reject(new UnsupportedObservation('disconnect', 'Observer connection failed')); }, { once: true });
     });
-    this.#socket.addEventListener('close', () => { if (!this.#intentionalClose) this.fail('disconnect'); });
+    this.#socket.addEventListener('close', () => {
+      this.#record({ event: 'protocol-socket-close', intentional: this.#intentionalClose });
+      if (!this.#intentionalClose) this.fail('disconnect', { site: 'socket-close' });
+    });
     this.#socket.addEventListener('message', event => {
       try {
         requireValue(typeof event.data === 'string', 'Unknown Inspector message encoding');
@@ -30,6 +35,8 @@ export class ObserverProtocol {
           const pending = this.#pending.get(message.id);
           requireValue(pending, 'Late/replayed Inspector response');
           this.#pending.delete(message.id); clearTimeout(pending.timer);
+          this.#record({ event: 'command-acknowledged', method: pending.method, commandId: message.id, accepted: !message.error });
+          if (message.error) this.#record({ event: 'protocol-response-error', method: pending.method, commandId: message.id });
           if (message.error) pending.reject(new UnsupportedObservation('protocol', 'Unsupported Inspector protocol operation'));
           else pending.resolve(message.result ?? {});
           return;
@@ -44,10 +51,13 @@ export class ObserverProtocol {
         const waiter = this.#waiters.shift();
         if (waiter) { clearTimeout(waiter.timer); waiter.resolve(message); }
         else this.#queue.push(message);
-      } catch (error) { this.fail(error instanceof ReleaseError || error instanceof SyntaxError ? 'protocol' : error); }
+      } catch (error) { this.fail(error instanceof ReleaseError || error instanceof SyntaxError ? 'protocol' : error, { site: 'message' }); }
     });
   }
-  fail(reason) {
+  fail(reason, { site = 'external', method, commandId } = {}) {
+    this.#record({ event: 'protocol-failure', site,
+      reason: typeof reason === 'string' ? reason : reason instanceof UnsupportedObservation ? reason.reason : 'protocol',
+      alreadyFailed: this.#failure !== null, ...(method === undefined ? {} : { method, commandId }) });
     if (this.#failure) return;
     this.#failure = typeof reason === 'string' ? new UnsupportedObservation(reason, `Observer ${reason}`) : reason;
     for (const pending of this.#pending.values()) { clearTimeout(pending.timer); pending.reject(this.#failure); }
@@ -60,8 +70,9 @@ export class ObserverProtocol {
     if (++this.#next > limits.commands) throw new UnsupportedObservation('bounds', 'Observer command bound exceeded');
     const id = this.#next;
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => { this.fail('timeout'); }, limits.operationMs);
-      this.#pending.set(id, { resolve, reject, timer });
+      const timer = setTimeout(() => { this.fail('timeout', { site: 'command-response', method, commandId: id }); }, limits.operationMs);
+      this.#pending.set(id, { resolve, reject, timer, method });
+      this.#record({ event: 'command-issued', method, commandId: id });
       this.#socket.send(JSON.stringify({ id, method, params }));
     });
   }
@@ -84,12 +95,13 @@ export class ObserverProtocol {
     if (this.#failure) throw this.#failure;
     if (this.#queue.length) return this.#queue.shift();
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => this.fail('timeout'), limits.operationMs);
+      const timer = setTimeout(() => this.fail('timeout', { site: 'notification-wait' }), limits.operationMs);
       this.#waiters.push({ resolve, reject, timer });
     });
   }
   close() {
-    this.#intentionalClose = true; this.fail('disconnect');
+    this.#record({ event: 'protocol-close-request' });
+    this.#intentionalClose = true; this.fail('disconnect', { site: 'intentional-close' });
     if (this.#socket.readyState === WebSocket.OPEN || this.#socket.readyState === WebSocket.CONNECTING) this.#socket.close();
   }
   get counts() { return { commands: this.#next, messages: this.#messages, bytes: this.#bytes }; }

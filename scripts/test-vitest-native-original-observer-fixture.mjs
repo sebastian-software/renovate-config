@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import { validateOriginalLifecycleDiagnostics } from './vitest-native-worker/original-observer-contract.mjs';
 import { controllerInventory, preflightOriginalObserver } from './vitest-native-worker/original-observer-inputs.mjs';
 import { runOriginalObserver } from './vitest-native-worker/original-observer.mjs';
 import { processGroupFailureMetadata } from './vitest-native-worker/original-observer-process.mjs';
@@ -197,6 +198,34 @@ try {
       assert.deepEqual(report.cases.map(item => item.category), ['install', 'update', 'dedupe']);
       for (const item of report.cases) {
         const original = item.original; const observed = original.report;
+        for (const [role, envelope] of [['original', item.original], ['derived', item.derived]]) {
+          const diagnostic = envelope.lifecycleDiagnostics;
+          validateOriginalLifecycleDiagnostics(diagnostic, { requireAvailable: true,
+            correlation: { recipe: fixtureRecipe, category: item.category, role,
+              launch: ['install', 'update', 'dedupe'].indexOf(item.category) * 2 + (role === 'derived' ? 1 : 0) } });
+          const events = diagnostic.events;
+          assert(events.some(event => event.event === 'native-launch'));
+          assert(events.some(event => event.event === 'native-group-empty'));
+          const exit = events.findIndex(event => event.event === 'native-exit');
+          const close = events.findIndex(event => event.event === 'native-stream-close');
+          assert(exit >= 0 && close > exit, 'Real leader exit and stream close must remain separately recorded');
+          assert.deepEqual({ exitCode: events[exit].exitCode, signal: events[exit].signal }, envelope.nativeFacts.outcome);
+          assert(!diagnostic.missingObservations.includes('native-exit') && !diagnostic.missingObservations.includes('native-stream-close'));
+          if (role === 'original') {
+            assert(events.some(event => event.event === 'script-authenticated'));
+            const cue = events.findIndex(event => event.event === 'native-shutdown-cue');
+            const receipt = events.findIndex(event => event.event === 'controller-receipt' && event.site === 'shutdown-cue');
+            assert.equal(cue >= 0, envelope.nativeFacts.debuggerDetachRequired);
+            assert.equal(diagnostic.missingObservations.includes('shutdown-cue'), cue < 0);
+            assert.equal(diagnostic.missingObservations.includes('controller-shutdown-receipt'), receipt < 0);
+            if (receipt >= 0) assert(cue >= 0 && receipt > cue, 'Controller receipt must follow the actual cue callback');
+            assert(events.some(event => event.event === 'protocol-close-request'));
+            const socketClose = events.findIndex(event => event.event === 'protocol-socket-close');
+            assert.equal(diagnostic.missingObservations.includes('protocol-socket-close'), socketClose < 0);
+          } else assert(!events.some(event => event.event.startsWith('protocol-') || event.event.startsWith('command-')));
+          assert(!JSON.stringify(diagnostic).includes('ws://') && !JSON.stringify(diagnostic).includes('file://'));
+        }
+
         assert.equal(original.actualScriptAuthenticated, true, 'Actual original script bytes were not authenticated');
         assert.deepEqual(observed.nativeOutcome, original.nativeFacts.outcome);
         assert.equal(item.derived.debuggerEnabled, false);
