@@ -8,8 +8,13 @@ additionally starts fixed owned source processes and a rendered test wrapper; it
 starts no live worker. Q2b.1a adds a separate bounded original Inspector fixture
 with owned local processes; Q2b.1b investigates fixed install/update entry points
 in that fixture, also without a live worker. Q2b.1c adds bounded controller-owned
-lifecycle diagnostics to the same source fixture. Prepared deployment and
-the Paratix helper remain inactive.
+lifecycle diagnostics to the same source fixture. Q2b.1d adds one fixed
+pre-cleanup diagnostic pause to original launches. The initial inquiry and later
+bounded frame diagnostics failed their authentic dispatch-frame gates on October
+10, 2026. The current source correction selects the structural start of `async`
+at `312305:36`; the bounded source validation below confirms actual frame
+acceptance and pre-cleanup hits. Prepared deployment and the Paratix helper
+remain inactive.
 Actual production release selection, Linux worker qualification, image/alias
 measurements and independent publication attestations remain separate Q2 gates; deployment,
 protection and Paratix activation require the separately approved E manifest.
@@ -35,7 +40,9 @@ worker. Q2a adds the bounded source harness below; Q2b.0 revises only its native
 evidence contract. Q2b.1a adds historical partial original-observer source feasibility;
 Q2b.1b completed the bounded entry inquiry below in merged
 [renovate-config #47](https://github.com/sebastian-software/renovate-config/pull/47).
-Q2b.1c is the current lifecycle-diagnostic source increment. Remaining Q2b.1–Q2b.3
+Q2b.1c is the retained lifecycle-diagnostic checkpoint from merged
+[renovate-config #48](https://github.com/sebastian-software/renovate-config/pull/48).
+Q2b.1d is the current bounded pre-cleanup source inquiry. Remaining Q2b.1–Q2b.3
 operational observer/facility/qualification, Q2c
 independent release/image/attestation selection and E live
 actions remain separate gates. Do not treat PR heads as squash or release
@@ -841,6 +848,197 @@ operational completeness or production eligibility. Causal repair and
 error-mechanism selection remain subsequent planning gates; operational adapter,
 facility, qualification, release selection and activation remain unreleased.
 
+## Inspect the Q2b.1d pre-cleanup diagnostic boundary
+
+**Initial Q2b.1d bounded inquiry: FAILED on October 10, 2026.** The authentic
+dispatch-frame gate rejected the selected callable identity. This retained,
+unaccepted local inquiry evidence permitted no source acceptance or PR from
+that failed run.
+The preceding Q2b.1c checkpoint remains historical. Deployment and the Paratix
+helper remain inactive.
+
+The independent source-contract command exited 0. Exactly one ordinary fixture
+command ran and exited 1, failing the retained assertion `Established genuine
+original call and handler entry must remain observed`. Only `empty-v1` launched
+its three original/derived pairs; `offline-miss-v1` remains UNRUN. The remaining
+12 of 14 required invocations were SKIPPED after the frame gate failed. No
+fallback, replacement identity or additional measurement followed.
+
+All three originals authenticated the pinned bundle, completed four fixed
+breakpoint setup and four one-character possible-location operations with
+accepted acknowledgements, and resolved exactly `preCall`, `entry`, `preCleanup`
+and `settlement`. Each then reported `Original dispatch frame differs from
+authenticated pre-call callable` before accepting a semantic pre-call or handler
+entry. No pre-cleanup hit or successful continuation was observed. Each original
+retained `location` intervention, actual SIGTERM and the missing `pre-cleanup`
+marker; all three derived processes exited naturally 0 without Inspector events.
+The predicate's rejection in this run establishes neither V8 impossibility nor
+an implementation-assertion error as its cause. Actual frame payloads were not
+inspected or persisted.
+
+Each original's first origin was `observer-failure`/`location`, sequence 42; last
+resume issued/acknowledged command IDs were 7/7. Close request, socket close,
+native exit and stream close were sequences 43, 48, 49 and 50. No shutdown cue
+or controller shutdown receipt occurred. Original locks were absent; derived
+locks were present and byte-equal to each other, so each original/derived lock
+comparison was unequal. Previously supported empty update/dedupe behavior and
+authentic entry were not retained. These failed-run differences prove no repair,
+rejection or equivalence.
+
+All six available diagnostic envelopes fit on this failed path. The empty-recipe
+summary was 52,144 bytes; each original had 56 events and 5,746–5,747 compact JSON
+bytes. This proves neither pre-cleanup-hit-path fit nor both-recipes/all-12-envelope
+fit. Independent readback found all six owned groups `EMPTY` via `ESRCH`.
+Normalized evidence is retained in `/private/tmp/apply37-q2b1d/final-validation.md`,
+`validation-measurements.json` and `validation-empty-readbacks.json` in that same
+directory. These local group observations do not cover operational descendants.
+
+A later bounded frame-diagnostic inquiry also FAILED on October 10, 2026.
+Exactly one ordinary invocation exited 1 after 11.007 seconds. All three
+`empty-v1` originals first rejected the function-location column: observed
+zero-based `312305:36`, expected `312305:42`. The anonymous name, truthy actual
+and expected function locations, script and line comparisons passed. The four
+exact source points resolved, but genuine pre-call/handler entry, a pre-cleanup
+hit and settlement were not established. The failed-path summary was 54,340
+bytes; all six available envelopes fit existing bounds and all six owned groups
+were independently `ESRCH`/`EMPTY`. `offline-miss-v1`, seven later process
+invocations and five owner invocations were skipped. Retain this separately from
+the initial inquiry above; its normalized evidence is
+`/private/tmp/apply37-frame-diagnostic/final-validation.md`. It identifies the
+column mismatch, without establishing an install cause, successful continuation,
+equivalence or operational eligibility.
+
+The active bounded correction derives the dispatch function location from the
+beginning of `async` in the same unique exact anonymous-IIFE signature, guarded
+at zero-based `312305:36`. Column `42` is the previous parameter-start token
+`()` and is no longer the active expectation. Literal-newline source inspection
+explains that structural distinction. The source oracles accept the structural
+start and reject the old column `42` at the column comparison without changing
+authenticated pre-call state. The existing diagnostic cases and unrelated
+synthetic coordinates retain their scope. The measured bounded source receipt
+below establishes actual frame acceptance for this correction; independent
+source review remains a separate delivery gate. No operational qualification is
+claimed.
+
+Original launches install and resolve exactly four distinct authenticated
+points: `preCall`, `entry`, `preCleanup` and `settlement`. The three semantic
+anchors and semantic report schema remain unchanged. The added point is the
+`finishWorkers` token at zero-based line `312340`, column `12`, immediately before
+the unchanged dispatch cleanup call. Source selection requires the unique
+enclosing anonymous async IIFE and the same dispatch call, await, finally and
+successful continuation. The fixed dispatch function has an empty name and
+structurally derived async-start location `312305:36`; `main4` is not its
+expected name.
+The pinned bundle, one-character possible-breakpoint range, exact resolution
+and actual pause must all agree. A coordinate alone is not identity.
+
+The actual dispatch frame must match that fixed callable identity and the
+authenticated pre-call frame's name, function location and script identity.
+Pause-local frame IDs do not identify the callable. Handler entry retains its
+named own-frame and dispatch-line caller checks, with that caller also matched
+to the authenticated pre-call callable. A pre-cleanup hit requires preceding
+authentic call and handler entry in the same recipe/category/role/launch.
+Unknown points, scripts or frames, missing or extra resolutions, nearest
+locations, replayed hits and late or unordered pauses are rejected.
+
+A validated hit emits only `{ event: "diagnostic-pause", point: "preCleanup" }`
+in lifecycle diagnostics, then uses the existing resume method. It never enters
+semantic `add()` or becomes a handler-settlement event. Breakpoint-resolution
+diagnostics also permit `preCleanup`; `semantic-pause` still permits only
+`preCall`, `entry` and `settlement`. Originals list `pre-cleanup` in
+`missingObservations` until that diagnostic hit is recorded. Derived launches
+have no Inspector, pre-cleanup diagnostic event, breakpoint-resolution event or
+required pre-cleanup missing marker. Only transient callable identity is used;
+frames, scopes, locals, expressions, environment and raw transcripts are not
+persisted.
+
+The same six Inspector methods and every existing bound remain unchanged:
+32 commands, 8 pauses and 32 semantic events; 96 lifecycle events and 8,192 bytes
+per launch; 12 fields and 512 bytes per event; 64-byte strings, 120,000 ms elapsed
+offsets and a 65,536-byte enclosing summary. The existing 5-second operation,
+10-second setup, 30-second native lifetime and 3-second cleanup bounds, protocol
+and output limits, error identity, Promise/listener ownership, races and
+TERM/KILL/leader-exit/ESRCH rules remain in force. Original pnpm and derived
+transform bytes are unchanged. Added setup, resolution, hit and acknowledgement
+traffic fit the unchanged budgets on both recipes/all categories in the bounded
+source validation below.
+
+The finite validation gate established authentic exact-point/frame feasibility,
+available bounded diagnostics and independent empty-group readback while
+retaining entry/dedupe and native/lock assertions. The current outcomes below
+remain distinct from the historical #48 matrix. A changed timing or outcome is a
+new observation, not a demonstrated causal repair. Unsupported point, frame or
+report fit, unknown cleanup, regression or unavailable/truncated diagnostics
+remain stop conditions. A synthetic unsupported-location negative does not
+replace authentic measurement.
+
+Reaching finally cannot distinguish handler resolution from rejection. A hit
+without the existing successful continuation only narrows the observed interval:
+handler rejection propagation, pending or failed cleanup and lost later
+observation remain possible. Absence is inconclusive. Neither hit nor absence,
+exit 1, derived errors or missing locks authenticate rejection, success,
+equivalence or operational completeness. Reports remain schema 1, qualification
+contract revision 2, with `completeness: false` and `productionEligible: false`.
+Causal repair and
+rejected-settlement mechanisms remain unreleased, as do the later operational
+adapter, facility, qualification, release and activation gates.
+
+### Measured callable-start source validation
+
+The correction passed its bounded source validation on October 10, 2026. All
+14 prescribed invocations completed once with exit 0 in sequence: one source
+contract, exactly one normal ordinary fixture, seven process cases and five
+owner checks. No required invocation was skipped or repeated. The ordinary
+fixture exited 0 after 27.387360 seconds and covered both recipes, all three
+categories and all 12 available correlated original/derived envelopes.
+
+All six originals accepted genuine `preCall` and named-handler entry under the
+strict authenticated anonymous dispatch function location `312305:36`. Each
+resolved the same four distinct exact points and reached authentic `preCleanup`
+at diagnostic sequence 49 after entry. No dispatch-frame rejection occurred.
+The exact callable/script/line/column, pre-call equality, handler/caller linkage,
+source pins, source ordering and original/derived separation remain unchanged.
+
+The `empty-v1` and `offline-miss-v1` summaries were 61,675 and 59,012 bytes,
+respectively, within 65,536 bytes. Maximum actual lifecycle usage was 69/96
+events, 6,984/8,192 envelope bytes, 6/12 event fields, 136/512 event bytes,
+31/64 string bytes and 5,536/120,000 elapsed milliseconds. Protocol, pause,
+semantic, time and cleanup bounds were not increased. Independent readbacks
+returned `ESRCH`/`EMPTY` for all 25 distinct owned groups: 12 ordinary groups and
+13 from the seven process cases. These local group readbacks establish no
+complete descendant, kernel containment or Linux operational qualification.
+
+| Recipe/category | Original state | Native terminal / intervention | Original/derived equivalent |
+| --- | --- | --- | --- |
+| `empty-v1/install` | unsupported | SIGTERM / timeout | false |
+| `empty-v1/update` | supported | natural exit 0 / none | true |
+| `empty-v1/dedupe` | supported | natural exit 0 / none | true |
+| `offline-miss-v1/install` | unsupported | SIGTERM / timeout | false |
+| `offline-miss-v1/update` | incomplete | natural exit 1 / none | true |
+| `offline-miss-v1/dedupe` | incomplete | natural exit 1 / none | true |
+
+Both install originals still first failed at `notification-wait` with reason
+`timeout`, sequence 52, followed by actual SIGTERM and timeout intervention;
+these are distinct facts. Their original/derived outcomes remain nonequivalent.
+Empty install locks were present on both sides; offline install locks were
+absent on both sides. Empty update/dedupe retained equivalent locks and outcomes.
+Offline update/dedupe retained the exactly missing handler-settlement observation
+and equivalent natural exit 1 without intervention or locks. Reaching `finally`
+and recording `preCleanup` does not distinguish handler resolution, rejection,
+cleanup failure or lost later observation. No install cause, rejected-settlement
+mechanism or causal repair is established.
+
+Normalized source evidence is retained in
+`/private/tmp/apply37-callable-start/final-validation.md`, `validation-results.json`,
+`validation-measurements.json` and `validation-all-empty-readbacks.json` in that
+directory. All six retained file hashes were unchanged during runtime validation;
+this later documentation-only reconciliation changes no executable source or
+test. Both earlier failed inquiries above remain historical failures. Reports
+remain schema 1, qualification contract revision 2, `completeness: false` and
+`productionEligible: false`, with no operational `PASSED`. Release selection,
+activation and the later operational gates remain unreleased; prepared deployment
+and the Paratix helper remain inactive. Issue #37 remains OPEN/in progress.
+
 ## Attest, issue and verify retained native evidence
 
 After genuine controlled qualification, the outside owner authenticates and
@@ -976,3 +1174,37 @@ to be power-loss atomic. Native issuance also never overwrites an output. Keep
 receipts before bounded retention prunes them. The stock packager alone supplies
 neither native dispatch proof nor helper activation authority; issue #37 remains
 open and the inactive Paratix helper/eight direct matches stay unchanged.
+
+
+### Bounded rejected dispatch-frame diagnostics
+
+A rejected dispatch callable now emits `frame-rejection` and immediately linked
+`frame-rejection-coordinates` before the existing controller failure receipt and
+`observer-failure` with reason `location`. The existing error text, acceptance
+predicate, expected empty name and cleanup remain unchanged. The diagnostic
+addition itself did not change the source selector; the separately authorized
+structural callable-start correction above changes only its active function
+location from `312305:42` to `312305:36`. The launch header provides recipe/category correlation; the
+rejection point and first failed check identify the dispatch conjunction stage.
+For handler entry, this diagnoses the first rejected eligible dispatch caller
+only when overall caller linkage fails; it does not add handler callable checks.
+
+The closed statuses classify the actual name as empty, another allowed name,
+absent or malformed; no arbitrary name is retained. Location statuses distinguish
+absence, null, other types and truthiness. Script/line/column equality statuses
+distinguish missing, malformed and differing values. Every skipped conjunction
+operand is `not-evaluated`; diagnostics never read later frame fields to fill it.
+The coordinate event retains only evaluated integer coordinates in
+`0..2147483647`, otherwise `null`; script IDs and complete frames are excluded.
+The two events share the selected point and precede the unchanged failure event;
+`firstFailure` continues to identify that existing failure event.
+
+All existing bounds remain: 96 events, 8,192 bytes per lifecycle envelope,
+12 fields and 512 bytes per sequenced event, 64 bytes per string and 65,536 bytes
+per complete summary. Closed-schema validation rejects inconsistent first-failed
+checks, skipped-coordinate claims and missing failure linkage. Unavailable or
+truncated diagnostics cannot qualify as completed evidence. Synthetic source
+contracts verify these distinctions; they establish no Inspector feasibility or
+runtime root cause. The retained authentic failures remain historical failures;
+the measured callable-start source receipt above records the separately
+authorized ordinary validation and its remaining unsupported install outcomes.

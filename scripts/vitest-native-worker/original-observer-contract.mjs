@@ -87,14 +87,34 @@ const lifecycleFields = {
   'command-issued': ['method', 'commandId'], 'command-acknowledged': ['method', 'commandId', 'accepted'],
   'protocol-response-error': ['method', 'commandId'],
   'protocol-close-request': [], 'protocol-socket-close': ['intentional'],
-  'script-authenticated': [], 'breakpoint-resolved': ['point'], 'semantic-pause': ['point'], 'initial-pause': [],
+  'script-authenticated': [], 'breakpoint-resolved': ['point'], 'semantic-pause': ['point'], 'diagnostic-pause': ['point'], 'initial-pause': [],
   'controller-receipt': ['site'], 'observer-failure': ['reason'],
+  'frame-rejection': ['point', 'check', 'name', 'expectedName', 'functionLocation', 'expectedLocation', 'script', 'line', 'column'],
+  'frame-rejection-coordinates': ['point', 'lineNumber', 'columnNumber'],
   'native-shutdown-cue': [], 'native-lifetime-expired': [], 'native-stream-close': [],
   'native-exit': ['exitCode', 'signal'], 'native-failure': ['site', 'reason'],
   'native-cancel-request': ['reason'], 'native-stop-request': ['site', 'reason'],
   'native-signal-request': ['signal'], 'native-owned-signal': ['signal'], 'native-group-empty': [],
   'native-group-failure': ['site', 'signal', 'reason'],
 };
+const frameChecks = ['name', 'expectedName', 'functionLocation', 'expectedLocation', 'script', 'line', 'column'];
+const frameKinds = ['absent', 'null', 'array', 'string', 'number', 'boolean', 'object', 'other'];
+function frameRejection(value) {
+  requireValue(frameChecks.includes(value.check), 'Unknown dispatch rejection check');
+  const failed = frameChecks.indexOf(value.check);
+  for (const [index, field] of frameChecks.entries()) {
+    const status = value[field];
+    const location = ['functionLocation', 'expectedLocation'].includes(field);
+    const pass = field === 'name' ? ['empty-match', 'other-match', 'absent-match', 'malformed-match'].includes(status) :
+      location ? frameKinds.map(kind => `${kind}-truthy`).includes(status) : status === 'match';
+    const fail = field === 'name' ? ['empty-mismatch', 'other-mismatch', 'absent-mismatch', 'malformed-mismatch'].includes(status) :
+      location ? frameKinds.map(kind => `${kind}-falsy`).includes(status) : frameKinds.map(kind => `${kind}-mismatch`).includes(status);
+    requireValue(index < failed ? pass : index === failed ? fail : status === 'not-evaluated',
+      'Inconsistent dispatch rejection evaluation');
+    if (location) requireValue(!['absent-truthy', 'null-truthy', 'object-falsy', 'array-falsy'].includes(status),
+      'Impossible dispatch location presence/type');
+  }
+}
 function lifecycleCorrelation(value) {
   exact(value, ['recipe', 'category', 'role', 'launch']);
   requireValue(['empty-v1', 'offline-miss-v1'].includes(value.recipe) &&
@@ -122,7 +142,14 @@ function lifecycleEvent(value, sequenced) {
   'Unknown lifecycle command linkage');
   if ('reason' in value) requireValue(lifecycleReasons.includes(value.reason) ||
     value.event === 'native-group-failure' && value.reason === null, 'Unknown lifecycle failure reason');
-  if ('point' in value) requireValue(['preCall', 'entry', 'settlement'].includes(value.point), 'Unknown lifecycle source point');
+  if ('point' in value) requireValue((value.event.startsWith('frame-rejection') ? ['preCall', 'entry', 'preCleanup', 'settlement'] :
+    value.event === 'diagnostic-pause' ? ['preCleanup'] :
+    value.event === 'breakpoint-resolved' ? ['preCall', 'entry', 'preCleanup', 'settlement'] :
+      ['preCall', 'entry', 'settlement']).includes(value.point), 'Unknown lifecycle source point');
+  if (value.event === 'frame-rejection') frameRejection(value);
+  if (value.event === 'frame-rejection-coordinates') requireValue(['lineNumber', 'columnNumber'].every(field =>
+    value[field] === null || Number.isInteger(value[field]) && value[field] >= 0 && value[field] <= 2_147_483_647),
+  'Invalid bounded dispatch rejection coordinate');
   if (value.event === 'protocol-failure') requireValue(typeof value.alreadyFailed === 'boolean' &&
     ['connection', 'command-response', 'notification-wait', 'socket-error', 'socket-close', 'message', 'intentional-close', 'external'].includes(value.site) &&
     (value.site === 'command-response') === ('method' in value), 'Unknown lifecycle protocol failure site');
@@ -139,6 +166,29 @@ function lifecycleEvent(value, sequenced) {
   else if ('signal' in value) requireValue(['SIGTERM', 'SIGKILL'].includes(value.signal) ||
     value.event === 'native-group-failure' && value.signal === 0, 'Unknown lifecycle owned signal');
 }
+function lifecycleDiagnosticOrder(event, role, previous) {
+  if (event.event.startsWith('frame-rejection')) {
+    requireValue(role === 'original', 'Derived launch cannot emit dispatch rejection diagnostics');
+    if (event.event === 'frame-rejection') requireValue(!previous.some(item => item.event.startsWith('frame-rejection') ||
+      ['observer-failure', 'protocol-failure', 'protocol-close-request', 'native-exit', 'native-stream-close'].includes(item.event)),
+    'Replayed or late dispatch rejection');
+    else {
+      const rejection = previous.at(-1);
+      requireValue(rejection?.event === 'frame-rejection' && rejection.point === event.point,
+        'Unlinked dispatch rejection coordinates');
+      for (const [field, coordinate] of [['line', 'lineNumber'], ['column', 'columnNumber']])
+        requireValue(event[coordinate] === null || ['match', 'number-mismatch'].includes(rejection[field]),
+          'Coordinate retained for skipped or nonnumeric dispatch comparison');
+    }
+  }
+  if (event.event === 'breakpoint-resolved' || event.event === 'diagnostic-pause')
+    requireValue(role === 'original', 'Derived launch cannot emit original breakpoint diagnostics');
+  if (event.event !== 'diagnostic-pause') return;
+  requireValue(['preCall', 'entry'].every(point => previous.some(item => item.event === 'semantic-pause' && item.point === point)) &&
+    !previous.some(item => item.event === 'diagnostic-pause' || item.event === 'semantic-pause' && item.point === 'settlement' ||
+      ['observer-failure', 'protocol-failure', 'protocol-close-request', 'native-exit', 'native-stream-close'].includes(item.event)),
+  'Replayed, late or unordered pre-cleanup diagnostic pause');
+}
 function lifecycleOrigin(event) {
   return event.event === 'protocol-failure' ? !event.alreadyFailed && event.site !== 'intentional-close' :
     ['native-failure', 'native-group-failure', 'protocol-response-error', 'observer-failure'].includes(event.event);
@@ -148,7 +198,8 @@ function lifecycleMissing(document) {
   const expected = [['native-exit', 'native-exit'], ['native-stream-close', 'native-stream-close'], ['group-empty', 'native-group-empty']];
   if (document.role === 'original') expected.push(['resume-issued', 'command-issued'], ['resume-acknowledged', 'command-acknowledged'],
     ['shutdown-cue', 'native-shutdown-cue'], ['controller-shutdown-receipt', 'controller-receipt', 'shutdown-cue'],
-    ['protocol-close-request', 'protocol-close-request'], ['protocol-socket-close', 'protocol-socket-close']);
+    ['protocol-close-request', 'protocol-close-request'], ['protocol-socket-close', 'protocol-socket-close'],
+    ['pre-cleanup', 'diagnostic-pause']);
   return expected.filter(([name, event, site]) => name === 'resume-issued' ? document.lastResumeIssued === null :
     name === 'resume-acknowledged' ? document.lastResumeAcknowledged === null : !has(event, site)).map(([name]) => name);
 }
@@ -170,7 +221,7 @@ export function createOriginalLifecycleDiagnostics(correlation, clock = () => pr
   function record(value) {
     if (document.state !== 'available') return;
     try {
-      try { lifecycleEvent(value, false); } catch { stop('unavailable', 'invalid-event'); return; }
+      try { lifecycleEvent(value, false); lifecycleDiagnosticOrder(value, document.role, document.events); } catch { stop('unavailable', 'invalid-event'); return; }
       let now;
       try { now = clock(); } catch { stop('unavailable', 'invalid-clock'); return; }
       if (typeof now !== 'bigint' || now < lastTime) { stop('unavailable', 'invalid-clock'); return; }
@@ -222,7 +273,7 @@ export function validateOriginalLifecycleDiagnostics(document, { requireAvailabl
   let elapsed = 0; let firstFailure = null; let issued = null; let acknowledged = null;
   const commands = new Map(); const acknowledgements = new Set();
   for (const [index, event] of document.events.entries()) {
-    lifecycleEvent(event, true);
+    lifecycleEvent(event, true); lifecycleDiagnosticOrder(event, document.role, document.events.slice(0, index));
     requireValue(event.sequence === index && event.elapsedMs >= elapsed, 'Replayed or unordered lifecycle event'); elapsed = event.elapsedMs;
     if (firstFailure === null && lifecycleOrigin(event)) firstFailure = index;
     if (event.event === 'command-issued') {
@@ -237,6 +288,12 @@ export function validateOriginalLifecycleDiagnostics(document, { requireAvailabl
       if (event.method === 'Debugger.resume') acknowledged = event.commandId;
     }
   }
+  const rejection = document.events.findIndex(event => event.event === 'frame-rejection');
+  if (rejection !== -1 && document.state === 'available') requireValue(
+    document.events[rejection + 1]?.event === 'frame-rejection-coordinates' &&
+    document.events[rejection + 2]?.event === 'controller-receipt' && document.events[rejection + 2].site === 'failure' &&
+    document.events[rejection + 3]?.event === 'observer-failure' && document.events[rejection + 3].reason === 'location',
+  'Dispatch rejection lacks its unchanged observer failure linkage');
   requireValue(document.firstFailure === firstFailure && document.lastResumeIssued === issued && document.lastResumeAcknowledged === acknowledged &&
     JSON.stringify(document.missingObservations) === JSON.stringify(lifecycleMissing(document)), 'Lifecycle diagnostic summary differs');
   return document;

@@ -4,13 +4,14 @@ import childProcess from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { syncBuiltinESMExports } from 'node:module';
 import { ownedNativeProcess } from './vitest-native-worker/original-observer-process.mjs';
-import { createOriginalLifecycleDiagnostics, validateOriginalLifecycleDiagnostics, originalLifecycleLimits }
+import { createOriginalLifecycleDiagnostics, validateOriginalLifecycleDiagnostics, originalLifecycleLimits, observerLimits }
   from './vitest-native-worker/original-observer-contract.mjs';
 import { ObserverProtocol } from './vitest-native-worker/original-observer-protocol.mjs';
 import { summarizeOriginalObservation, validateOriginalObservationReport }
   from './vitest-native-worker/original-observer-contract.mjs';
 import { UnsupportedObservation } from './vitest-native-worker/original-observer-contract.mjs';
 import { originalHandlerLocation } from './vitest-native-worker/original-observer-source.mjs';
+import * as originalSource from './vitest-native-worker/original-observer-source.mjs';
 import { validateOriginalPossibleLocation, validateOriginalResolvedLocation, validateOriginalPauseFrame }
   from './vitest-native-worker/original-observer.mjs';
 
@@ -51,9 +52,11 @@ sourceSelectionNegatives++;
 // No socket, Inspector target, actual frame or pnpm runtime feasibility is measured here.
 const scriptId = 'original-script';
 const points = { preCall: { lineNumber: 100, columnNumber: 22 }, entry: { lineNumber: 42, columnNumber: 18 },
-  settlement: { lineNumber: 110, columnNumber: 4 }, handlerName: 'handler5' };
-const ids = new Map([['call-id', 'preCall'], ['entry-id', 'entry'], ['settled-id', 'settlement']]);
-const resolved = new Set(['preCall', 'entry', 'settlement']);
+  settlement: { lineNumber: 110, columnNumber: 4 }, preCleanup: { lineNumber: 108, columnNumber: 12 },
+  handlerName: 'handler5', functionLocation: { lineNumber: 41, columnNumber: 6 },
+  dispatchFunctionName: '', dispatchFunctionLocation: { lineNumber: 90, columnNumber: 42 } };
+const ids = new Map([['call-id', 'preCall'], ['entry-id', 'entry'], ['settled-id', 'settlement'], ['cleanup-id', 'preCleanup']]);
+const resolved = new Set(['preCall', 'entry', 'preCleanup', 'settlement']);
 const located = point => ({ scriptId, ...point });
 let correlationNegatives = 0;
 const rejectsCorrelation = (name, run) => {
@@ -76,12 +79,17 @@ for (const [name, changed, known, currentScript] of [
   ['wrong resolved script', { ...resolution, location: { ...resolution.location, scriptId: 'derived-script' } }, new Set(), scriptId],
 ]) rejectsCorrelation(name, () => validateOriginalResolvedLocation(changed, points, currentScript, ids, known));
 const pause = { hitBreakpoints: ['entry-id'], callFrames: [
-  { functionName: 'handler5', location: located(points.entry) },
-  { functionName: 'main5', location: located(points.preCall) },
+  { functionName: 'handler5', functionLocation: located(points.functionLocation), location: located(points.entry) },
+  { functionName: '', functionLocation: located(points.dispatchFunctionLocation), location: located(points.preCall) },
 ] };
-assert.equal(validateOriginalPauseFrame(pause, points, scriptId, ids, resolved).name, 'entry');
+const dispatchIdentity = { functionName: '', functionLocation: located(points.dispatchFunctionLocation) };
+const stateFor = (observed = ['preCall'], preCallFrame = dispatchIdentity) =>
+  ({ preCallFrame: structuredClone(preCallFrame), observed: new Set(observed), failed: false });
+const checkedPauseFrame = (value, selected, authenticatedScript, knownIds, resolvedPoints, state = stateFor()) =>
+  validateOriginalPauseFrame(value, selected, authenticatedScript, knownIds, resolvedPoints, state);
+assert.equal(checkedPauseFrame(pause, points, scriptId, ids, resolved).name, 'entry');
 const sameLineCaller = structuredClone(pause); sameLineCaller.callFrames[1].location.columnNumber++;
-assert.equal(validateOriginalPauseFrame(sameLineCaller, points, scriptId, ids, resolved).name, 'entry',
+assert.equal(checkedPauseFrame(sameLineCaller, points, scriptId, ids, resolved).name, 'entry',
   'Caller continuation column must preserve the established original-script/dispatch-line rule');
 for (const [name, mutate] of [
   ['missing frames', x => { x.callFrames = []; }],
@@ -106,15 +114,80 @@ for (const [name, mutate] of [
   ['wrong caller line', x => { x.callFrames[1].location.lineNumber++; }],
 ]) {
   const changed = structuredClone(pause); mutate(changed);
-  rejectsCorrelation(name, () => validateOriginalPauseFrame(changed, points, scriptId, ids, resolved));
+  rejectsCorrelation(name, () => checkedPauseFrame(changed, points, scriptId, ids, resolved));
 }
-rejectsCorrelation('pause before script authentication', () => validateOriginalPauseFrame(pause, points, null, ids, resolved));
-rejectsCorrelation('pause before all exact resolutions', () => validateOriginalPauseFrame(pause, points, scriptId, ids, new Set(['entry'])));
+rejectsCorrelation('pause before script authentication', () => checkedPauseFrame(pause, points, null, ids, resolved));
+rejectsCorrelation('pause before all exact resolutions', () => checkedPauseFrame(pause, points, scriptId, ids, new Set(['entry'])));
 const selfOnly = { hitBreakpoints: ['entry-id'], callFrames: [{ functionName: 'handler5', location: located(points.entry) }] };
-rejectsCorrelation('current frame cannot be its own caller', () => validateOriginalPauseFrame(selfOnly,
+rejectsCorrelation('current frame cannot be its own caller', () => checkedPauseFrame(selfOnly,
   { ...points, preCall: points.entry }, scriptId, ids, resolved));
 // Generic programming faults must not be silently classified as supported/unsupported input.
 assert.throws(() => validateOriginalPossibleLocation(null, points.entry, scriptId), TypeError);
+
+// The fourth point is diagnostic-only, but it shares exact point and callable
+// authentication with the actual controller. State comes from authentic pauses.
+const dispatchPause = name => ({ hitBreakpoints: [name === 'preCall' ? 'call-id' : name === 'preCleanup' ? 'cleanup-id' : 'settled-id'],
+  callFrames: [{ ...structuredClone(dispatchIdentity), location: located(points[name]) }] });
+assert.equal(checkedPauseFrame(dispatchPause('preCall'), points, scriptId, ids, resolved, stateFor([], null)).name, 'preCall');
+assert.equal(checkedPauseFrame(dispatchPause('preCleanup'), points, scriptId, ids, resolved, stateFor(['preCall', 'entry'])).name, 'preCleanup');
+assert.equal(checkedPauseFrame(dispatchPause('settlement'), points, scriptId, ids, resolved,
+  stateFor(['preCall', 'entry', 'preCleanup'])).name, 'settlement');
+for (const name of ['preCall', 'entry', 'preCleanup', 'settlement']) {
+  const fewer = new Set(resolved); fewer.delete(name);
+  rejectsCorrelation(`missing ${name} resolution`, () => checkedPauseFrame(dispatchPause('preCleanup'), points, scriptId, ids, fewer,
+    stateFor(['preCall', 'entry'])));
+}
+for (const current of [new Set([...resolved, 'extra']), new Set(['preCall', 'entry', 'settlement', 'unknown'])])
+  rejectsCorrelation('extra or substituted resolution', () => checkedPauseFrame(dispatchPause('preCleanup'), points, scriptId, ids, current,
+    stateFor(['preCall', 'entry'])));
+for (const alteredIds of [new Map([...ids].slice(1)), new Map([...ids, ['extra-id', 'preCleanup']]),
+  new Map([...ids].map(([id, name]) => [id, name === 'settlement' ? 'preCleanup' : name]))])
+  rejectsCorrelation('missing extra or duplicate point IDs', () => checkedPauseFrame(dispatchPause('preCleanup'), points, scriptId,
+    alteredIds, resolved, stateFor(['preCall', 'entry'])));
+for (const [name, mutate] of [
+  ['wrong diagnostic script', x => { x.callFrames[0].location.scriptId = 'derived-script'; }],
+  ['nearest diagnostic column', x => { x.callFrames[0].location.columnNumber++; }],
+  ['nearest diagnostic line', x => { x.callFrames[0].location.lineNumber++; }],
+  ['named outer function', x => { x.callFrames[0].functionName = 'main4'; }],
+  ['missing dispatch callable', x => { delete x.callFrames[0].functionLocation; }],
+  ['wrong dispatch callable script', x => { x.callFrames[0].functionLocation.scriptId = 'derived-script'; }],
+  ['wrong dispatch callable line', x => { x.callFrames[0].functionLocation.lineNumber++; }],
+  ['nearest dispatch callable column', x => { x.callFrames[0].functionLocation.columnNumber++; }],
+  ['duplicate diagnostic hit', x => { x.hitBreakpoints.push('cleanup-id'); }],
+  ['unknown diagnostic hit', x => { x.hitBreakpoints = ['unknown']; }],
+  ['unbounded diagnostic frames', x => { x.callFrames = Array(65).fill(x.callFrames[0]); }],
+]) {
+  const changed = dispatchPause('preCleanup'); mutate(changed);
+  rejectsCorrelation(name, () => checkedPauseFrame(changed, points, scriptId, ids, resolved, stateFor(['preCall', 'entry'])));
+}
+for (const [name, state] of [
+  ['before pre-call', stateFor([], null)], ['before entry', stateFor(['preCall'])],
+  ['replayed diagnostic', stateFor(['preCall', 'entry', 'preCleanup'])],
+  ['late diagnostic', stateFor(['preCall', 'entry', 'preCleanup', 'settlement'])],
+  ['after failure', { ...stateFor(['preCall', 'entry']), failed: true }],
+  ['missing authenticated pre-call frame', stateFor(['preCall', 'entry'], null)],
+  ['different authenticated pre-call frame', stateFor(['preCall', 'entry'],
+    { ...dispatchIdentity, functionLocation: { ...dispatchIdentity.functionLocation, columnNumber: 43 } })],
+]) rejectsCorrelation(name, () => checkedPauseFrame(dispatchPause('preCleanup'), points, scriptId, ids, resolved, state));
+for (const [name, mutate] of [
+  ['named caller function', x => { x.callFrames[1].functionName = 'main4'; }],
+  ['wrong caller callable', x => { x.callFrames[1].functionLocation.lineNumber++; }],
+  ['missing caller callable', x => { delete x.callFrames[1].functionLocation; }],
+]) {
+  const changed = structuredClone(pause); mutate(changed);
+  rejectsCorrelation(name, () => checkedPauseFrame(changed, points, scriptId, ids, resolved));
+}
+rejectsCorrelation('settlement before diagnostic', () => checkedPauseFrame(dispatchPause('settlement'), points, scriptId, ids, resolved,
+  stateFor(['preCall', 'entry'])));
+rejectsCorrelation('replayed pre-call', () => checkedPauseFrame(dispatchPause('preCall'), points, scriptId, ids, resolved));
+rejectsCorrelation('replayed entry', () => checkedPauseFrame(pause, points, scriptId, ids, resolved, stateFor(['preCall', 'entry'])));
+const diagnosticResolution = { breakpointId: 'cleanup-id', location: located(points.preCleanup) };
+assert.equal(validateOriginalResolvedLocation(diagnosticResolution, points, scriptId, ids, new Set()), 'preCleanup');
+rejectsCorrelation('duplicate diagnostic resolution', () => validateOriginalResolvedLocation(diagnosticResolution, points, scriptId, ids,
+  new Set(['preCleanup'])));
+rejectsCorrelation('extra mapped diagnostic resolution', () => validateOriginalResolvedLocation(
+  { breakpointId: 'extra-id', location: located(points.preCleanup) }, { ...points, extra: points.preCleanup }, scriptId,
+  new Map([...ids, ['extra-id', 'extra']]), new Set()));
 
 const events = [
   { phase: 'launch', sequence: 0 },
@@ -489,6 +562,9 @@ for (const cueOrder of ['before-timeout', 'after-timeout', 'throwing-recorder'])
 }
 
 // Strict diagnostic validation cannot promote semantic or operational claims.
+assert.deepEqual(Object.fromEntries(['commands', 'pauses', 'events', 'summary', 'operationMs', 'setupMs', 'lifetimeMs', 'cleanupMs']
+  .map(name => [name, observerLimits[name]])),
+{ commands: 32, pauses: 8, events: 32, summary: 65536, operationMs: 5000, setupMs: 10000, lifetimeMs: 30000, cleanupMs: 3000 });
 assert.deepEqual(originalLifecycleLimits, { events: 96, bytes: 8192, eventFields: 12, eventBytes: 512, stringBytes: 64, elapsedMs: 120000 });
 let lifecycleNegatives = 0;
 for (const change of [
@@ -526,6 +602,302 @@ for (const clock of [() => { throw Error('Synthetic clock failure'); }, () => Na
   assert.throws(() => validateAvailable(diagnostic)); lifecycleNegatives++;
 }
 
+// Diagnostic observations cannot enter the semantic event or point vocabularies.
+const noCleanup = createOriginalLifecycleDiagnostics(correlation, () => 0n).snapshot();
+validateAvailable(noCleanup); assert(noCleanup.missingObservations.includes('pre-cleanup'));
+const diagnosticLifecycle = createOriginalLifecycleDiagnostics(correlation, () => 0n);
+diagnosticLifecycle.record({ event: 'breakpoint-resolved', point: 'preCleanup' });
+diagnosticLifecycle.record({ event: 'semantic-pause', point: 'preCall' });
+diagnosticLifecycle.record({ event: 'semantic-pause', point: 'entry' });
+diagnosticLifecycle.record({ event: 'diagnostic-pause', point: 'preCleanup' });
+const diagnosticSnapshot = diagnosticLifecycle.snapshot(); validateAvailable(diagnosticSnapshot);
+assert(!diagnosticSnapshot.missingObservations.includes('pre-cleanup'));
+assert(!diagnosticSnapshot.events.some(event => event.event === 'semantic-pause' && event.point === 'settlement'));
+for (const previous of [[], [{ event: 'semantic-pause', point: 'preCall' }],
+  [{ event: 'semantic-pause', point: 'preCall' }, { event: 'semantic-pause', point: 'entry' },
+    { event: 'semantic-pause', point: 'settlement' }],
+  [{ event: 'semantic-pause', point: 'preCall' }, { event: 'semantic-pause', point: 'entry' },
+    { event: 'diagnostic-pause', point: 'preCleanup' }],
+  [{ event: 'semantic-pause', point: 'preCall' }, { event: 'semantic-pause', point: 'entry' },
+    { event: 'protocol-close-request' }]]) {
+  const recorder = createOriginalLifecycleDiagnostics(correlation, () => 0n);
+  previous.forEach(recorder.record); recorder.record({ event: 'diagnostic-pause', point: 'preCleanup' });
+  assert.throws(() => validateAvailable(recorder.snapshot())); lifecycleNegatives++;
+}
+for (const value of [
+  { event: 'semantic-pause', point: 'preCleanup' }, { event: 'diagnostic-pause', point: 'settlement' },
+  { event: 'diagnostic-pause', point: 'preCleanup', settlement: 'resolved' },
+  { event: 'diagnostic-pause', point: 'preCleanup', frame: {} },
+]) {
+  const recorder = createOriginalLifecycleDiagnostics(correlation, () => 0n); recorder.record(value);
+  assert.throws(() => validateAvailable(recorder.snapshot())); lifecycleNegatives++;
+}
+const derivedCorrelation = { ...correlation, role: 'derived', launch: 1 };
+const derivedDiagnostic = createOriginalLifecycleDiagnostics(derivedCorrelation, () => 0n);
+assert(!derivedDiagnostic.snapshot().missingObservations.includes('pre-cleanup'));
+derivedDiagnostic.record({ event: 'diagnostic-pause', point: 'preCleanup' });
+assert.throws(() => validateOriginalLifecycleDiagnostics(derivedDiagnostic.snapshot(),
+  { requireAvailable: true, correlation: derivedCorrelation })); lifecycleNegatives++;
+for (const phase of ['diagnostic-pause', 'preCleanup']) {
+  const promoted = structuredClone(complete);
+  promoted.splice(3, 0, { phase, sequence: 3, location }); promoted.forEach((event, sequence) => { event.sequence = sequence; });
+  rejectsEvents(promoted);
+}
+
+// The selected diagnostic boundary must be a fixed token in the same anonymous
+// dispatch IIFE as the existing call, await and success continuation. This direct
+// parser fixture authenticates no bytes or executable Inspector location.
+assert.equal(typeof originalSource.originalDispatchLocations, 'function',
+  'Missing authenticated pre-cleanup diagnostic source selector');
+const dispatchBody = `  let { output, exitCode } = await (async () => {
+    await new Promise((resolve4) => setTimeout(() => {
+      resolve4();
+    }, 0));
+    if (config2.updateNotifier !== false && !config2.ci && cmd !== "self-update" && !config2.offline && !config2.preferOffline && !config2.fallbackCommandUsed && (cmd === "install" || cmd === "add")) {
+      checkForUpdates(config2).catch(() => {
+      });
+    }
+    if (config2.force === true && !config2.fallbackCommandUsed) {
+      logger.warn({
+        message: "using --force I sure hope you know what you are doing",
+        prefix: config2.dir
+      });
+    }
+    scopeLogger.debug({
+      ...!cliOptions["recursive"] ? { selected: 1 } : {
+        selected: Object.keys(context.selectedProjectsGraph).length,
+        total: context.allProjects.length
+      },
+      ...workspaceDir ? { workspacePrefix: workspaceDir } : {}
+    });
+    let result2 = pnpmCmds[cmd ?? "help"](
+      // Spread config (settings) and context (runtime state) into a single
+      // options object for command handlers. The original split objects are
+      // also passed for handlers that need them separated (e.g. config commands).
+      // Named "_config"/"_context" to avoid clashing with the "--config" CLI option.
+      { ...config2, ...context, _config: config2, _context: context },
+      cliParams,
+      pnpmCmds
+    );
+    try {
+      if (result2 instanceof Promise) {
+        result2 = await result2;
+      }
+    } finally {
+      await finishWorkers();
+    }
+    executionTimeLogger.debug({
+      startedAt: global["pnpm__startedAt"],
+      endedAt: Date.now()
+    });
+    if (!result2) {
+      return { output: null, exitCode: 0 };
+    }
+    if (typeof result2 === "string") {
+      return { output: result2, exitCode: 0 };
+    }
+    return result2;
+  })();
+`;
+const dispatchSource = '\n'.repeat(312305) + dispatchBody;
+const dispatch = originalSource.originalDispatchLocations(dispatchSource);
+assert.deepEqual(dispatch.preCleanup, { lineNumber: 312340, columnNumber: 12 });
+const dispatchOpening = dispatchBody.slice(0, dispatchBody.indexOf('\n'));
+const dispatchAsyncStart = { lineNumber: 312305, columnNumber: dispatchOpening.indexOf('async') };
+assert.deepEqual(dispatchAsyncStart, { lineNumber: 312305, columnNumber: 36 });
+assert.deepEqual(dispatch.dispatchFunctionLocation, dispatchAsyncStart,
+  'Anonymous dispatch callable must begin at the structural async token');
+assert.equal(dispatch.dispatchFunctionName, '', 'Dispatch belongs to the anonymous async IIFE, not main4');
+for (const category of Object.keys(sourceSnippets)) {
+  const selected = { ...dispatch, ...originalHandlerLocation(sourceSnippets[category], category) };
+  const semantic = ['preCall', 'entry', 'settlement'];
+  const pointNames = Object.keys(selected).filter(name => selected[name] &&
+    typeof selected[name] === 'object' && !name.endsWith('FunctionLocation') && name !== 'functionLocation');
+  assert.deepEqual(pointNames.sort(), [...semantic, 'preCleanup'].sort(),
+    'Exactly four source points must retain the three semantic anchors');
+  assert.equal(new Set(pointNames.map(name => JSON.stringify(selected[name]))).size, 4,
+    'Diagnostic and semantic points must be distinct');
+  assert(dispatch.preCall.lineNumber < dispatch.preCleanup.lineNumber &&
+    dispatch.preCleanup.lineNumber < dispatch.settlement.lineNumber);
+}
+for (const [name, changed] of [
+  ['missing cleanup', dispatchSource.replace('      await finishWorkers();\n', '')],
+  ['duplicate cleanup', dispatchSource.replace('      await finishWorkers();\n', '      await finishWorkers();\n      await finishWorkers();\n')],
+  ['cleanup outside finally', dispatchSource.replace('    } finally {\n      await finishWorkers();\n    }', '    }\n    await finishWorkers();')],
+  ['cleanup in catch', dispatchSource.replace('    } finally {', '    } catch {')],
+  ['missing dispatch await', dispatchSource.replace('        result2 = await result2;', '        result2 = result2;')],
+  ['nearest cleanup column', dispatchSource.replace('      await finishWorkers();', '       await finishWorkers();')],
+  ['moved cleanup line', dispatchSource.replace('      await finishWorkers();', '\n      await finishWorkers();')],
+  ['named enclosing function', dispatchSource.replace('(async () => {', '(async function main4() {')],
+  ['duplicate enclosing dispatch', dispatchSource + dispatchBody],
+]) {
+  assert.throws(() => originalSource.originalDispatchLocations(changed), /source|dispatch|cleanup|location|anchor|control|function/i,
+    `${name} accepted by the shared diagnostic source selector`);
+  sourceSelectionNegatives++;
+}
+
+// Connect source selection to the production-shared frame predicate. These
+// scripted inputs establish no actual Inspector frame acceptance.
+const selectedDispatchPoints = { ...points, ...dispatch };
+const asyncStartPause = { hitBreakpoints: ['call-id'], callFrames: [{ functionName: '',
+  functionLocation: located(dispatchAsyncStart), location: located(dispatch.preCall) }] };
+const asyncStartRecorder = createOriginalLifecycleDiagnostics(correlation, () => 0n);
+const acceptedAsyncStart = validateOriginalPauseFrame(asyncStartPause, selectedDispatchPoints, scriptId, ids, resolved,
+  stateFor([], null), asyncStartRecorder.record);
+assert.equal(acceptedAsyncStart.name, 'preCall');
+assert.deepEqual(acceptedAsyncStart.frame.functionLocation, located(dispatchAsyncStart));
+assert.deepEqual(asyncStartRecorder.snapshot().events, [], 'Accepted async start must publish no rejection');
+const oldParameterStartPause = structuredClone(asyncStartPause);
+oldParameterStartPause.callFrames[0].functionLocation.columnNumber = dispatchOpening.indexOf('() =>');
+assert.equal(oldParameterStartPause.callFrames[0].functionLocation.columnNumber, 42);
+const rejectedParameterStartState = stateFor([], null);
+const rejectedParameterStartBefore = structuredClone(rejectedParameterStartState);
+const oldParameterStartRecorder = createOriginalLifecycleDiagnostics(correlation, () => 0n);
+assert.throws(() => validateOriginalPauseFrame(oldParameterStartPause, selectedDispatchPoints, scriptId, ids, resolved,
+  rejectedParameterStartState, oldParameterStartRecorder.record),
+  error => error instanceof UnsupportedObservation && error.reason === 'location' &&
+    error.message === 'Original dispatch frame differs from authenticated pre-call callable');
+assert.deepEqual(rejectedParameterStartState, rejectedParameterStartBefore,
+  'Rejected parameter start must not mutate authenticated pause state');
+oldParameterStartRecorder.record({ event: 'controller-receipt', site: 'failure' });
+oldParameterStartRecorder.record({ event: 'observer-failure', reason: 'location' });
+const oldParameterStartDiagnostic = oldParameterStartRecorder.snapshot();
+validateAvailable(oldParameterStartDiagnostic);
+const oldParameterStartRejection = oldParameterStartDiagnostic.events[0];
+assert.equal(oldParameterStartRejection.event, 'frame-rejection');
+assert.equal(oldParameterStartRejection.check, 'column');
+assert.deepEqual(['name', 'expectedName', 'functionLocation', 'expectedLocation', 'script', 'line', 'column']
+  .map(field => oldParameterStartRejection[field]),
+  ['empty-match', 'match', 'object-truthy', 'object-truthy', 'match', 'match', 'number-mismatch']);
+assert.equal(oldParameterStartDiagnostic.events[1].event, 'frame-rejection-coordinates');
+assert.equal(oldParameterStartDiagnostic.events[1].lineNumber, dispatchAsyncStart.lineNumber);
+assert.equal(oldParameterStartDiagnostic.events[1].columnNumber, 42);
+assert.equal(oldParameterStartDiagnostic.events.length, 4);
+assert.equal(oldParameterStartDiagnostic.firstFailure, 3);
+
+// Rejected dispatch conjunction diagnostics preserve first failure, type/presence
+// and short-circuit evaluation without retaining arbitrary names or script IDs.
+let frameDiagnosticCases = 0;
+const rejectedDispatch = (change, expectedCheck, selected = points) => {
+  const recorder = createOriginalLifecycleDiagnostics(correlation, () => 0n);
+  const params = dispatchPause('preCall'); change(params.callFrames[0]);
+  const before = stateFor([], null);
+  assert.throws(() => validateOriginalPauseFrame(params, selected, scriptId, ids, resolved, before, recorder.record),
+    error => error instanceof UnsupportedObservation && error.reason === 'location' &&
+      error.message === 'Original dispatch frame differs from authenticated pre-call callable');
+  assert.equal(before.observed.size, 0); assert.equal(before.preCallFrame, null); assert.equal(before.failed, false);
+  recorder.record({ event: 'controller-receipt', site: 'failure' });
+  recorder.record({ event: 'observer-failure', reason: 'location' });
+  const diagnostic = recorder.snapshot(); validateAvailable(diagnostic);
+  const rejection = diagnostic.events[0];
+  assert.equal(rejection.event, 'frame-rejection'); assert.equal(rejection.check, expectedCheck);
+  assert.equal(rejection.point, 'preCall'); assert.equal(diagnostic.firstFailure, 3);
+  assert.equal(Object.keys(rejection).length, 12);
+  assert(diagnostic.events.every(event => Buffer.byteLength(JSON.stringify(event)) <= 512));
+  assert(Buffer.byteLength(JSON.stringify(diagnostic)) <= 8192);
+  assert(!JSON.stringify(diagnostic).includes('privateScript') && !JSON.stringify(diagnostic).includes('privateName'));
+  frameDiagnosticCases++; return diagnostic;
+};
+const dispatchRejections = [];
+for (const [change, check, field, status] of [
+  [frame => { frame.functionName = 'privateName'; }, 'name', 'name', 'other-mismatch'],
+  [frame => { delete frame.functionLocation; }, 'functionLocation', 'functionLocation', 'absent-falsy'],
+  [frame => { frame.functionLocation = null; }, 'functionLocation', 'functionLocation', 'null-falsy'],
+  [frame => { frame.functionLocation = false; }, 'functionLocation', 'functionLocation', 'boolean-falsy'],
+  [frame => { frame.functionLocation = 0; }, 'functionLocation', 'functionLocation', 'number-falsy'],
+  [frame => { frame.functionLocation = ''; }, 'functionLocation', 'functionLocation', 'string-falsy'],
+  [frame => { frame.functionLocation = []; }, 'script', 'functionLocation', 'array-truthy'],
+  [frame => { frame.functionLocation = 'malformed'; }, 'script', 'functionLocation', 'string-truthy'],
+  [frame => { frame.functionLocation = 4; }, 'script', 'functionLocation', 'number-truthy'],
+  [frame => { delete frame.functionLocation.scriptId; }, 'script', 'script', 'absent-mismatch'],
+  [frame => { frame.functionLocation.scriptId = 'privateScript'; }, 'script', 'script', 'string-mismatch'],
+  [frame => { frame.functionLocation.scriptId = 42; }, 'script', 'script', 'number-mismatch'],
+  [frame => { delete frame.functionLocation.lineNumber; }, 'line', 'line', 'absent-mismatch'],
+  [frame => { frame.functionLocation.lineNumber = null; }, 'line', 'line', 'null-mismatch'],
+  [frame => { frame.functionLocation.lineNumber = '10'; }, 'line', 'line', 'string-mismatch'],
+  [frame => { frame.functionLocation.lineNumber++; }, 'line', 'line', 'number-mismatch'],
+  [frame => { delete frame.functionLocation.columnNumber; }, 'column', 'column', 'absent-mismatch'],
+  [frame => { frame.functionLocation.columnNumber = false; }, 'column', 'column', 'boolean-mismatch'],
+  [frame => { frame.functionLocation.columnNumber++; }, 'column', 'column', 'number-mismatch'],
+]) {
+  const diagnostic = rejectedDispatch(change, check);
+  assert.equal(diagnostic.events[0][field], status); dispatchRejections.push(diagnostic);
+}
+for (const expected of [undefined, null, false, 0, '']) {
+  const diagnostic = rejectedDispatch(() => {}, 'expectedLocation', { ...points, dispatchFunctionLocation: expected });
+  assert.equal(diagnostic.events[0].functionLocation, 'object-truthy');
+  assert.equal(diagnostic.events[0].script, 'not-evaluated');
+}
+const unexpectedName = rejectedDispatch(frame => { frame.functionName = 'privateName'; }, 'expectedName',
+  { ...points, dispatchFunctionName: 'privateName' });
+assert.equal(unexpectedName.events[0].name, 'other-match');
+assert.equal(unexpectedName.events[0].expectedName, 'string-mismatch');
+for (const value of [-1, 2_147_483_648, Infinity, NaN, 3.5]) {
+  const diagnostic = rejectedDispatch(frame => { frame.functionLocation.lineNumber = value; }, 'line');
+  assert.equal(diagnostic.events[1].lineNumber, null);
+}
+const boundedLine = rejectedDispatch(frame => { frame.functionLocation.lineNumber = 2_147_483_647; }, 'line');
+assert.equal(boundedLine.events[1].lineNumber, 2_147_483_647);
+assert.equal(boundedLine.events[1].columnNumber, null);
+const boundedColumn = rejectedDispatch(frame => { frame.functionLocation.columnNumber++; }, 'column');
+assert.equal(boundedColumn.events[1].lineNumber, points.dispatchFunctionLocation.lineNumber);
+assert.equal(boundedColumn.events[1].columnNumber, points.dispatchFunctionLocation.columnNumber + 1);
+for (const [first, skipped] of [['name', 'functionLocation'], ['script', 'lineNumber'], ['line', 'columnNumber']]) {
+  let reads = 0;
+  rejectedDispatch(frame => {
+    if (first === 'name') frame.functionName = 'privateName';
+    else frame.functionLocation[first === 'script' ? 'scriptId' : 'lineNumber'] = first === 'script' ? 'privateScript' : -1;
+    Object.defineProperty(first === 'name' ? frame : frame.functionLocation, skipped,
+      { get() { reads++; throw Error('Skipped operand was read'); } });
+  }, first);
+  assert.equal(reads, 0);
+}
+// matches() arguments are still evaluated before its own truthiness checks;
+// expected-location truthiness itself remains skipped after absent actual data.
+let expectedLocationReads = 0;
+const expectedGetter = { ...points };
+Object.defineProperty(expectedGetter, 'dispatchFunctionLocation', { get() { expectedLocationReads++; return points.dispatchFunctionLocation; } });
+const absentActual = rejectedDispatch(frame => { delete frame.functionLocation; }, 'functionLocation', expectedGetter);
+assert.equal(expectedLocationReads, 1); assert.equal(absentActual.events[0].expectedLocation, 'not-evaluated');
+const successfulRecorder = createOriginalLifecycleDiagnostics(correlation, () => 0n);
+assert.equal(validateOriginalPauseFrame(dispatchPause('preCall'), points, scriptId, ids, resolved, stateFor([], null),
+  successfulRecorder.record).name, 'preCall');
+assert.deepEqual(successfulRecorder.snapshot().events, []);
+assert.throws(() => validateOriginalPauseFrame(dispatchPause('preCleanup'), { ...points, dispatchFunctionName: 'privateName' },
+  scriptId, ids, resolved, stateFor(['preCall', 'entry']), () => { throw Error('Synthetic recorder failure'); }),
+  error => error instanceof UnsupportedObservation && error.reason === 'location');
+// A rejected earlier caller must not be published when a later caller authenticates.
+const laterCaller = structuredClone(pause);
+laterCaller.callFrames.splice(1, 0, { ...structuredClone(pause.callFrames[1]), functionName: 'privateName' });
+assert.equal(validateOriginalPauseFrame(laterCaller, points, scriptId, ids, resolved, stateFor(), successfulRecorder.record).name, 'entry');
+assert.deepEqual(successfulRecorder.snapshot().events, []);
+for (const change of [
+  value => { value.events[0].check = 'unknown'; },
+  value => { value.events[0].name = 'privateName'; },
+  value => { value.events[0].script = 'privateScript'; },
+  value => { value.events[0].line = 'match'; },
+  value => { value.events[0].expectedName = 'match'; },
+  value => { value.events[0].functionLocation = 'object-falsy'; },
+  value => { value.events[0].rawFrame = {}; },
+  value => { value.events[1].lineNumber = 2_147_483_648; },
+  value => { value.events[1].columnNumber = 42; },
+  value => { value.events[1].point = 'entry'; },
+  value => { value.events[3].reason = 'protocol'; },
+  value => { value.events.splice(2, 1); value.events.forEach((event, sequence) => { event.sequence = sequence; }); value.firstFailure = 2; },
+  value => { value.role = 'derived'; value.launch = 1; },
+]) {
+  const forged = structuredClone(dispatchRejections[0]); change(forged);
+  assert.throws(() => validateAvailable(forged)); frameDiagnosticCases++;
+}
+const invalidRejection = createOriginalLifecycleDiagnostics(correlation, () => 0n);
+invalidRejection.record({ ...dispatchRejections[0].events[0], sequence: undefined });
+assert.equal(invalidRejection.snapshot().state, 'unavailable');
+const truncatedRejection = createOriginalLifecycleDiagnostics(correlation, () => 0n);
+for (let index = 0; index < 80; index++) truncatedRejection.record({ event: 'native-launch' });
+for (const { sequence, elapsedMs, ...event } of boundedColumn.events) truncatedRejection.record(event);
+assert.doesNotThrow(() => validateOriginalLifecycleDiagnostics(truncatedRejection.snapshot()));
+assert(['available', 'truncated'].includes(truncatedRejection.snapshot().state));
+
 console.log(JSON.stringify({ negativeCases, sourceSelectionNegatives, correlationNegatives, state: 'PASSED' , evidenceScope: 'source-contract',
   qualificationContractRevision: 2, completeness: false, productionEligible: false,
-  inspectorFeasibilityMeasured: false, lifecycleCases, lifecycleNegatives }));
+  inspectorFeasibilityMeasured: false, lifecycleCases, lifecycleNegatives, frameDiagnosticCases }));

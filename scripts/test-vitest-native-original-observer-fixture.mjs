@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { validateOriginalLifecycleDiagnostics } from './vitest-native-worker/original-observer-contract.mjs';
+import { validateOriginalLifecycleDiagnostics, originalLifecycleLimits, observerLimits } from './vitest-native-worker/original-observer-contract.mjs';
 import { controllerInventory, preflightOriginalObserver } from './vitest-native-worker/original-observer-inputs.mjs';
 import { runOriginalObserver } from './vitest-native-worker/original-observer.mjs';
 import { processGroupFailureMetadata } from './vitest-native-worker/original-observer-process.mjs';
@@ -97,6 +97,19 @@ function assertSourceSelection(bytes) {
     assert.equal(selected.handlerName, handlerName);
     assert.deepEqual(selected.functionLocation, position(start + 'async '.length));
     assert.equal(selected.scriptSha256, pinsBefore.bundle);
+    assert.deepEqual(selected.preCleanup, { lineNumber: 312340, columnNumber: 12 });
+    const dispatchSignature = '  let { output, exitCode } = await (async () => {';
+    assert.equal(source.split(dispatchSignature).length, 2, 'Fixed anonymous dispatch must be unique');
+    const dispatchStart = source.indexOf(dispatchSignature);
+    assert.equal(selected.dispatchFunctionName, '');
+    assert.deepEqual(selected.dispatchFunctionLocation, position(dispatchStart + dispatchSignature.indexOf('async')));
+    const fixedFinally = '    try {\n      if (result2 instanceof Promise) {\n        result2 = await result2;\n      }\n    } finally {\n      await finishWorkers();\n    }\n    executionTimeLogger.debug({\n      startedAt: global["pnpm__startedAt"]';
+    assert.equal(source.split(fixedFinally).length, 2, 'Dispatch await/finally/success structure must be unique');
+    assert.deepEqual(selected.preCleanup, position(source.indexOf(fixedFinally) + fixedFinally.indexOf('finishWorkers()')));
+    const pointNames = ['preCall', 'entry', 'preCleanup', 'settlement'];
+    assert.equal(new Set(pointNames.map(name => JSON.stringify(selected[name]))).size, 4);
+    assert(selected.preCall.lineNumber < selected.preCleanup.lineNumber && selected.preCleanup.lineNumber < selected.settlement.lineNumber);
+
     if (awaitAnchor) {
       const firstAwait = body.indexOf('await ');
       assert(firstAwait >= 0 && body.indexOf(awaitAnchor) < firstAwait && offset < start + firstAwait,
@@ -104,7 +117,9 @@ function assertSourceSelection(bytes) {
     }
     if (category === 'update') assert(!body.slice(0, offset - start).includes('await '),
       'update: fixed normal-path return call must precede any await');
-    results.sourceSelection.push({ category, handlerName, entry: selected.entry, anchor,
+    results.sourceSelection.push({ category, handlerName, entry: selected.entry, preCall: selected.preCall,
+      preCleanup: selected.preCleanup, settlement: selected.settlement, dispatchFunctionLocation: selected.dispatchFunctionLocation,
+      dispatchFunctionName: selected.dispatchFunctionName, anchor,
       evidenceScope: 'authenticated-source-selection', inspectorFeasibilityMeasured: false });
   }
   assert.throws(() => originalLocations(bytes, 'unknown'), /category/i);
@@ -118,12 +133,50 @@ function assertSourceSelection(bytes) {
     ['duplicate-install-anchor-bytes', source.slice(0, ownAnchor) + '  const include = { };\n' + source.slice(ownAnchor)],
     ['cross-handler-update-anchor-bytes', source.replace(updateCall, '  return interactiveUpdate(params, opts3, rebuildHandler);')],
     ['wrong-original-script-bytes', source + '\n// unknown original source\n'],
+    ['missing-pre-cleanup-bytes', source.replace('      await finishWorkers();', '      await unrelatedCleanup();')],
+    ['moved-pre-cleanup-bytes', source.replace('      await finishWorkers();', '\n      await finishWorkers();')],
   ]) {
     assert.notEqual(hash(Buffer.from(altered)), pinsBefore.bundle, `${name}: mutation did not alter authenticated bytes`);
     for (const category of ['install', 'update', 'dedupe'])
       assert.throws(() => originalLocations(Buffer.from(altered), category), /script bytes/i, `${name}: accepted altered source`);
     results.sourceAuthentication.push(name);
   }
+}
+// #48 is a historical comparison, never a required timing outcome. New outcomes
+// are recorded alongside that baseline while established entry/dedupe assertions remain.
+function previousMatrix(recipe, category) {
+  const emptyRecipe = recipe === 'empty-v1'; const install = category === 'install';
+  const natural = { exitCode: emptyRecipe ? 0 : 1, signal: null };
+  return { semantic: { state: install ? 'unsupported' : emptyRecipe ? 'supported' : 'incomplete',
+    entry: true, settlement: !install && emptyRecipe },
+    originalOutcome: install ? { exitCode: null, signal: 'SIGTERM' } : natural,
+    derivedOutcome: natural, intervention: install ? 'timeout' : 'none',
+    locks: { originalPresent: emptyRecipe, derivedPresent: emptyRecipe, equal: true } };
+}
+function actualMatrix(item) {
+  return { semantic: { state: item.original.report.state,
+    entry: item.original.report.observedPhases.includes('handler-entry'),
+    settlement: item.original.report.observedPhases.includes('handler-settlement') },
+    originalOutcome: item.original.nativeFacts.outcome, derivedOutcome: item.derived.nativeFacts.outcome,
+    intervention: item.original.nativeFacts.observerIntervention,
+    locks: { originalPresent: item.originalLock.present, derivedPresent: item.derivedLock.present,
+      equal: JSON.stringify(item.originalLock) === JSON.stringify(item.derivedLock) } };
+}
+function normalizedDiagnostics(envelope) {
+  const document = envelope.lifecycleDiagnostics; const events = document.events;
+  const first = event => events.find(item => item.event === event) ?? null;
+  return { state: document.state, events: events.length, bytes: Buffer.byteLength(JSON.stringify(document)),
+    resolvedPoints: events.filter(item => item.event === 'breakpoint-resolved').map(item => item.point),
+    preCleanupObserved: events.some(item => item.event === 'diagnostic-pause' && item.point === 'preCleanup'),
+    preCleanupMissing: document.missingObservations.includes('pre-cleanup'),
+    successContinuationObserved: events.some(item => item.event === 'semantic-pause' && item.point === 'settlement'),
+    firstOrigin: document.firstFailure === null ? null : events[document.firstFailure],
+    lastResumeIssued: document.lastResumeIssued, lastResumeAcknowledged: document.lastResumeAcknowledged,
+    shutdownCue: first('native-shutdown-cue'),
+    shutdownReceipt: events.find(item => item.event === 'controller-receipt' && item.site === 'shutdown-cue') ?? null,
+    closeRequest: first('protocol-close-request'), socketClose: first('protocol-socket-close'),
+    nativeOutcome: envelope.nativeFacts.outcome, intervention: envelope.nativeFacts.observerIntervention,
+    ownedProcessGroupEmpty: envelope.nativeFacts.cleanup.ownedProcessGroupEmpty };
 }
 const abort = new AbortController(); const deadline = setTimeout(() => abort.abort(), 180_000);
 try {
@@ -188,7 +241,11 @@ try {
       originalState: item.original.report.state, missingClaims: item.original.report.missingClaims,
       originalOutcome: item.original.nativeFacts.outcome, derivedOutcome: item.derived.nativeFacts.outcome,
       intervention: item.original.nativeFacts.observerIntervention, actualScriptAuthenticated: item.original.actualScriptAuthenticated,
-      equivalent: item.equivalent })) });
+      equivalent: item.equivalent, originalLock: item.originalLock, derivedLock: item.derivedLock,
+      diagnostics: { original: normalizedDiagnostics(item.original), derived: normalizedDiagnostics(item.derived) },
+      baselineComparison: { previous: previousMatrix(fixtureRecipe, item.category), actual: actualMatrix(item),
+        unchanged: JSON.stringify(previousMatrix(fixtureRecipe, item.category)) === JSON.stringify(actualMatrix(item)),
+        interpretation: 'Source observation only; changed timing or outcome does not establish a causal repair' } })) });
     try {
       assert(!abort.signal.aborted, 'Fixture suite exceeded its own execution deadline');
       assert.equal(report.evidenceScope, 'source-fixture'); assert.equal(report.qualificationContractRevision, 2);
@@ -204,6 +261,14 @@ try {
             correlation: { recipe: fixtureRecipe, category: item.category, role,
               launch: ['install', 'update', 'dedupe'].indexOf(item.category) * 2 + (role === 'derived' ? 1 : 0) } });
           const events = diagnostic.events;
+          assert.equal(diagnostic.state, 'available');
+          assert(diagnostic.events.length <= originalLifecycleLimits.events);
+          assert(Buffer.byteLength(JSON.stringify(diagnostic)) <= originalLifecycleLimits.bytes);
+          for (const event of diagnostic.events) {
+            assert(Object.keys(event).length <= originalLifecycleLimits.eventFields);
+            assert(Buffer.byteLength(JSON.stringify(event)) <= originalLifecycleLimits.eventBytes);
+          }
+
           assert(events.some(event => event.event === 'native-launch'));
           assert(events.some(event => event.event === 'native-group-empty'));
           const exit = events.findIndex(event => event.event === 'native-exit');
@@ -213,6 +278,36 @@ try {
           assert(!diagnostic.missingObservations.includes('native-exit') && !diagnostic.missingObservations.includes('native-stream-close'));
           if (role === 'original') {
             assert(events.some(event => event.event === 'script-authenticated'));
+            const expectedPoints = ['preCall', 'entry', 'preCleanup', 'settlement'];
+            const resolvedPoints = events.filter(event => event.event === 'breakpoint-resolved').map(event => event.point);
+            assert.deepEqual([...resolvedPoints].sort(), [...expectedPoints].sort(),
+              'Actual original must resolve exactly four distinct authenticated points');
+            for (const method of ['Debugger.setBreakpointByUrl', 'Debugger.getPossibleBreakpoints']) {
+              const issued = events.filter(event => event.event === 'command-issued' && event.method === method);
+              const acknowledged = events.filter(event => event.event === 'command-acknowledged' && event.method === method);
+              assert.equal(issued.length, 4, `Actual ${method} setup must include the fixed fourth point`);
+              assert.equal(acknowledged.length, 4);
+              assert(acknowledged.every(event => event.accepted));
+            }
+            assert(envelope.protocolCounts.commands <= observerLimits.commands);
+            assert(envelope.protocolCounts.messages <= observerLimits.messages);
+            assert(envelope.protocolCounts.bytes <= observerLimits.protocolBytes);
+            const diagnosticHits = events.filter(event => event.event === 'diagnostic-pause');
+            assert(diagnosticHits.length <= 1); assert(diagnosticHits.every(event => event.point === 'preCleanup'));
+            assert.equal(diagnostic.missingObservations.includes('pre-cleanup'), diagnosticHits.length === 0,
+              'Original must explicitly report an absent pre-cleanup observation');
+            assert(!events.some(event => event.event === 'semantic-pause' && event.point === 'preCleanup'));
+            if (diagnosticHits.length) {
+              const preCall = events.findIndex(event => event.event === 'semantic-pause' && event.point === 'preCall');
+              const entry = events.findIndex(event => event.event === 'semantic-pause' && event.point === 'entry');
+              const hit = events.indexOf(diagnosticHits[0]);
+              const settlement = events.findIndex(event => event.event === 'semantic-pause' && event.point === 'settlement');
+              assert(preCall >= 0 && entry > preCall && hit > entry && (settlement < 0 || settlement > hit),
+                'Authenticated diagnostic hit must follow genuine entry and precede success');
+            }
+            if (observed.observedPhases.includes('handler-settlement')) assert.equal(diagnosticHits.length, 1,
+              'Observed success continuation requires the authenticated diagnostic boundary');
+
             const cue = events.findIndex(event => event.event === 'native-shutdown-cue');
             const receipt = events.findIndex(event => event.event === 'controller-receipt' && event.site === 'shutdown-cue');
             assert.equal(cue >= 0, envelope.nativeFacts.debuggerDetachRequired);
@@ -222,11 +317,25 @@ try {
             assert(events.some(event => event.event === 'protocol-close-request'));
             const socketClose = events.findIndex(event => event.event === 'protocol-socket-close');
             assert.equal(diagnostic.missingObservations.includes('protocol-socket-close'), socketClose < 0);
-          } else assert(!events.some(event => event.event.startsWith('protocol-') || event.event.startsWith('command-')));
+          } else {
+            assert(!events.some(event => event.event.startsWith('protocol-') || event.event.startsWith('command-') ||
+              ['diagnostic-pause', 'breakpoint-resolved', 'semantic-pause', 'script-authenticated'].includes(event.event)));
+            assert(!diagnostic.missingObservations.includes('pre-cleanup'));
+          }
           assert(!JSON.stringify(diagnostic).includes('ws://') && !JSON.stringify(diagnostic).includes('file://'));
         }
 
         assert.equal(original.actualScriptAuthenticated, true, 'Actual original script bytes were not authenticated');
+        const selectedPoint = originalLocations(await fs.readFile(bundle), item.category);
+        const preCall = observed.events.find(event => event.phase === 'pre-call-pause');
+        const authenticEntry = observed.events.find(event => event.phase === 'handler-entry');
+        assert(preCall && authenticEntry, 'Established genuine original call and handler entry must remain observed');
+        assert.deepEqual(preCall.location, { scriptSha256: selectedPoint.scriptSha256, ...selectedPoint.preCall, functionName: '' },
+          'Actual dispatch frame must be the selected anonymous IIFE');
+        assert.deepEqual(authenticEntry.location, { scriptSha256: selectedPoint.scriptSha256,
+          ...selectedPoint.entry, functionName: selectedPoint.handlerName });
+        assert(!observed.observedPhases.includes('diagnostic-pause') && !observed.observedPhases.includes('preCleanup'));
+
         assert.deepEqual(observed.nativeOutcome, original.nativeFacts.outcome);
         assert.equal(item.derived.debuggerEnabled, false);
         assert.equal(original.nativeFacts.cleanup.ownedProcessGroupEmpty, true);
@@ -252,6 +361,9 @@ try {
         if (fixtureRecipe === 'offline-miss-v1' && original.nativeFacts.outcome?.exitCode !== null && original.nativeFacts.outcome.exitCode !== 0)
           assert(!observed.observedPhases.includes('handler-settlement'), 'Native error exit was substituted for observed successful settlement');
       }
+      assert(report.cases.some(item => item.original.lifecycleDiagnostics.events.some(event =>
+        event.event === 'diagnostic-pause' && event.point === 'preCleanup')),
+      'Authenticated source selection and resolution cannot substitute for an actual exact-point hit');
       if (fixtureRecipe === 'empty-v1') {
         const dedupe = report.cases.find(item => item.category === 'dedupe');
         assert.equal(dedupe.original.report.state, 'supported', 'Established dedupe entry/success evidence regressed');
