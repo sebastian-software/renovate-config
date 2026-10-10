@@ -4,13 +4,14 @@ import { pathToFileURL } from 'node:url';
 import { preflightOriginalObserver } from './original-observer-inputs.mjs';
 import { ObserverProtocol } from './original-observer-protocol.mjs';
 import { ownedNativeProcess } from './original-observer-process.mjs';
-import { summarizeOriginalObservation, observerLimits as limits, UnsupportedObservation, createOriginalLifecycleDiagnostics } from './original-observer-contract.mjs';
+import { summarizeOriginalObservation, observerLimits as limits, UnsupportedObservation, createOriginalLifecycleDiagnostics, recordOriginalLifecycle } from './original-observer-contract.mjs';
 import { prepareNative } from '../vitest-native/prepare.mjs';
 import { dataOnlyEnvironment } from '../vitest-native/data-only.mjs';
 import { sha256, jsonBytes, requireValue, ReleaseError } from '../vitest-release/files.mjs';
 
 const categories = ['install', 'update', 'dedupe'];
-const matches = (actual, expected, scriptId) => actual && actual.scriptId === scriptId &&
+const sourcePoints = ['preCall', 'entry', 'preCleanup', 'settlement'];
+const matches = (actual, expected, scriptId) => actual && expected && actual.scriptId === scriptId &&
   actual.lineNumber === expected.lineNumber && actual.columnNumber === expected.columnNumber;
 function measured(condition, message) {
   if (!condition) throw new UnsupportedObservation(/source|script/i.test(message) ? 'source' :
@@ -23,21 +24,75 @@ export function validateOriginalPossibleLocation(possible, point, scriptId) {
 }
 export function validateOriginalResolvedLocation(params, points, scriptId, ids, resolved) {
   const name = ids.get(params.breakpointId);
-  measured(name && scriptId !== null && !resolved.has(name) && matches(params.location, points[name], scriptId),
+  measured(sourcePoints.includes(name) && scriptId !== null && !resolved.has(name) && matches(params.location, points[name], scriptId),
     'Unknown/replayed/nearest original breakpoint');
   return name;
 }
-export function validateOriginalPauseFrame(params, points, scriptId, ids, resolved) {
+export function validateOriginalPauseFrame(params, points, scriptId, ids, resolved, state, record) {
   measured(Array.isArray(params.callFrames) && params.callFrames.length > 0 && params.callFrames.length <= 64,
     'Unknown or unbounded debugger pause');
   const frame = params.callFrames[0]; const hits = params.hitBreakpoints ?? [];
-  measured(hits.length === 1 && scriptId !== null && resolved.size === 3, 'Uncorrelated original pause');
+  measured(hits.length === 1 && scriptId !== null && ids.size === 4 && resolved.size === 4 &&
+    sourcePoints.every(point => resolved.has(point) && [...ids.values()].filter(name => name === point).length === 1),
+  'Uncorrelated original pause');
   const name = ids.get(hits[0]);
-  measured(name && matches(frame?.location, points[name], scriptId) && typeof frame.functionName === 'string' &&
+  measured(sourcePoints.includes(name) && matches(frame?.location, points[name], scriptId) && typeof frame.functionName === 'string' &&
     /^[A-Za-z0-9_$]{0,64}$/.test(frame.functionName), 'Current original frame differs from selected location');
-  if (name === 'entry') measured(frame.functionName === points.handlerName && params.callFrames.slice(1).some(caller =>
-    caller?.location?.scriptId === scriptId && caller.location.lineNumber === points.preCall.lineNumber),
-  'Selected handler frame lacks authentic caller linkage');
+  measured(state && state.observed instanceof Set && [...state.observed].every(point => sourcePoints.includes(point)) &&
+    !state.failed && !state.observed.has(name) &&
+    !state.observed.has('settlement') && (name === 'preCall' ? state.observed.size === 0 :
+      state.observed.has('preCall') && (name === 'entry' ? !state.observed.has('preCleanup') :
+        state.observed.has('entry') && (name !== 'settlement' || state.observed.has('preCleanup')))),
+  'Replayed, late or unordered original pause');
+  // Capture only evaluated operands of the unchanged dispatch conjunction. No
+  // later field is inspected for diagnostics after an earlier comparison fails.
+  let rejection = null;
+  const dispatchFrame = candidate => {
+    const detail = { point: name, check: null, name: 'not-evaluated', expectedName: 'not-evaluated',
+      functionLocation: 'not-evaluated', expectedLocation: 'not-evaluated', script: 'not-evaluated',
+      line: 'not-evaluated', column: 'not-evaluated' };
+    const coordinates = { event: 'frame-rejection-coordinates', point: name, lineNumber: null, columnNumber: null };
+    const kind = value => value === undefined ? 'absent' : value === null ? 'null' :
+      Array.isArray(value) ? 'array' : ['string', 'number', 'boolean', 'object'].includes(typeof value) ? typeof value : 'other';
+    const present = (field, value) => { detail[field] = `${kind(value)}-${value ? 'truthy' : 'falsy'}`; return value; };
+    const equal = (field, actual, expected) => {
+      const accepted = actual === expected;
+      detail[field] = accepted ? 'match' : `${kind(actual)}-mismatch`;
+      if ((field === 'line' || field === 'column') && Number.isInteger(actual) && actual >= 0 && actual <= 2_147_483_647)
+        coordinates[field === 'line' ? 'lineNumber' : 'columnNumber'] = actual;
+      return accepted;
+    };
+    const equalName = (actual, expected) => {
+      const accepted = actual === expected;
+      const category = actual === '' ? 'empty' : typeof actual === 'string' && /^[A-Za-z0-9_$]{1,64}$/.test(actual) ? 'other' :
+        actual === undefined ? 'absent' : 'malformed';
+      detail.name = `${category}-${accepted ? 'match' : 'mismatch'}`; return accepted;
+    };
+    const accepted = equalName(candidate?.functionName, points.dispatchFunctionName) &&
+      equal('expectedName', points.dispatchFunctionName, '') &&
+      ((actual, expected) => present('functionLocation', actual) && present('expectedLocation', expected) &&
+        equal('script', actual.scriptId, scriptId) && equal('line', actual.lineNumber, expected.lineNumber) &&
+        equal('column', actual.columnNumber, expected.columnNumber))(candidate.functionLocation, points.dispatchFunctionLocation);
+    if (!accepted && rejection === null) {
+      detail.check = ['name', 'expectedName', 'functionLocation', 'expectedLocation', 'script', 'line', 'column']
+        .find(field => detail[field].endsWith('-mismatch') || detail[field].endsWith('-falsy'));
+      rejection = { detail, coordinates };
+    }
+    return accepted;
+  };
+  const samePreCallFrame = candidate => dispatchFrame(candidate) && state.preCallFrame &&
+    candidate.functionName === state.preCallFrame.functionName &&
+    matches(candidate.functionLocation, state.preCallFrame.functionLocation, scriptId) &&
+    state.preCallFrame.functionLocation.scriptId === scriptId;
+  const accepted = name === 'entry' ? frame.functionName === points.handlerName && params.callFrames.slice(1).some(caller =>
+    caller?.location?.scriptId === scriptId && caller.location.lineNumber === points.preCall.lineNumber && samePreCallFrame(caller)) :
+    name === 'preCall' ? dispatchFrame(frame) : samePreCallFrame(frame);
+  if (!accepted && rejection !== null) {
+    recordOriginalLifecycle(record, { event: 'frame-rejection', ...rejection.detail });
+    recordOriginalLifecycle(record, rejection.coordinates);
+  }
+  measured(accepted, name === 'entry' ? 'Selected handler frame lacks authentic caller linkage' :
+    'Original dispatch frame differs from authenticated pre-call callable');
   return { name, frame };
 }
 async function observeOriginal(selected, category, workspace, env, signal) {
@@ -47,6 +102,7 @@ async function observeOriginal(selected, category, workspace, env, signal) {
   const record = lifecycle.record;
   let scriptId = null; let initialPause = false; let pauses = 0; let detached = false; let failureDiagnostic = null;
   const ids = new Map(); const resolved = new Set();
+  const pauseState = { preCallFrame: null, observed: new Set(), failed: false };
   const native = await ownedNativeProcess(selected.input.node.path,
     ['--inspect-brk=127.0.0.1:0', path.join(selected.input.pnpm.root, 'bin/pnpm.mjs'), category,
       '--offline', '--ignore-scripts', '--reporter=silent'], workspace, env, signal, { role: 'original', category, record });
@@ -56,9 +112,10 @@ async function observeOriginal(selected, category, workspace, env, signal) {
   try {
     protocol = new ObserverProtocol(await native.endpoint, pathToFileURL(selected.script).href, record);
     await protocol.enable();
-    for (const [name, point] of [['preCall', points.preCall], ['entry', points.entry], ['settlement', points.settlement]]) {
+    for (const name of sourcePoints) {
+      const point = points[name];
       const response = await protocol.breakpoint(point);
-      measured(typeof response.breakpointId === 'string' && Array.isArray(response.locations) && response.locations.length === 0,
+      measured(typeof response.breakpointId === 'string' && !ids.has(response.breakpointId) && Array.isArray(response.locations) && response.locations.length === 0,
         'Original script unexpectedly resolved before authenticated parsing');
       ids.set(response.breakpointId, name);
     }
@@ -80,7 +137,8 @@ async function observeOriginal(selected, category, workspace, env, signal) {
           'Actual Inspector script bytes differ from authenticated original');
         scriptId = params.scriptId;
         record({ event: 'script-authenticated' });
-        for (const point of [points.preCall, points.entry, points.settlement]) {
+        for (const name of sourcePoints) {
+          const point = points[name];
           const possible = await protocol.possible(scriptId, point);
           validateOriginalPossibleLocation(possible, point, scriptId);
         }
@@ -94,7 +152,14 @@ async function observeOriginal(selected, category, workspace, env, signal) {
         params.callFrames.length > 0 && params.callFrames.length <= 64, 'Unknown or unbounded debugger pause');
       const frame = params.callFrames[0]; const hits = params.hitBreakpoints ?? [];
       if (!hits.length && !initialPause && scriptId === null) { initialPause = true; record({ event: 'initial-pause' }); await protocol.resume(); continue; }
-      const { name } = validateOriginalPauseFrame(params, points, scriptId, ids, resolved);
+      const { name } = validateOriginalPauseFrame(params, points, scriptId, ids, resolved, pauseState, record);
+      pauseState.observed.add(name);
+      if (name === 'preCall') pauseState.preCallFrame = { functionName: frame.functionName,
+        functionLocation: { scriptId, lineNumber: frame.functionLocation.lineNumber, columnNumber: frame.functionLocation.columnNumber } };
+      if (name === 'preCleanup') {
+        record({ event: 'diagnostic-pause', point: name });
+        await protocol.resume(); continue;
+      }
       const phase = { preCall: 'pre-call-pause', entry: 'handler-entry', settlement: 'handler-settlement' }[name];
       measured(!events.some(event => event.phase === phase), 'Replayed original semantic phase');
       const location = { scriptSha256: points.scriptSha256, lineNumber: frame.location.lineNumber,
@@ -104,6 +169,7 @@ async function observeOriginal(selected, category, workspace, env, signal) {
       await protocol.resume();
     }
   } catch (error) {
+    pauseState.failed = true;
     record({ event: 'controller-receipt', site: 'failure' });
     record({ event: 'observer-failure', reason: error instanceof UnsupportedObservation ? error.reason : 'protocol' });
     if (!(error instanceof UnsupportedObservation)) {
