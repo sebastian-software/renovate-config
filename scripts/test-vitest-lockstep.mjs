@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { cp, mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
+import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -231,7 +232,22 @@ async function runCase(mode) {
       '--store-dir', join(output, 'frozen-store')], { cwd: workspace, encoding: 'utf8', timeout: 180000 });
     await writeFile(join(workspace, 'frozen-install.log'), (frozen.stdout ?? '') + (frozen.stderr ?? ''));
     assert.equal(frozen.status, 0, frozen.error?.message || frozen.stderr || frozen.stdout);
-    const aligned = manifest.devDependencies.vitest === '4.1.11' && manifest.devDependencies['@vitest/coverage-v8'] === '4.1.11';
+    // Check the installed package and its own peer context, not just matching
+    // manifest strings or a successful frozen install with permissive peers.
+    const fromImporter = createRequire(join(workspace, 'package.json'));
+    const coveragePath = fromImporter.resolve('@vitest/coverage-v8/package.json');
+    const installedVitest = JSON.parse(await readFile(fromImporter.resolve('vitest/package.json'), 'utf8'));
+    const installedCoverage = JSON.parse(await readFile(coveragePath, 'utf8'));
+    const coverageVitest = JSON.parse(await readFile(createRequire(coveragePath).resolve('vitest/package.json'), 'utf8'));
+    const installedPlugin = JSON.parse(await readFile(fromImporter.resolve('@vitest/eslint-plugin/package.json'), 'utf8'));
+    assert.equal(installedVitest.version, manifest.devDependencies.vitest);
+    assert.equal(installedCoverage.version, manifest.devDependencies['@vitest/coverage-v8']);
+    assert.equal(installedPlugin.version, seedManifest.devDependencies['@vitest/eslint-plugin']);
+    const installed = { vitest: installedVitest.version, coverage: installedCoverage.version,
+      coverageVitest: coverageVitest.version, requiredVitest: installedCoverage.peerDependencies.vitest,
+      eslintPlugin: installedPlugin.version };
+    const aligned = installed.vitest === '4.1.11' && installed.coverage === '4.1.11'
+      && installed.coverageVitest === installed.vitest && installed.requiredVitest === installed.vitest;
     if (aligned) {
       assert.equal(lock.packages['@vitest/coverage-v8@4.1.11'].peerDependencies.vitest, '4.1.11');
       assert(importer['@vitest/coverage-v8'].version.includes('vitest@4.1.11'), 'Coverage peer must resolve to the generated Vitest version.');
@@ -240,7 +256,7 @@ async function runCase(mode) {
       ? contents !== seed : generated.lockFile !== undefined);
     const result = { mode, branchName: branch.branchName, files, frozenInstallExit: frozen.status,
       vitest: manifest.devDependencies.vitest, coverage: manifest.devDependencies['@vitest/coverage-v8'],
-      aligned, state: aligned ? 'PASSED' : 'FAILED: advisory-only companion mismatch' };
+      installed, aligned, state: aligned ? 'PASSED' : 'FAILED: advisory-only companion mismatch' };
     await writeFile(join(workspace, 'result.json'), JSON.stringify(result, null, 2) + '\n');
     if (!security) assert(aligned, 'Regular manifests and lockfile must align at 4.1.11.');
     console.log(`${mode}: ${result.state}; frozen-lockfile=${frozen.status}`);

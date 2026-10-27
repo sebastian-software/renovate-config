@@ -63,6 +63,10 @@ rules can override it.
 Renovate's [monorepo mapping](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/data/monorepo.json)
 and [group preset](https://github.com/renovatebot/renovate/blob/f3ec5e6b5166b327833f63a531179d89fd8fc9db/lib/config/presets/internal/group.preset.ts).
 The explicit allowlist preserves grouping when that metadata changes.
+The existing upstream group and local allowlist are reused; no additional rule
+is needed for the current consumer. Paratix currently declares Vitest and
+`@vitest/coverage-v8` in `packages/paratix`, and Vitest without coverage in
+`packages/create-paratix`. UI/browser companions remain optional.
 
 From the repository root, use Node **24.21.0** and pnpm **11.20.0** to reproduce
 the regular CI milestone with Renovate **44.127.1** (source commit
@@ -82,12 +86,68 @@ The fixture retains the ordinary update delay. The runner replays pinned registr
 metadata through Renovate's extraction, lookup and branch APIs, applies Renovate's
 manifest updater, and generates real pnpm lockfiles through Renovate's native
 pnpm path. It prints the temporary artifact directory. The regular 4.1.10 to
-4.1.11 case passes manifest, importer, exact-peer and frozen-lockfile checks;
-excluded packages stay unchanged. The committed fixture `.npmrc` permits peer
+4.1.11 case checks the generated manifest and lockfile, then the installed
+package versions and coverage package's resolved Vitest peer after a frozen
+install; excluded packages stay unchanged. The committed fixture `.npmrc` permits peer
 mismatches, so frozen installation alone cannot prove companion compatibility.
 Tooling installation disables scripts; missing native RE2 uses Renovate's RegExp
 fallback. These literal-name/API/artifact checks do not verify RE2 conformance,
 hosted PR creation or the deployed worker.
+
+#### Repair an incomplete security PR
+
+Renovate's [vulnerability alert defaults](https://docs.renovatebot.com/configuration-options/#vulnerabilityalerts)
+include `groupName: null` and `rangeStrategy: update-lockfile`. A security PR can
+therefore update vulnerable Vitest without its non-vulnerable coverage/UI/browser
+companion. Restoring the group name alone does not add the missing companion.
+The original `vitest@4.1.11` / `@vitest/coverage-v8@4.1.10` pair is incompatible.
+An ordinary test run or successful frozen install is insufficient evidence.
+
+When the consumer's compatibility check reports a mismatch:
+
+1. Review the advisory and select its fixed target.
+2. Update only the necessary installed companions in **the same security PR**.
+   Use their published peer requirements; keep independently versioned tools such
+   as `@vitest/eslint-plugin` independent and leave absent optional packages absent.
+3. Regenerate `pnpm-lock.yaml` with the consumer's pinned pnpm version. Review
+   the manifest and lockfile diff, keeping unrelated dependency changes out.
+4. Run the focused compatibility check and normal required CI for the repaired
+   PR head. Merge only after the existing requirements pass.
+
+The ordinary one-day Renovate release-age policy stays in place. Its vulnerability
+alert defaults set `minimumReleaseAge: null` for the advised update; an unadvised
+companion and pnpm's own release-age setting can still add delay. This procedure
+adds no global release-age bypass and promises neither automatic nor zero-delay
+security repair. Existing major-update separation and automerge policies remain;
+automerging still depends on the consumer's required CI.
+
+The [Paratix](https://github.com/sebastian-software/paratix) consumer integration
+uses `scripts/checkVitestCompatibility.mjs`, exposed as `pnpm check:vitest` and
+included in `pnpm agent:check` in its ordinary CI. Run it after a frozen install
+with the project's pinned pnpm **12.11.2** and Node **24**. It discovers every
+importer, including the root, through pnpm's workspace listing and reads actual
+installed package links and peer metadata. It checks the declared family and
+its resolved family peer contexts per importer, using semver ranges rather than
+requiring one global version. Missing declared packages, ambiguous declarations
+or unusable peer metadata fail. Absent optional peers are allowed, and the
+independently versioned ESLint plugin is excluded. The supported input is the
+installed pnpm 12 workspace layout used by Paratix with Vitest 4/5; this is not a
+generic lockfile parser or support for other package-manager layouts.
+
+The regular fixture above proves local preset resolution, branch grouping,
+manifest/lockfile generation and the installed pair for the pinned test tools.
+It does not prove deployed consumer CI enforcement; that requires the Paratix
+PR's ordinary required checks for its head. No separate status publisher,
+privileged service or historical native qualification is required by the
+[small #37 scope](https://github.com/sebastian-software/renovate-config/issues/37#issuecomment-5928986305).
+
+<details>
+<summary>Historical tooling and source-only evidence</summary>
+
+The material below records earlier work. Its App, publisher, provenance,
+activation and native qualification gates were superseded by the small scope
+above. Existing sources and evidence are retained; they are not prerequisites or
+acceptance evidence for the consumer's ordinary CI compatibility check.
 
 **Full security alignment remains NOT PROVEN.** The default lockstep command
 runs regular grouping only. Adding `--require-security` runs the synthetic
@@ -232,6 +292,8 @@ Prepare complete authenticated stock checker/helper/Node/pnpm candidates with th
 pinned preparation document and complete original archive correspondence. Its
 read-only candidates remain ineligible for production until reviewed release
 selection and all separate activation gates are satisfied.
+
+</details>
 
 ## `standards.json` — standards-sync mechanics
 
