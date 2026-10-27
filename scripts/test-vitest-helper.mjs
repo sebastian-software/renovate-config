@@ -196,7 +196,12 @@ try {
   await negative('unrelated-young', async (w) => { const m = await json(join(w, 'packages/a/package.json')); m.devDependencies['is-odd'] = '3.0.1'; await save(join(w, 'packages/a/package.json'), m); }, /ERR_PNPM_(?:NO_MATURE_MATCHING_VERSION|MINIMUM_RELEASE_AGE_VIOLATION)/);
   const distribution = join(output, 'isolated-layout'); await mkdir(distribution); await cp(helper, join(distribution, 'vitest-lockstep.mjs')); await mkdir(join(distribution, 'vitest-lockstep'));
   for (const file of ['package.json', 'pnpm-lock.yaml']) await cp(join(repo, 'scripts/vitest-lockstep', file), join(distribution, 'vitest-lockstep', file));
-  const isolatedInstall = await pnpm(['install', '--frozen-lockfile', '--offline'], join(distribution, 'vitest-lockstep'), 'isolated-runtime-install'); assert.equal(isolatedInstall.code, 0, isolatedInstall.stdout + isolatedInstall.stderr);
+  // The temporary distribution can select a different default store from the
+  // repository bootstrap. Seed its exact lockfile into an owned store first;
+  // the isolated installation must still succeed with network access disabled.
+  const runtimeStore = join(output, 'isolated-runtime-store');
+  const runtimeFetch = await pnpm(['fetch', '--store-dir', runtimeStore], join(distribution, 'vitest-lockstep'), 'isolated-runtime-fetch'); assert.equal(runtimeFetch.code, 0, runtimeFetch.stdout + runtimeFetch.stderr);
+  const isolatedInstall = await pnpm(['install', '--frozen-lockfile', '--offline', '--store-dir', runtimeStore], join(distribution, 'vitest-lockstep'), 'isolated-runtime-install'); assert.equal(isolatedInstall.code, 0, isolatedInstall.stdout + isolatedInstall.stderr);
   const isolated = await run(process.execPath, [join(distribution, 'vitest-lockstep.mjs')], multi, 'isolated-layout', env); assert.equal(isolated.code, 0, isolated.stdout + isolated.stderr);
   const broken = join(output, 'broken-layout'); await mkdir(broken); await cp(helper, join(broken, 'vitest-lockstep.mjs')); await mkdir(join(broken, 'vitest-lockstep')); await cp(join(repo, 'scripts/vitest-lockstep/package.json'), join(broken, 'vitest-lockstep/package.json')); await symlink(join(distribution, 'vitest-lockstep/node_modules'), join(broken, 'node_modules'));
   const missingDependency = await run(process.execPath, [join(broken, 'vitest-lockstep.mjs')], multi, 'parent-fallback-rejected', env); assert.notEqual(missingDependency.code, 0); assert.match(missingDependency.stderr, /Runtime dependency escapes isolated distribution/);
