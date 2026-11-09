@@ -5,7 +5,6 @@
     "path": "roles/services/renovate/templates/github-org.config.js.j2",
     "sha256": "4ef6709db645d92bbe67a46f1d49a343d67170b19c73414bd90de34a2973d2bc"
   },
-  "localPresetCommit": "c946105c29114c00eb0f549f38abe13b145f4d72",
   "sanitizedConfig": {
     "extends": [
       "config:recommended",
@@ -24,7 +23,9 @@
     "^pnpm( --config\\.[^ ]+)* dlx @sebastian-software/standards .+$"
   ],
   "localPresetSha256": {
-    "default.json": "c6e44eeeb28a445c4c9e1ce3a9c2a3d28e16c728db4abeb37c32c2aff3b8f6ce",
+    "default.json": "021f7a73ff1a8f39563512765fc10be46bbb60bf9605640422603fce5571940d",
     "standards.json": "0da212e8fe096031a2949841a211008c4b493099d02b9fa3d21d48704e1dd553"
-  }
+  },
+  "localPresetBaseCommit": "50f3ee9fbf52bc5def8879011405b5472253ddbb",
+  "localPresetChanges": "This change preserves dependency ranges and pins build inputs."
 }

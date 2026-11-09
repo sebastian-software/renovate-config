@@ -38,6 +38,7 @@ jobs:
           tooling_dir="$(mktemp -d "$RUNNER_TEMP/vitest-lockstep-tools.XXXXXX")"
           pnpm --dir "$tooling_dir" add --save-exact renovate@44.127.1 pnpm@11.20.0 --ignore-scripts --config.minimum-release-age=0
           node "$tooling_dir/node_modules/renovate/dist/config-validator.js" --strict default.json standards.json
+          node scripts/test-dependency-ranges.mjs --renovate-root "$tooling_dir/node_modules/renovate"
           node scripts/test-vitest-lockstep.mjs \
             --renovate-root "$tooling_dir/node_modules/renovate" \
             --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"
@@ -100,6 +101,7 @@ jobs:
           tooling_dir="$(mktemp -d "$RUNNER_TEMP/vitest-helper-tools.XXXXXX")"
           pnpm --dir "$tooling_dir" add --save-exact "renovate@$RENOVATE_VERSION" "pnpm@$PNPM_VERSION" --ignore-scripts --config.minimum-release-age=0
           node "$tooling_dir/node_modules/renovate/dist/config-validator.js" --strict default.json standards.json
+          node scripts/test-dependency-ranges.mjs --renovate-root "$tooling_dir/node_modules/renovate"
           node scripts/test-vitest-worker-contract.mjs --runtime-profile "$PROFILE" \
             --renovate-root "$tooling_dir/node_modules/renovate" \
             --pnpm-cli "$tooling_dir/node_modules/pnpm/bin/pnpm.mjs"

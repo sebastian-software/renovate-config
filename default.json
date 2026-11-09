@@ -3,12 +3,30 @@
   "description": "Shared Renovate preset for all Sebastian Software repositories.",
   "extends": [
     "config:recommended",
+    "helpers:pinGitHubActionDigests",
     ":timezone(Europe/Berlin)"
   ],
   "labels": ["dependencies"],
   "minimumReleaseAge": "1 day",
   "internalChecksFilter": "strict",
   "packageRules": [
+    {
+      "description": "Preserve Cargo and npm dependency ranges, including development tools. Update lockfiles for compatible releases and replace ranges for releases outside them; committed lockfiles provide reproducible repository builds. Peer dependency compatibility keeps the upstream widening policy.",
+      "matchManagers": ["cargo", "npm"],
+      "matchDepTypes": ["!peerDependencies"],
+      "rangeStrategy": "update-lockfile"
+    },
+    {
+      "description": "Rust toolchains are build inputs outside dependency lockfiles, so use explicit versions. Repositories can freeze a dated nightly or reference toolchain locally when required.",
+      "matchManagers": ["rust-toolchain"],
+      "rangeStrategy": "pin"
+    },
+    {
+      "description": "Node versions selected by GitHub Actions are build inputs outside dependency lockfiles, so use explicit versions.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["actions/node-versions", "node"],
+      "rangeStrategy": "pin"
+    },
     {
       "description": "Release-relevant dependency updates use fix(deps) so release-please publishes deployable application images after merged dependency PRs. This intentionally covers runtime packages plus build, CI, package-manager, Node, Dockerfile and lockfile-affecting updates; purely mechanical standards rollouts live in standards.json and keep their separate chore: standards flow.",
       "matchManagers": ["npm", "github-actions", "dockerfile", "nvm"],
