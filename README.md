@@ -36,6 +36,12 @@ take effect across the org immediately, without touching the consuming repos.
 
 - Based on `config:recommended`, timezone Europe/Berlin (the worker controls the
   actual run schedule, so the preset pins no schedule of its own)
+- Preserves Cargo and npm dependency ranges with `rangeStrategy: "update-lockfile"`,
+  including development tools. Compatible updates refresh lockfiles; releases
+  outside the range get a manifest update. npm peer dependencies retain the
+  upstream widening policy.
+- Pins GitHub Actions to commit SHAs and selects explicit Rust toolchain and
+  GitHub Actions Node versions, which dependency lockfiles do not capture
 - Uses `fix(deps):` for release-relevant dependency updates across runtime,
   build, CI, package-manager, Node and Dockerfile managers, so release-please
   can publish deployable releases after merged dependency PRs
@@ -45,6 +51,21 @@ take effect across the org immediately, without touching the consuming repos.
 - Groups the React core packages (`react`, `react-dom`, `react-is`,
   `react-test-renderer`, `react-server-dom-*`) into a single PR by package
   name, so they always move in lockstep
+
+Use committed lockfiles with `cargo --locked` or `pnpm --frozen-lockfile` for
+reproducible repository builds. A published library's version requirements
+describe its supported dependency versions; they should allow compatible
+versions to be unified in the consumer's graph. The same range policy applies
+to unpublished tools and dev-dependencies.
+
+Consumers inherit this policy rather than repeating it locally. Remove blanket
+`rangeStrategy: "pin"` and scoped range-strategy overrides when adopting it:
+repository configuration can override a shared preset. Existing exact manifest
+versions are not loosened automatically. Convert them to compatible ranges
+without changing the resolved lockfile versions, unless a documented exception
+requires an exact version. Frozen reference oracles, release smoke tests and
+packages with an actual exact-version compatibility requirement can keep
+narrow local exceptions. Keep npm peer ranges tied to the supported API contract.
 
 ### Vitest grouping and verification
 
