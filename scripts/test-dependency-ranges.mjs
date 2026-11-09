@@ -16,7 +16,7 @@ const { getConfig } = await load('config/defaults.js');
 const { resolveConfigPresets } = await load('config/presets/index.js');
 const { mergeChildConfig } = await load('config/utils.js');
 const { applyPackageRules } = await load('util/package-rules/index.js');
-const { resolveRangeStrategy } = await load('workers/repository/process/lookup/range-strategy.js');
+const { getRangeStrategy } = await load('modules/manager/index.js');
 const { generateUpdate } = await load('workers/repository/process/lookup/generate.js');
 const { extractPackageFile } = await load('modules/manager/github-actions/extract.js');
 const { GlobalConfig } = await load('config/global.js');
@@ -33,10 +33,10 @@ for (const [manager, depType, currentValue, currentVersion, next, outside, expec
 ]) {
   const dep = await applyPackageRules({ ...config, manager, depType, datasource: manager,
     packageName: 'example', depName: 'example', currentValue, lockedVersion: currentVersion }, 'range-policy');
-  const strategy = resolveRangeStrategy(dep);
+  const strategy = getRangeStrategy(dep);
   const { api } = await load(`modules/versioning/${manager}/index.js`);
   const update = (version) => generateUpdate(dep, currentValue, api, strategy,
-    currentVersion, 'latest', { version }, [currentVersion, next, outside]);
+    currentVersion, 'latest', { version }, new Set([currentVersion, next, outside]));
   const compatible = await update(next);
   assert.equal(compatible.newVersion, next);
   assert.equal(compatible.newValue, currentValue);
@@ -48,7 +48,7 @@ for (const [manager, depType, currentValue, currentVersion, next, outside, expec
 
 const peer = await applyPackageRules({ ...config, manager: 'npm', depType: 'peerDependencies',
   depName: 'example', packageName: 'example', currentValue: '^1.0.0 || ^2.0.0' }, 'peer-policy');
-assert.equal(resolveRangeStrategy(peer), 'widen');
+assert.equal(getRangeStrategy(peer), 'widen');
 
 // Exercise real extraction: setup-node uses github-releases/actions/node-versions,
 // rather than the node-version datasource used by some other actions.
